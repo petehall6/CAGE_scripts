@@ -1,14 +1,6 @@
 import pandas as pd
 
-#Finds copy number using Depmap downloadable csv by converting to hd5 for quicker loading and parsing.
-#returns "Number of copies: {copy number}" boardered by *
-#dataset found @ https://depmap.org/portal/download/custom/
-#Copy Number (Absolute)
-
-#TODO multiple cell line entry?  Save results to core projects folder?
-
 def initDataFrame():
-    print("Connecting to dataframe.  This will take a few moments.")
     data_store = "copy_number_processed.h5"
     df = pd.read_hdf(data_store)
     #strips hyphens for easier parsing.  Trying to remove hyphen in the hdf5 will give an unique index error
@@ -25,29 +17,25 @@ def getCopyNumber(df):
     cell_matches = list(filter(lambda x: cell_line in x, df['cell_line']))
     gene_matches = list(filter(lambda x: gene in x, df.columns))
 
-    #if cell and gene matches found, list approximate matches
     if len(cell_matches) > 0 and len(gene_matches) > 0:
         while True:
-            try:
-                print("Cell line matches:\n")
-                for (i,j) in enumerate(cell_matches, start=1):
-                    print(i,j)
-                    
-                cell_choice = int(input("\nEnter cell choice number: "))
-                if cell_choice > len(cell_matches):
-                    print("Invalid choice. Please re-select cell line.")
-                    continue          
+            print("Cell line matches:\n")
+            for (i,j) in enumerate(cell_matches, start=1):
+                print(i,j)
+                
+            cell_choice = int(input("\nEnter cell choice number: "))
+            if cell_choice > len(cell_matches):
+                print("Invalid choice. Please re-select cell line.")
+                continue
+            
 
-                for (i,j) in enumerate(gene_matches, start=1):
-                    print(i,j)
-                    
-                gene_choice = int(input("\nEnter gene choice number: "))
-                if gene_choice > len(gene_matches):
-                    print("\nInvalid choice. Please re-select gene.\n")
-                    continue
-            except ValueError:
-                    print("Invalid choice. Please re-select cell line and gene.")
-                    continue
+            for (i,j) in enumerate(gene_matches, start=1):
+                print(i,j)
+                
+            gene_choice = int(input("\nEnter gene choice number: "))
+            if gene_choice > len(gene_matches):
+                print("\nInvalid choice. Please re-select gene.\n")
+                continue
             
             cell_selection = cell_matches[cell_choice-1]
             gene_selection = gene_matches[gene_choice-1]
@@ -58,28 +46,25 @@ def getCopyNumber(df):
             confirm = input("Press 'y' to confirm: ").upper()
                         
 
-            if confirm == 'Y' or 'YES':
+            if confirm == 'Y':
             #This finds copy number
 
                 try:
-                    copyNumber = str(df.loc[df['cell_line'] == cell_selection][gene_selection])
-                    #copy number returns large string with cell and table information.  slice though to get just copy number        
+                    copyNumber = str(df.loc[df['cell_line'] == cell_selection][gene_selection])        
                     copyNumberSlice = copyNumber[5:8]
-                    #make it pretty
                     top_btm_boarder = "*"*33
-                    line_boarder = "*"+" "*31 + "*"
+                    line_boarder = "*"+" "*30 + "*"
                     print(top_btm_boarder)
                     print(line_boarder)
-                    print(f"*\tNumber of copies: {copyNumberSlice}"+" "*3+"*")
+                    print(f"\tNumber of copies: {copyNumberSlice} \t")
                     print(line_boarder)
                     print(top_btm_boarder)
                     return
         
                 except KeyError:
                     print("Problem finding cell line: {} or gene: {}".format(cell_line, gene))
-            #incorrect match choosen by user.  reset and repick
+                    
             elif confirm != 'Y':
-                print("Resetting cell line and gene.  Please re-pick")
                 del cell_line, gene
                 getCopyNumber(df)
                     
