@@ -7,9 +7,10 @@ import pandas as pd
 
 #TODO multiple cell line entry?  Save results to core projects folder?
 
+
 def initDataFrame():
     print("Connecting to dataframe.  This will take a few moments.")
-    data_store = "copy_number_processed.h5"
+    data_store = "copy_number_data.h5"
     df = pd.read_hdf(data_store)
     #strips hyphens for easier parsing.  Trying to remove hyphen in the hdf5 will give an unique index error
     #stripping here does not impact performance    
@@ -21,7 +22,7 @@ def getCopyNumber(df):
     cell_line = input("Enter cell line: ").upper()
     gene = input("Enter gene: ").upper()
 
-    #filters take a function so lambda was used to create anyonmous functions. works only when index is not set to cell_line
+    #filters take a function so lambda was used to create anyonmous functions.
     cell_matches = list(filter(lambda x: cell_line in x, df['cell_line']))
     gene_matches = list(filter(lambda x: gene in x, df.columns))
 
@@ -89,11 +90,17 @@ def getCopyNumber(df):
         else:
             print("Gene was not found in database.")
         return None
-        #print("Cell line or gene was not found in database.")
-        #return None
-df = initDataFrame()
 
-cn = getCopyNumber(df)
+def main():
+    
+    df = initDataFrame()
+
+    cn = getCopyNumber(df)
+
+
+if __name__ == "__main__":
+    main()
+
 
 
 
