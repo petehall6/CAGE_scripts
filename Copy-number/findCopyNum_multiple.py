@@ -19,6 +19,7 @@ def initDataFrame():
     return df
 
 def getCopyNumber(df):
+    
     cell_line = input("Enter cell line: ").upper()
     gene = input("Enter gene: ").upper()
 
