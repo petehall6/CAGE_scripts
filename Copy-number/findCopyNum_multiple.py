@@ -20,11 +20,17 @@ def initDataFrame():
 
 def getCopyNumber(df):
     
-    cell_line = input("Enter cell line: ").upper()
+    cell_lines = list((input("Enter cell lines separated by (,): ").strip(" ")).split(","))  
     gene = input("Enter gene: ").upper()
 
     #filters take a function so lambda was used to create anyonmous functions.
-    cell_matches = list(filter(lambda x: cell_line in x, df['cell_line']))
+    
+    
+    #TODO Cell Lines selection and filter loop
+    
+    
+    for lines in cell_lines:
+        cell_matches = list(filter(lambda x: cell_lines in x, df['cell_line']))
     gene_matches = list(filter(lambda x: gene in x, df.columns))
 
     #if cell and gene matches found, list approximate matches
@@ -59,7 +65,7 @@ def getCopyNumber(df):
 
             confirm = input("Press 'y' to confirm: ").upper()
                         
-
+            #TODO Gene Selection
             if confirm == 'Y' or 'YES':
             #This finds copy number
 
