@@ -30,7 +30,7 @@ def getCopyNumber(df):
     if len(cell_matches) > 0 and len(gene_matches) > 0:
         while True:
             try:
-                print("Cell line matches:\n")
+                print("\nCell line matches:\n")
                 for (i,j) in enumerate(cell_matches, start=1):
                     print(i,j)
                     
@@ -38,7 +38,8 @@ def getCopyNumber(df):
                 if cell_choice > len(cell_matches):
                     print("Invalid choice. Please re-select cell line.")
                     continue          
-
+                
+                print("\nGene matches: \n")
                 for (i,j) in enumerate(gene_matches, start=1):
                     print(i,j)
                     
@@ -53,7 +54,7 @@ def getCopyNumber(df):
             cell_selection = cell_matches[cell_choice-1]
             gene_selection = gene_matches[gene_choice-1]
 
-            print("Cell choice: ",cell_selection)
+            print("\n\nCell choice: ",cell_selection)
             print("Gene choice: ",gene_selection)
 
             confirm = input("Press 'y' to confirm: ").upper()
