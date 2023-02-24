@@ -1,3 +1,6 @@
 
 Copy-number/copy_number_processed.h5
 Copy-number/copyNumber.csv
+*.h5
+Copy-number/tiny.h5
+Copy-number/tiny_csv.csv
