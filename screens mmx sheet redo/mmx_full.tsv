@@ -1,0 +1,3 @@
+sample_name	vector	ng/uL	uL	num_grnas	coverage	primer_set	primer	ug_to_screen	total_ug_DNA	uL DNA/rxn	uL MMX/rxn	ug/rxn	limit_volume	limit_DNA	required_DNA	n	ug_screened	n_total	uL MMX for Individual MMX	uL H2O/rxn	uL Rev Primer for individual MMX	desired MMX vol	uL DNA to Add	uL H2O to Add	hart_well
+Metabolomic_D1	SNP28	491.4	200	12560	400	pLentiGuide-Puro	PC266	30.144	98.3	20.4	75	10.02	9.0	9.0	4.0	4.0	40.08	5	350.0	4.600000000000001	25.0	225.0	61.199999999999996	13.800000000000004	A01
+Metabolomic_D3	SNP28	330.0	190	12560	400	pLentiGuide-Puro	PC267	30.144	62.7	25.0	75	8.25	7.0	7.0	4.0	4.0	33.0	5	350.0	0.0	25.0	225.0	75.0	0.0	B01

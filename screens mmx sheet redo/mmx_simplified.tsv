@@ -1,0 +1,3 @@
+sample_name	n_total	uL MMX for Individual MMX	primer	uL Rev Primer for individual MMX	uL DNA/rxn	uL H2O/rxn	desired MMX vol	uL H2O to Add	uL DNA to Add	hart_well
+Metabolomic_D1	5	350.0	PC266	25.0	20.4	4.600000000000001	225.0	13.800000000000004	61.199999999999996	A01
+Metabolomic_D3	5	350.0	PC267	25.0	25.0	0.0	225.0	0.0	75.0	B01
