@@ -5,3 +5,5 @@ open_table
 Unlocked
 	toggles the shift key once every 9 mins for funsies. Requires pyautogui
 
+tif_converter
+	converts gel.tif to gel.jpg for easier storage and sharing

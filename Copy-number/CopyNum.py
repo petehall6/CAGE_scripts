@@ -14,9 +14,9 @@ line_boarder = "*"+" "*31 + "*"
 
 def getCopyNumberInLine(cell_line, gene, proj_objective):
     
-    cell_line =str(cell_line).strip()
-    gene = str(gene).strip()
-    proj_objective = str(proj_objective).strip()
+    cell_line =str().strip()
+    gene = str().strip()
+    proj_objective = str().strip()
     
     data_store = "copy_number_data.h5"
     df = pd.read_hdf(data_store)
