@@ -8,13 +8,11 @@ import win32com.client
 NGS_DIR = "Z:/ResearchHome/Groups/millergrp/home/common/NGS"
 DEST_DIR = "Z:/ResearchHome/Groups/millergrp/home/common/Python/CAGE_Programs/fastq_emailer/zip_output"
 
-#TODO add in multiple email_recip and email_cc
 #get input
 run_date = input("Enter run date: ")
 CAGE_NUM = input("Enter project Number: ")
-email_recip = input("Primary recipient email address: ")
+email_recip = input("Recipient email address: ")
 email_cc = input("CC'd email address")
-
 
 def _get_and_zip():
     working_dir = os.path.join(NGS_DIR,run_date,"joined")
@@ -83,14 +81,14 @@ def _emailer(email_recip):
     body = f"""
     Hi,
     
-    I have attached the requested FASTQ files for project {CAGE_NUM}.  If you have any questions please feel free to contact me.  Thanks.
+    I have attached the requested FASTQ files for project{CAGE_NUM}.  If you have any questions please feel free to contact me.  Thanks.
         
     """
 
     outlook = win32com.client.Dispatch("Outlook.Application")
     email = outlook.CreateItem(0)
     email.To = email_recip
-    #email.CC = email_cc
+    email.CC = email_cc
     email.Subject = "FASTQ Emailer Test"
     email.Body = body
     #explicitly converting slashes because I'm lazy right now
