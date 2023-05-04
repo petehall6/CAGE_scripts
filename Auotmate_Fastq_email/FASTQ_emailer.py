@@ -1,3 +1,10 @@
+#5/4/2023 PMH
+
+#This script compiles FASTQ files, zips them and attaches them to an email
+
+
+
+
 import os
 import pandas as pd
 import shutil
@@ -9,32 +16,32 @@ DEST_DIR = "Z:/ResearchHome/Groups/millergrp/home/common/Python/CAGE_Programs/fa
 
 def _input():
     #get input
-    run_date = input("Enter run date: ")
+    run_date = input("Enter run date: ").strip()
     working_dir = os.path.join(NGS_DIR, run_date, "joined").replace("\\","/")
 
-    #check if run_date is correct
-    try:
-        os.chdir(working_dir)
-    except:
-        print("Could not find run date.  Please reenter date.")
-        _input()
+    #check if run_date is correct/folder exsists
+    while os.path.isdir(working_dir) == True:
+        print("Run date found.")
+        break
+        
+    else:
+        print("Run date not found.  Please reenter run date.")
+        run_date = input("Enter run date: ").strip()
+        working_dir = os.path.join(NGS_DIR, run_date, "joined").replace("\\","/")
+        
     
     cagenum_dirs =[]
-    #check project number/cage number.  If there anything in the cagenum/projectnum dirs list continue
+    #check project number/cage number.  If there anything in the cagenum/projectnum dirs list loop breaks and contiues to emailer
     while len(cagenum_dirs) == 0:
-        cage_num = input("Please enter project number: ").upper()
+        cage_num = input("Please enter project number: ").upper().strip()
         print("Searching for project folder.  This may take a moment.")
         cagenum_dirs = [dir.name for dir in os.scandir(working_dir) if dir.is_dir() if cage_num in dir.name]
+        print(f"Number of projects found: {len(cagenum_dirs)}")
         #empty list evaluate to false
         if not cagenum_dirs:
-            print(f"Did not find project number {cage_num}.")
-    
-    print(f"Found Project Number {cage_num}")
-    
-    email_recip = input("Recipient email address: ").replace(" ","").split(",")
-    email_cc = input("CC'd email address: ").replace(" ","").split(",")
-    
-    return working_dir,cagenum_dirs, email_recip, email_cc, cage_num
+            print(f"Did not find project number {cage_num}.")    
+            
+    return working_dir,cagenum_dirs,cage_num
 
 def _get_fastq_and_zip(working_dir, cagenum_dirs, cage_num):
     #create a df from cagenum_dirs for easier reading
@@ -94,17 +101,22 @@ def _get_fastq_and_zip(working_dir, cagenum_dirs, cage_num):
     print("Zipping complete")
     
 #opens outlook and emails primary(To:) aka email_recip and secondary (CC:)
-def _emailer(email_recip, email_cc, cage_num):
+def _emailer(cage_num):
+    email_recip = input("Recipient email address: ").strip().replace(" ","").split(",")
+    email_cc = input("CC'd email address: ").strip().replace(" ","").split(",")
     
-    body = f"""
+    body = (
+    f"""
     Hi,
     
-    I have attached the requested FASTQ files for project{cage_num}.  If you have any questions please feel free to contact me.  Thanks.
-        
+    I have attached the requested FASTQ files for project {cage_num}.  If you have any questions please feel free to contact me.  Thanks.    
     """
+    
+    )
 
     outlook = win32com.client.Dispatch("Outlook.Application")
     email = outlook.CreateItem(0)
+    #splits each element from list and seperates each with ';' allowing for multiple recipenants and cc's
     email.To = ";".join(email_recip)
     email.CC = ";".join(email_cc)
     email.Subject = f"{cage_num} FASTQ Files"
@@ -113,7 +125,7 @@ def _emailer(email_recip, email_cc, cage_num):
     attachment = os.path.join(DEST_DIR,cage_num+"_fastq_zipped.zip").replace("\\","/")
     email.Attachments.Add(attachment)
     email.Display(True)
-    #email.Save()
+    #uncomment line below to automatically send email without opening outlook window
     #email.Send()
     
 #remove old zipped files because cant be trusted to clean up after themselves
@@ -124,11 +136,11 @@ def _delete_after(cage_num):
     os.remove(os.path.join(DEST_DIR,cage_num+"_fastq_zipped.zip").replace("\\","/"))
 
 
-working_dir, cagenum_dirs, email_recip, email_cc, cage_num = _input()
+working_dir, cagenum_dirs,cage_num = _input()
         
 _get_fastq_and_zip(working_dir, cagenum_dirs, cage_num)
 
-_emailer(email_recip, email_cc, cage_num)
+_emailer(cage_num)
 
 
 clean = input("Do you want to delete zipped files? (y/n): ").upper()
@@ -136,5 +148,5 @@ clean = input("Do you want to delete zipped files? (y/n): ").upper()
 if clean != "N":
     _delete_after(cage_num)
 
-
+print("Program completed.")
 
