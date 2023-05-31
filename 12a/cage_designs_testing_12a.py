@@ -70,7 +70,7 @@ SPECIES_TO_ABBRV = {
     "monkey": "gm",
 }
 ABBRV_TO_SPECIES = {
-    "h": "HUMAN",
+    "h": "human",
     "m": "mouse",
     "z": "zebrafish",
     "r": "rat",
@@ -314,7 +314,6 @@ class PrimerDesigner(object):
         # One shalt be the number of occurrences, and the number of occurrences should be one.
         # print("picking target")
         picking_target = GuideRNA("picked", self.grna_picking_seq).find_target(self.seq_record.seq, fuzzy=self.fuzzy)
-      
         # print(self.seq_record.seq)
         # print(picking_target)
         # print(self.grna_picking_seq)
@@ -659,10 +658,10 @@ class AmpliconSet(object):
                 "Rev_Primer": amplicon.rev_primer,
                 "DS.Fwd_Primer_Name": amplicon_name + ".DS.F",
                 #'DS.Fwd_Primer' : 'CACTCTTTCCCTACACGACGCTCTTCCGATCT'+amplicon.fwd_primer,
-                "DS.Fwd_Primer": "CTACACGACGCTCTTCCGATCT" + str(amplicon.fwd_primer).lower(),
+                "DS.Fwd_Primer": "CTACACGACGCTCTTCCGATCT" + str(amplicon.fwd_primer).upper(),
                 "DS.Rev_Primer_Name": amplicon_name + ".DS.R",
                 #'DS.Rev_Primer' : 'GTGACTGGAGTTCAGACGTGTGCTCTTCCGATCT' + amplicon.rev_primer},
-                "DS.Rev_Primer": "CAGACGTGTGCTCTTCCGATCT" + str(amplicon.rev_primer).lower(),
+                "DS.Rev_Primer": "CAGACGTGTGCTCTTCCGATCT" + str(amplicon.rev_primer).upper(),
             },
             index=df_index,
         )
@@ -791,33 +790,33 @@ class GuideRNA(object):
         Start and end are reversed (ie PAM sequence at start) in the case of reverse string matches
         Cut is the python slicing index that the cut will be made (ie in-between actual bases)
         """
+        #grna generation step
         if (
             self.name != "picked" and self.name != ""
         ):  # Added "and" statement to check self.name != ""
             ortho = self.name.split(".")[2]
+        #primer generation step
         else:
-            ortho = self.name
+             ###GET CAS TYPE
+            ##Read grna crispr summary
+            df = read_crispr_summary(CRISPR_SUMMARY)
+            ##get cas type for matching guide ID
+            df_summary_picked = df['Picked']
+            #OG df combines Name and Seq with 'Name' set as index
+            #reset index to access index as regular column
+            df_temp = df_summary_picked.reset_index()
+            #expand 'Name' column into sub strings to parse
+            df_temp[['CAGENum','Gene','Cas','GuideNum']] = df_temp.Name.str.split('.', expand=True)
+            #drop redundent name column
+            df_picked = df_temp.drop(['Name'], axis=1)
+            #create casType df with only picked guides
+            df_casType = df_picked.loc[df_picked['Picked'] == True]
+            #use iloc since some df's will only have 1 row
+            ortho = df_casType.iloc[0]['Cas']
         if fuzzy is None:
             fuzzy = ""
         elif not self.validate_fuzzy_match(fuzzy):
             raise InvalidFuzzyStringError(fuzzy)
-
-        ###GET CAS TYPE
-        ##Read grna crispr summary
-        df = read_crispr_summary(CRISPR_SUMMARY)
-        ##get cas type for matching guide ID
-        df_summary_picked = df['Picked']
-        #OG df combines Name and Seq with 'Name' set as index
-        #reset index to access index as regular column
-        df_temp = df_summary_picked.reset_index()
-        #expand 'Name' column into sub strings to parse
-        df_temp[['CAGENum','Gene','Cas','GuideNum']] = df_temp.Name.str.split('.', expand=True)
-        #drop redundent name column
-        df_picked = df_temp.drop(['Name'], axis=1)
-        #create casType df with only picked guides
-        df_casType = df_picked.loc[df_picked['Picked'] == True]
-        #use iloc since some df's will only have 1 row
-        ortho = df_casType.iloc[0]['Cas']
         
         fwd_targets = []
         rev_targets = []
@@ -826,7 +825,7 @@ class GuideRNA(object):
         )
         if ortho == "Cas9":
             CUT_SITE = int(orthos_df.loc[orthos_df["Ortholog"] == "Cas9", "CUT_SITE"].iloc[0])
-            #LENGTH = int(orthos_df.loc[orthos_df["Ortholog"] == "Cas9", "LENGTH"].iloc[0])
+            LENGTH = int(orthos_df.loc[orthos_df["Ortholog"] == "Cas9", "LENGTH"].iloc[0])
             
             fwd_targets = [
                 GuideTarget(m.start(), m.end() - 1, m.start() + CUT_SITE, "1")
@@ -835,7 +834,7 @@ class GuideRNA(object):
             
         elif ortho == "Cas12a":
             CUT_SITE = int(orthos_df.loc[orthos_df["Ortholog"] == "Cas12a", "CUT_SITE"].iloc[0])
-            #LENGTH = int(orthos_df.loc[orthos_df["Ortholog"] == "Cas12a", "LENGTH"].iloc[0])
+            LENGTH = int(orthos_df.loc[orthos_df["Ortholog"] == "Cas12a", "LENGTH"].iloc[0])
             fwd_targets = [
                 GuideTarget(m.start(), m.end() - 1, m.start() + CUT_SITE, "1")
                 for m in fwd_matches
@@ -1097,6 +1096,7 @@ def create_target_bp_df(seq_targeted, guide_rna_list):
     """
     # Short-circuit return to all NA df if there are no targeted
     # bases in the seq_targeted
+
     if seq_targeted.target_indexes:
         target_bp_str = ":".join(map(str, seq_targeted.target_indexes))
     else:
@@ -1318,11 +1318,9 @@ def find_gRNAs(your_Sequence, your_Gene, experiment):
     )
     for g in range(len(ortho.gRNA)):
         print(ortho.gRNA[g])
-        print(("Searching for gRNAs to %s" % your_Gene))
-        print(("\nYour sequence- > %s" % your_Sequence))
-        reverse_seq = Seq(
-            your_Sequence
-        )  # Create a Biopython Seq object from your_Sequence
+        print(f"\nSearching for gRNAs to {your_Gene}...")
+        print(f"    Your sequence:\n    {your_Sequence}\n")
+        reverse_seq = Seq(your_Sequence) # Create a Biopython Seq object from your_Sequence
         reverse_seq = (
             reverse_seq.reverse_complement()
         )  # Create the reverse_complement of your_Sequence
@@ -1363,30 +1361,29 @@ def find_gRNAs(your_Sequence, your_Gene, experiment):
 
     #Names the guides
     for i, gRNA in enumerate(all_gRNAs):
-        print(i, g)
+        print(i, gRNA)
         if gRNA[0:4] == "TTTV":
             name = your_Gene + str(".Cas12a.g") + str(i + 1)
         elif gRNA[20:23] == "NGG":
             name = your_Gene + str(".Cas9.g") + str(i + 1)
-        elif gRNA[21:22] == "CG" or "AG" or "TG":
-            name = your_Gene + str(".Cas9NG.g") + str(i + 1)
         all_gRNAs_namer.append(
             name
         )  # create a list that has gRNA names in the format:  your_Gene.gXX
-        print("%s %s" % (name, gRNA))
+        print(f"{name} {gRNA}")
 
     all_gRNAs_full_name = [experiment + ".%s" % x for x in all_gRNAs_namer]
 
     return all_gRNAs, all_gRNAs_full_name
 
-def write_CRISPR_Fa(all_gRNAs, all_gRNAs_namer):
-    """Create the CRISPR.fa file that will be used for OTA"""
-    with open("CRISPR.fa", "w") as f:
-        counter = 0
-        for x in all_gRNAs_namer:
-            f.write(f">{x}\n")  # Guide name
-            f.write(f"{all_gRNAs[counter]}\n")  # Guide sequence
-            counter += 1
+#def write_CRISPR_Fa(all_gRNAs, all_gRNAs_namer):
+#    """Create the CRISPR.fa file that will be used for OTA"""
+#    with open("CRISPR.fa", "w") as f:
+#        counter = 0
+#        for x in all_gRNAs_namer:
+#            f.write(f">{x}\n")  # Guide name
+#            f.write(f"{all_gRNAs[counter]}\n")  # Guide sequence
+#            counter += 1
+
 def write_CRISPR_Fa(
     all_gRNAs, all_gRNAs_namer
 ):  # Create the CRISPR.fa file that will be used for OTA
@@ -2206,6 +2203,7 @@ if __name__ == "__main__":
         ]
         # If Distance_from_BP is positive than target bp is UPSTREAM of cas9 cut site
         # If negative than target bp is DOWNSTREAM of cas9 cut site
+  
         target_bp_df = create_target_bp_df(args.sequence, guide_rna_list)
 
         # Only creates guide_rna objects for grna with long_0 == 1
@@ -2341,8 +2339,6 @@ if __name__ == "__main__":
         selected_guide_rna = select_grna_from_substring_list(
             args.grna_id, guide_rna_list
         )
-
-        # print(selected_guide_rna)
 
         # Updates the CRISPR_SUMMARY csv with guide rna selections via Picked column
         mark_grna_as_selected(selected_guide_rna, CRISPR_SUMMARY)
