@@ -94,38 +94,39 @@ def _rename_csv(working_dir, cagenum_dirs):
     print()
     print(csv_df)
     
-    #rename rows.  print vertical and add backk to csv_df
+    rename = input("Do you wish to rename samples? (y)es or (n)o:  ").upper()
     
-    sample_list =[]
     
-    index=1
-    #get sample names
-    while len(sample_list) < csv_df.shape[0]:       
-        sample_name = input(f"Please enter sample name for row {index}: ")
-        sample_list.append(sample_name)
-        index = index + 1
+    if rename == 'Y' or rename == 'YES':
+    
+        #rename rows.  print vertical and add backk to csv_df
+        sample_list =[]
+    
+        index=1
+        #get sample names
+        while len(sample_list) < csv_df.shape[0]:       
+            sample_name = input(f"Please enter sample name for row {index}: ")
+            sample_list.append(sample_name)
+            index = index + 1
 
-    
-    #create temp_df of sample names for easier merging
-    temp_df = pd.DataFrame(sample_list,columns=['Sample'])
-    raw_df['Sample'] = temp_df['Sample']
-    del temp_df
-    #set index to name stop addtional column from being added
-    raw_df.set_index(['Name'], inplace=True)
         
-    #write sample names to csv
-    raw_df.to_csv(os.path.join(target_dir,csv_list[csv_choice]))
-    del raw_df
-    
-    print()
-    print("Naming complete")
-    print()
-    print()
+        #create temp_df of sample names for easier merging
+        temp_df = pd.DataFrame(sample_list,columns=['Sample'])
+        raw_df['Sample'] = temp_df['Sample']
+        del temp_df
+        #set index to name stop addtional column from being added
+        raw_df.set_index(['Name'], inplace=True)
+            
+        #write sample names to csv
+        raw_df.to_csv(os.path.join(target_dir,csv_list[csv_choice]))
+        del raw_df
+        
+        print("\nNaming complete\n\n")
 
     print(target_csv)
-    return(target_csv)
+    return(target_csv,graph_dir)
 
-def _make_plot(target_csv):
+def _make_plot(target_csv, graph_dir):
     
     def label_bar(bars):
             for bar in bars:
@@ -136,6 +137,9 @@ def _make_plot(target_csv):
                             ha='center', va='bottom')
     
     
+    guide_names = []
+    guide_scores = []
+    
     named_csv = pd.read_csv(target_csv)
     oof_df = named_csv[['Sample','0bp','In-frame','Out-of-frame']]
     
@@ -144,12 +148,20 @@ def _make_plot(target_csv):
     print()
     print()
     
-    guide_names = []
-    guide_scores = []
     
-    gene_name = input("Please enter gene name: ")
+    
+    gene_name = str(target_csv).split("_")[1]
+
+    gene_correct = input(f"Confirm gene name is correct {gene_name}, y or n: ").upper()
+    
+    print(f"GENE CORRECT: {gene_correct}")
+    
+    if gene_correct == 'N' or gene_correct == 'NO':
+        gene_name = input("Please enter gene name: ")
+
+    
     #gene_name="TESTGENE"
-    chart_title = gene_name +" Cell Fitness Aassay"
+    chart_title = gene_name +" Cell Fitness (CelFi) Assay"
     
     #num_of_guides = 1
     num_of_guides = int(input("How many guides are being compared (1 or 2): "))
@@ -165,15 +177,28 @@ def _make_plot(target_csv):
         #secondguide_first_time = 4
         #secondguide_last_time = 5
         
-        guide_names.append(input("\nEnter first guide name: "))
+        
         firstguide_first_time = int(input("\nEnter row number of first time point for first guide: "))
         firstguide_last_time = int(input("\nEnter row number of last time point for first guide: "))
-
-        guide_names.append(input("\n\nEnter second guide name: "))
+        
         secondguide_first_time = int(input("\nEnter row number of first time point for second guide: "))
         secondguide_last_time = int(input("\nEnter row number of last time point for second guide: "))
-        #TODO
-        #convert to string and see if that works
+        
+        
+        guide_names.append(str(oof_df.at[firstguide_first_time,'Sample']).split('.')[1].split(' ')[0])
+        guide_names.append(str(oof_df.at[secondguide_first_time,'Sample']).split('.')[1].split(' ')[0])
+        
+        
+        print(f"1st guide: {guide_names[0]}")
+        print(f"2nd guide: {guide_names[1]}")
+        
+        guide_names_good = input("Please confirm guide names, y or n: ").upper()
+        
+        if guide_names_good == 'N' or guide_names_good == 'NO':
+            guide_names.clear()
+            guide_names.append(input("1st guide name: "))
+            guide_names.append(input("2nd guide name: "))
+        
         guide_scores.append(round(oof_df.at[firstguide_last_time, 'Out-of-frame']/oof_df.at[firstguide_first_time, 'Out-of-frame'],2))
         
         guide_scores.append(round(oof_df.at[secondguide_last_time, 'Out-of-frame']/oof_df.at[secondguide_first_time, 'Out-of-frame'],2))
@@ -181,10 +206,10 @@ def _make_plot(target_csv):
             
         print()
         print()
-        print(f"First guide fitness score: {guide_scores[0]}")
+        print(f"{guide_names[0]} fitness ratio: {guide_scores[0]}")
         print()
         print()
-        print(f"Second guide fitness score: {guide_scores[1]}")
+        print(f"{guide_names[1]} fitness ratio: {guide_scores[1]}")
         
         #sets overall graph as subplot for easier editing
         fig, ax = plt.subplots()
@@ -213,6 +238,11 @@ def _make_plot(target_csv):
         #prompt for time poitns
         
         #guide_names.append('Guide One')
+        
+        
+        
+        
+        
         
         guide_names.append(input("\nEnter first guide name: "))
         firstguide_first_time = int(input("\nEnter row number of first time point: "))
@@ -244,29 +274,42 @@ def _make_plot(target_csv):
         
         label_bar(bars)
         plt.xticks(range(1,2),guide_names)
-    
-    
-    
-    
-    
-           
-    plt.ylabel('Fitness Score')
+    plt.ylabel('Fitness Ratio')
     plt.title(chart_title ,y=1.05)
     ax.spines[['top','right']].set_visible(False)
 
+    g1_ratio = [gene_name, guide_names[0], guide_scores[0]]
+    g2_ratio = [gene_name, guide_names[1], guide_scores[1]]
+    
+    ratio_list = [g1_ratio,g2_ratio]
+    
+    ratio_df = pd.DataFrame(ratio_list, columns=['Gene','Guide', 'Ratio'])
+    
+    os.chdir(graph_dir)
+    ratio_df.to_csv(gene_name+ 'CelFi_ratios.csv')
+    
+    
+    
     plt.show()
+    
+    
 
 
 
-working_dir, cagenum_dirs,cage_num = _input()
+
+    
+    
+
+#working_dir, cagenum_dirs,cage_num = _input()
         
-target_csv = _rename_csv(working_dir, cagenum_dirs)
+#target_csv,graph_dir = _rename_csv(working_dir, cagenum_dirs)
 
 
-#target_csv = r"Z:/ResearchHome/Groups/millergrp/home/common/NGS/062023/joined\\CAGE9999TEST\\CAGE9999_hPSMD12_F2_R2_all_indels.csv"
+target_csv = r"Z:/ResearchHome/Groups/millergrp/home/common/NGS/062023/joined\\CAGE9999TEST\\CAGE9999_hPSMD12_F2_R2_all_indels.csv"
+graph_dir = r"Z:/ResearchHome/Groups/millergrp/home/common/NGS/062023/joined\\CAGE9999TEST\\graphs"
 
+_make_plot(target_csv, graph_dir)
 
-_make_plot(target_csv)
 
 print()
 print("Program completed.")
