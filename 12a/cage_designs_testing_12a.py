@@ -27,7 +27,7 @@ from pptx.enum.shapes import MSO_SHAPE
 from pptx.enum.text import MSO_AUTO_SIZE
 from pptx.util import Cm, Inches, Pt
 
-import crisprSummarySRMConverter
+import crisprSummarySRMConverter_multi_join
 from check_existing_projects import check_projects
 from off_target_all_RDM_v4_12a import off_target_all, off_target_all_primers
 
@@ -185,6 +185,7 @@ class Amplicon(object):
     def __str__(self):
         return " ".join([self.fwd_primer, self.rev_primer])
 
+print("\n\n***************************THIS IS THE Cas12 Version 20230601.2 - multi-join enabled **************************************\n\n")
 
 class PrimerDesigner(object):
     """
@@ -540,7 +541,7 @@ class AmpliconSet(object):
                         print("*"*50)
                         print("*"*50)
                         print("\n")
-                        input("Press any key to continue")
+                        input("Press any key to continue\n")
                         print(f"{txtcolors.END}")
                         amplicon_df = self._create_amplicon_dataframe(amplicon, name=name)
                         amplicon_df.drop("Penalty", axis=1, inplace=True)
@@ -1375,14 +1376,6 @@ def find_gRNAs(your_Sequence, your_Gene, experiment):
 
     return all_gRNAs, all_gRNAs_full_name
 
-#def write_CRISPR_Fa(all_gRNAs, all_gRNAs_namer):
-#    """Create the CRISPR.fa file that will be used for OTA"""
-#    with open("CRISPR.fa", "w") as f:
-#        counter = 0
-#        for x in all_gRNAs_namer:
-#            f.write(f">{x}\n")  # Guide name
-#            f.write(f"{all_gRNAs[counter]}\n")  # Guide sequence
-#            counter += 1
 
 def write_CRISPR_Fa(
     all_gRNAs, all_gRNAs_namer
@@ -1400,6 +1393,7 @@ def write_CRISPR_Fa(
         print((all_gRNAs[counter]))
         counter = counter + 1
     f.close()
+
 
 def make_oligos(your_Gene, all_gRNAs, all_gRNAs_namer, vector):
     """
@@ -1971,6 +1965,66 @@ def CAGE_slides(gene, species, project_dir, edit):
     return final_path
 
 
+def SRMJoiner():
+        print("Multi joiner test")
+        filename = "CRISPR_summary_w_primers_NGS.txt"
+        folder_list = []
+        file_list = []
+        i=0
+        cluster_core_projects_prefx = "/research_jude/rgs01_jude/groups/millergrp/home/common/CORE PROJECTS/"
+        try:            
+            total_folders = (input("Please enter CAGE Project folder names to join.  Seperate by commas ',': ")).strip().replace('.',',').split(',')
+
+            for i in range(len(total_folders)):
+                if i == 0:
+                    #print("\nPlease enter the CAGE number of the first file.")
+                    #print("\n* NOTE: This will serve as the output folder! *")
+                    #just parse CAGE numbers and add linux path prefix
+                    destination_project = total_folders[i].strip()
+                    
+                    #scan through CORE PROJECTS fodler and find destination folder full name
+                    print("\nScanning for folders.....\n")
+                    for subdirs in os.walk(cluster_core_projects_prefx):
+                        for d in subdirs:
+                            if destination_project in d:
+                                destination_full_name = d              
+                    
+                    destination_folder = PurePosixPath(cluster_core_projects_prefx).joinpath(destination_full_name)
+                    
+                    folder_list.append(destination_folder)
+                    print(f"\n This is the dest folder: {destination_folder}")
+                    #what to do if not a directory
+                    print(os.path.isdir(destination_folder))
+
+                else:
+                    #print("\nPlease enter the CAGE number of the next file.")
+                    next_folder = total_folders[i]
+                    
+                    print("\nScanning for folders.....\n")
+                    for subdirs in os.walk(cluster_core_projects_prefx):
+                        for d in subdirs:
+                            if next_folder in d:
+                                next_folder_full_name = d
+                    
+                    next_folder = PurePosixPath(cluster_core_projects_prefx).joinpath(next_folder_full_name)
+                    
+                    folder_list.append(next_folder)
+                    print(os.path.isdir(next_folder))
+                    print(f"Index: {i}")
+            
+            for folder in folder_list:
+                file = PurePosixPath(folder).joinpath(filename).as_posix()#as_posix coverts to string
+                file_list.append(file)
+
+            #input("Holding for SRMCONVERTER")
+            crisprSummarySRMConverter_multi_join.multiTXTtoXLS(file_list)
+            print("\n")
+            return None
+        except EOFError:
+            print("\n")
+            return None
+
+
 def main():
     parser = argparse.ArgumentParser()
     subparser = parser.add_subparsers()
@@ -2398,8 +2452,8 @@ if __name__ == "__main__":
             # summary_write(FINAL_SUMMARY, summary_df, amplicon_df)
 
         print("\nMaking .XLS file for SRM upload...")
-        summarySeries = crisprSummarySRMConverter.CRISPRSummaryToSeries(FINAL_SUMMARY)
-        crisprSummarySRMConverter.CRISPRSummarySeriesToXLS(
+        summarySeries = crisprSummarySRMConverter_multi_join.CRISPRSummaryToSeries(FINAL_SUMMARY)
+        crisprSummarySRMConverter_multi_join.CRISPRSummarySeriesToXLS(
             summarySeries, "Converted-Picked-Py.xls"
         )
 
@@ -2431,66 +2485,10 @@ if __name__ == "__main__":
 
         copy_folder_over(args.project_dir)
         return None
+    
+    
 
-    def SRMJoiner(args):
-        use_default_filename_choice = ""
-        filename = ""
-        first_folder = ""
-        second_folder = ""
-        try:
-            while use_default_filename_choice not in ["Y", "YES", "N", "NO"]:
-                print("Use default filename 'CRISPR_summary_w_primers_NGS.txt'? (y/n)")
-                use_default_filename_choice = input("--> ").strip().upper()
 
-            if use_default_filename_choice in ["N", "NO"]:
-                print("Please enter the intended filename:")
-                filename = input("--> ")
-            elif use_default_filename_choice in ["Y", "YES"]:
-                filename = "CRISPR_summary_w_primers_NGS.txt"
-
-            # while os.path.isdir(first_folder) == False:
-            print("Please enter the full path to the folder of the first file.")
-            print("* NOTE: This will serve as the output folder! *")
-            first_folder = (
-                # '"'
-                PureWindowsPath(
-                    input("--> ")
-                    .strip()
-                    .replace(
-                        r"Z:\ResearchHome\Groups\millergrp\home\common",
-                        r"\research_jude\rgs01_jude\groups\millergrp\home\common",
-                    )
-                    # .replace("CORE PROJECTS", '"CORE PROJECTS"')
-                    # .split("\\")
-                    # + '"'
-                ).as_posix()
-            )
-
-            # while os.path.isdir(second_folder) == False:
-            print("Please enter the full path to the folder of the second file.")
-            second_folder = (
-                # '"'
-                PureWindowsPath(
-                    input("--> ")
-                    .strip()
-                    .replace(
-                        r"Z:\ResearchHome\Groups\millergrp\home\common",
-                        r"\research_jude\rgs01_jude\groups\millergrp\home\common",
-                    )
-                    # .replace("CORE PROJECTS", '"CORE PROJECTS"')
-                    # .split("\\")
-                    # + '"'
-                ).as_posix()
-            )
-
-            firstFile = PurePosixPath(first_folder).joinpath(filename)
-            secondFile = PurePosixPath(second_folder).joinpath(filename)
-            crisprSummarySRMConverter.dualTXTtoXLS(firstFile, secondFile)
-            print("\n")
-            return None
-        except EOFError:
-            print("\n")
-            return None
-
+        
     # RUN THE PROGRAM
     main()
