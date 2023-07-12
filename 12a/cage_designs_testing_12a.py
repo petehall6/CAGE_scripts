@@ -156,6 +156,7 @@ class txtcolors:
     HIGHLIGHT = '\033[95m'
     #Clears color back to default
     END = '\033[0m'
+    
 class Amplicon(object):
     def __init__(self, Seq_target, penalty, fwd_primer, rev_primer, start, end):
         """
@@ -531,20 +532,22 @@ class AmpliconSet(object):
                     print("*"*50)
                     input("Press any key to continue")
                     print(f"{txtcolors.END}")
+                    
                 else:
-                        # print("valid")
-                        print("\n")
-                        print(f"{txtcolors.HIGHLIGHT}")
-                        print("*"*50)
-                        print("*"*50)
-                        print(f"Amplicon GC content is: {round(SeqUtils.GC(amplicon.seq),3)}")
-                        print("*"*50)
-                        print("*"*50)
-                        print("\n")
-                        input("Press any key to continue\n")
-                        print(f"{txtcolors.END}")
-                        amplicon_df = self._create_amplicon_dataframe(amplicon, name=name)
-                        amplicon_df.drop("Penalty", axis=1, inplace=True)
+                    print("\n")
+                    print(f"{txtcolors.HIGHLIGHT}")
+                    print("*"*50)
+                    print("*"*50)
+                    print(f"Amplicon GC content is: {round(SeqUtils.GC(amplicon.seq),3)}")
+                    print("*"*50)
+                    print("*"*50)
+                    print("\n")
+                    input("Press any key to continue\n")
+                    print(f"{txtcolors.END}")
+                        
+                        
+                amplicon_df = self._create_amplicon_dataframe(amplicon, name=name)
+                amplicon_df.drop("Penalty", axis=1, inplace=True)
                 return (amplicon, amplicon_df)
 
         # should never reach this point if there exists a valid amplicon
@@ -762,8 +765,6 @@ class GuideRNA(object):
     def get_length(self):
         
         df = read_crispr_summary(CRISPR_SUMMARY)
-        
-        
         ##get cas type for matching guide ID
         df_summary_picked = df['Picked']
         #OG df combines Name and Seq with 'Name' set as index
@@ -778,10 +779,39 @@ class GuideRNA(object):
         #use iloc since some df's will only have 1 row
         ortho = df_casType.iloc[0]['Cas']
         
-        if ortho == "Cas9":
-            LENGTH = 23
-        elif ortho == "Cas12a":
+        
+        """
+        #TODO
+        #PARSE ENTIRE STRING AND FIND .12a.
+        ##get cas type for matching guide ID
+        df_summary_picked = df['Picked']
+        #OG df combines Name and Seq with 'Name' set as index
+        #reset index to access index as regular column
+        df_temp = df_summary_picked.reset_index()
+        #expand 'Name' column into sub strings to parse
+        df_temp[['CAGENum','Gene','Cas','GuideNum']] =
+        df_temp.Name.str.split('.', expand=True)
+        #drop redundent name column
+        df_picked = df_temp.drop(['Name'], axis=1)
+        #create casType df with only picked guides
+        df_casType = df_picked.loc[df_picked['Picked'] == True]
+        #use iloc since some df's will only have 1 row
+        ortho = df_casType.iloc[0]['Cas']
+        """
+        
+        
+        
+        
+        
+        
+        
+        
+        print(f"##############################    Ortho: {ortho}")
+        
+        if ortho == "12a":
             LENGTH = 25
+        else:
+            LENGTH = 23
 
     def find_target(self, Seq_ref, fuzzy=None):
         """
@@ -798,7 +828,7 @@ class GuideRNA(object):
             ortho = self.name.split(".")[2]
         #primer generation step
         else:
-             ###GET CAS TYPE
+            ###GET CAS TYPE
             ##Read grna crispr summary
             df = read_crispr_summary(CRISPR_SUMMARY)
             ##get cas type for matching guide ID
@@ -824,18 +854,18 @@ class GuideRNA(object):
         fwd_matches = self._recog_site_fuzzy_regex(str(self.seq), fuzzy).finditer(
             str(Seq_ref)
         )
-        if ortho == "Cas9":
-            CUT_SITE = int(orthos_df.loc[orthos_df["Ortholog"] == "Cas9", "CUT_SITE"].iloc[0])
-            LENGTH = int(orthos_df.loc[orthos_df["Ortholog"] == "Cas9", "LENGTH"].iloc[0])
+        if ortho == "12a":
+            CUT_SITE = int(orthos_df.loc[orthos_df["Ortholog"] == "Cas12a", "CUT_SITE"].iloc[0])
+            LENGTH = int(orthos_df.loc[orthos_df["Ortholog"] == "Cas12a", "LENGTH"].iloc[0])
             
             fwd_targets = [
                 GuideTarget(m.start(), m.end() - 1, m.start() + CUT_SITE, "1")
                 for m in fwd_matches
             ]
             
-        elif ortho == "Cas12a":
-            CUT_SITE = int(orthos_df.loc[orthos_df["Ortholog"] == "Cas12a", "CUT_SITE"].iloc[0])
-            LENGTH = int(orthos_df.loc[orthos_df["Ortholog"] == "Cas12a", "LENGTH"].iloc[0])
+        else:
+            CUT_SITE = int(orthos_df.loc[orthos_df["Ortholog"] == "Cas9", "CUT_SITE"].iloc[0])
+            LENGTH = int(orthos_df.loc[orthos_df["Ortholog"] == "Cas9", "LENGTH"].iloc[0])
             fwd_targets = [
                 GuideTarget(m.start(), m.end() - 1, m.start() + CUT_SITE, "1")
                 for m in fwd_matches
@@ -844,17 +874,17 @@ class GuideRNA(object):
         rev_matches = self._recog_site_fuzzy_regex(
             str(self.seq.reverse_complement()), fuzzy
         ).finditer(str(Seq_ref))
-        if ortho == "Cas9":
+        if ortho == "12a":
             CUT_SITE = int(
-                orthos_df.loc[orthos_df["Ortholog"] == "Cas9", "CUT_SITE"].iloc[0]
+                orthos_df.loc[orthos_df["Ortholog"] == "Cas12a", "CUT_SITE"].iloc[0]
             )
             rev_targets = [
                 GuideTarget(m.start(), m.end() - 1, m.end() - CUT_SITE, "2")
                 for m in rev_matches
             ]
-        elif ortho == "Cas12a":
+        else:
             CUT_SITE = int(
-                orthos_df.loc[orthos_df["Ortholog"] == "Cas12a", "CUT_SITE"].iloc[0]
+                orthos_df.loc[orthos_df["Ortholog"] == "Cas9", "CUT_SITE"].iloc[0]
             )
             rev_targets = [
                 GuideTarget(m.start(), m.end() - 1, m.end() - CUT_SITE, "2")
@@ -919,13 +949,13 @@ class UniqueGuideRNA(GuideRNA):
         else:
             self.ortho = self.name
 
-        if self.ortho == "Cas9":
-            self.LENGTH = int(
-                orthos_df.loc[orthos_df["Ortholog"] == "Cas9", "LENGTH"].iloc[0]
-            )
-        elif self.ortho == "Cas12a":
+        if self.ortho == "12a":
             self.LENGTH = int(
                 orthos_df.loc[orthos_df["Ortholog"] == "Cas12a", "LENGTH"].iloc[0]
+            )
+        else:
+            self.LENGTH = int(
+                orthos_df.loc[orthos_df["Ortholog"] == "Cas9", "LENGTH"].iloc[0]
             )
         self.end = self.start + self.LENGTH - 1
 
@@ -1364,9 +1394,11 @@ def find_gRNAs(your_Sequence, your_Gene, experiment):
     for i, gRNA in enumerate(all_gRNAs):
         print(i, gRNA)
         if gRNA[0:4] == "TTTV":
-            name = your_Gene + str(".Cas12a.g") + str(i + 1)
+            name = your_Gene + str(".12a.g") + str(i + 1)
         elif gRNA[20:23] == "NGG":
-            name = your_Gene + str(".Cas9.g") + str(i + 1)
+            #hotfix added Cas9 ortho name to fix parsing issue
+            #TODO fix this
+            name = your_Gene + str(".9.g") + str(i + 1)
         all_gRNAs_namer.append(
             name
         )  # create a list that has gRNA names in the format:  your_Gene.gXX

@@ -8,16 +8,71 @@ import shutil
 import win32com.client
 import matplotlib as mpl
 import matplotlib.pyplot as plt
-
-
+import importlib as ilib
+import subprocess
 
 
 NGS_DIR = "Z:/ResearchHome/Groups/millergrp/home/common/NGS"
 
+def _run_all_indels():
+    #to run or not to run?
+    #run_all_indels = input("Do you want to run all_indels program?  y or n: ").upper()
+    run_all_indels = 'Y'
+    if run_all_indels == 'Y':
+        #find project folder
+        working_dir,cagenum_dirs,cage_num =_input()
+        
+        temp_df = pd.DataFrame(cagenum_dirs, columns=['Directory'])
+        #set first row to display as 1
+        dirs_df = temp_df
+        temp_df.drop(columns=temp_df.columns)
+        dirs_df.index +=1
+        print()
+        print(dirs_df)
+        print()
+        #index still initilazes to 0. Subtract 1 to account for print/actual format
+        #dir_choice = int(input("Enter directory choice number: "))-1
+        dir_choice = 0
+        print()
+        cage_dir = dirs_df.iloc[dir_choice,0]
+
+        print(f"CAGE Directory: {cage_dir}")
+        
+        target_dir = os.path.join(working_dir,cage_dir)
+        os.chdir(target_dir)
+
+        #add all_indels_no_round to clone_check_main
+        for f in os.scandir(target_dir):
+            if f.name.endswith(".py"):
+                target_script = f.name
+        
+        #creates an all_indels copy and replaces fastq file directory and clone_check info
+        all_indels_script = str(shutil.copy(target_script, target_script.replace(".py",'')+"_all_indels_no_round.py"))
+        
+        code_replace=[]
+        with open(all_indels_script, "rt") as script:
+            code = script.readlines()
+            for line in code:
+                if line.startswith("    fastq_files = "):
+                    line = line.replace(line, "    fastq_files = 'Miller-Plate44*.fastq'\n" )
+                if "from clone_check_main" in line:
+                    line = line.replace("clone_check_main", "clone_check_main_all_indels_no_round_v3ish")
+                code_replace.append(line)
+
+        with open(all_indels_script, 'w+') as script:
+            script.writelines(code_replace)        
+            
+        #copy to joined folder and run
+        new_script = shutil.copyfile(all_indels_script, working_dir+'/'+all_indels_script)
+        os.chdir(working_dir)
+        print("Running all_indels.py now.")
+        subprocess.run(['python',new_script])      
+
+
 def _input():
     #get input
-    #run_date = "062023"
-    run_date = input("Enter run date: ").strip()
+    run_date = "062023"
+    #run_date = input("Enter run date: ").strip()
     working_dir = os.path.join(NGS_DIR, run_date, "joined").replace("\\","/")
 
     #check if run_date is correct/folder exsists
@@ -34,8 +89,8 @@ def _input():
     cagenum_dirs =[]
     #check project number/cage number.  If there anything in the cagenum/projectnum dirs list loop breaks and contiues to emailer
     while len(cagenum_dirs) == 0:
-        cage_num = input("Please enter project number: ").upper().strip()
-        #cage_num = "CAGE9999"
+        cage_num = '1111'
+        #cage_num = input("Please enter project number: ").upper().strip()
         print("Searching for project folder.  This may take a moment.")
         cagenum_dirs = [dir.name for dir in os.scandir(working_dir) if dir.is_dir() if cage_num in dir.name]
         print(f"Number of projects found: {len(cagenum_dirs)}")
@@ -89,6 +144,7 @@ def _rename_csv(working_dir, cagenum_dirs):
         
     #reads CSV into a df to parse plate names
     raw_df = pd.read_csv(target_csv)
+    
     csv_df = raw_df[['Sample','0bp','In-frame','Out-of-frame']]
     csv_df.index +=1
     print()
@@ -137,8 +193,8 @@ def _make_plot(target_csv, graph_dir):
                             ha='center', va='bottom')
     
     
-    guide_names = []
-    guide_scores = []
+    guide_name = []
+    ratio = []
     
     named_csv = pd.read_csv(target_csv)
     oof_df = named_csv[['Sample','0bp','In-frame','Out-of-frame']]
@@ -171,7 +227,7 @@ def _make_plot(target_csv, graph_dir):
 
         
         #TODO. FOR TESTING
-        #guide_names = ['Guide One','Guide Two']
+        #guide_name = ['Guide One','Guide Two']
         #firstguide_first_time = 2
         #firstguide_last_time = 3
         #secondguide_first_time = 4
@@ -185,31 +241,31 @@ def _make_plot(target_csv, graph_dir):
         secondguide_last_time = int(input("\nEnter row number of last time point for second guide: "))
         
         
-        guide_names.append(str(oof_df.at[firstguide_first_time,'Sample']).split('.')[1].split(' ')[0])
-        guide_names.append(str(oof_df.at[secondguide_first_time,'Sample']).split('.')[1].split(' ')[0])
+        guide_name.append(str(oof_df.at[firstguide_first_time,'Sample']).split(' ')[0])
+        guide_name.append(str(oof_df.at[secondguide_first_time,'Sample']).split(' ')[0])
         
         
-        print(f"1st guide: {guide_names[0]}")
-        print(f"2nd guide: {guide_names[1]}")
+        print(f"1st guide: {guide_name[0]}")
+        print(f"2nd guide: {guide_name[1]}")
         
-        guide_names_good = input("Please confirm guide names, y or n: ").upper()
+        guide_name_good = input("Please confirm guide names, y or n: ").upper()
         
-        if guide_names_good == 'N' or guide_names_good == 'NO':
-            guide_names.clear()
-            guide_names.append(input("1st guide name: "))
-            guide_names.append(input("2nd guide name: "))
+        if guide_name_good == 'N' or guide_name_good == 'NO':
+            guide_name.clear()
+            guide_name.append(input("1st guide name: "))
+            guide_name.append(input("2nd guide name: "))
         
-        guide_scores.append(round(oof_df.at[firstguide_last_time, 'Out-of-frame']/oof_df.at[firstguide_first_time, 'Out-of-frame'],2))
+        ratio.append(round(oof_df.at[firstguide_last_time, 'Out-of-frame']/oof_df.at[firstguide_first_time, 'Out-of-frame'],2))
         
-        guide_scores.append(round(oof_df.at[secondguide_last_time, 'Out-of-frame']/oof_df.at[secondguide_first_time, 'Out-of-frame'],2))
+        ratio.append(round(oof_df.at[secondguide_last_time, 'Out-of-frame']/oof_df.at[secondguide_first_time, 'Out-of-frame'],2))
         
             
         print()
         print()
-        print(f"{guide_names[0]} fitness ratio: {guide_scores[0]}")
+        print(f"{guide_name[0]} fitness ratio: {ratio[0]}")
         print()
         print()
-        print(f"{guide_names[1]} fitness ratio: {guide_scores[1]}")
+        print(f"{guide_name[1]} fitness ratio: {ratio[1]}")
         
         #sets overall graph as subplot for easier editing
         fig, ax = plt.subplots()
@@ -222,7 +278,7 @@ def _make_plot(target_csv, graph_dir):
         x_pos=[0,1,2,3]
         bars = ax.bar(x_pos,
                       # sets values for empty columns as 0 and explicitly calls guide score indices
-                      [0,guide_scores[0],guide_scores[1],0], 
+                      [0,ratio[0],ratio[1],0], 
                       color='#16A085', 
                       edgecolor='#17202A',
                       width=0.5,
@@ -230,12 +286,12 @@ def _make_plot(target_csv, graph_dir):
 
 
         label_bar(bars)
-        #uses a short range of 1,2 to get two middle x_pos columns and uses guide_names list to fill in names
-        plt.xticks(range(1,3), guide_names)
+        #uses a short range of 1,2 to get two middle x_pos columns and uses guide_name list to fill in names
+        plt.xticks(range(1,3), guide_name)
         
         #lazy way of compiling ratios for csv export
-        g1_ratio = [gene_name, guide_names[0], guide_scores[0]]
-        g2_ratio = [gene_name, guide_names[1], guide_scores[1]]
+        g1_ratio = [gene_name, guide_name[0], ratio[0]]
+        g2_ratio = [gene_name, guide_name[1], ratio[1]]
         
         ratio_list = [g1_ratio,g2_ratio]
         
@@ -252,19 +308,19 @@ def _make_plot(target_csv, graph_dir):
         #firstguide_first_time = 2
         #firstguide_last_time = 3
         
-        guide_names.append(str(oof_df.at[firstguide_first_time,'Sample']).split('.')[1].split(' ')[0])
+        guide_name.append(str(oof_df.at[firstguide_first_time,'Sample']).split(' ')[0])
         
-        guide_scores.append(round(oof_df.at[firstguide_last_time, 'Out-of-frame']/oof_df.at[firstguide_first_time, 'Out-of-frame'],2))
+        ratio.append(round(oof_df.at[firstguide_last_time, 'Out-of-frame']/oof_df.at[firstguide_first_time, 'Out-of-frame'],2))
         
-        print(f"Guide: {guide_names[0]}")
-        guide_names_good = input("Please confirm guide names, y or n: ").upper()
+        print(f"Guide: {guide_name[0]}")
+        guide_name_good = input("Please confirm guide names, y or n: ").upper()
         
-        if guide_names_good == 'N' or guide_names_good == 'NO':
-            guide_names.clear()
-            guide_names.append(input("Guide name: "))
+        if guide_name_good == 'N' or guide_name_good == 'NO':
+            guide_name.clear()
+            guide_name.append(input("Guide name: "))
 
         print()
-        print(f"{guide_names[0]} fitness ratio: {guide_scores[0]}")
+        print(f"{guide_name[0]} fitness ratio: {ratio[0]}")
         
         
         
@@ -276,13 +332,13 @@ def _make_plot(target_csv, graph_dir):
         x_pos = [0,1,2]
         
         bars = ax.bar(x_pos,
-                      [0,guide_scores[0],0], 
+                      [0,ratio[0],0], 
                       color='#16A085', 
                       edgecolor='#17202A',
                       width=0.5,
                       )
         #lazy way of compiling ratios for csv export
-        g1_ratio = [gene_name, guide_names[0], guide_scores[0]]
+        g1_ratio = [gene_name, guide_name[0], ratio[0]]
 
         
         ratio_list = [g1_ratio]
@@ -292,7 +348,9 @@ def _make_plot(target_csv, graph_dir):
         os.chdir(graph_dir)
         ratio_df.to_csv(gene_name+ '_CelFi_ratios.csv')                    
         label_bar(bars)
-        plt.xticks(range(1,2),guide_names)
+        plt.xticks(range(1,2),guide_name)
+    
+    plt.ylim(ymax=1.2, ymin=0)
     plt.ylabel('Fitness Ratio')
     plt.title(chart_title ,y=1.05)
     ax.spines[['top','right']].set_visible(False)
@@ -304,18 +362,16 @@ def _make_plot(target_csv, graph_dir):
 
 
 
-    
-    
-
-working_dir, cagenum_dirs,cage_num = _input()
-        
-target_csv,graph_dir = _rename_csv(working_dir, cagenum_dirs)
-
-
 #target_csv = r"Z:/ResearchHome/Groups/millergrp/home/common/NGS/062023/joined\\CAGE9999TEST\\CAGE9999_hPSMD12_F2_R2_all_indels.csv"
 #graph_dir = r"Z:/ResearchHome/Groups/millergrp/home/common/NGS/062023/joined\\CAGE9999TEST\\graphs"
 
-_make_plot(target_csv, graph_dir)
+_run_all_indels()
+
+#working_dir, cagenum_dirs,cage_num = _input()
+        
+#target_csv,graph_dir = _rename_csv(working_dir, cagenum_dirs)
+
+#_make_plot(target_csv, graph_dir)
 
 
 print()
