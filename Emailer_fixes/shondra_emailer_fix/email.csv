@@ -1,0 +1,13 @@
+﻿,SRM Project #,Design Lead,Project Number,Task Start Date,PI,Requested By,Scope,Specify Vector Preference,Species,Target Gene Name,# of gRNAs?,gRNA 1,gRNA 2,gRNA 3,Previously Tested gRNAs,gRNA Design - Final PowerPoint File,Project Comments,gRNA Approval Status
+0,2618365,"Hall, Pete",CAGE2764,07/18/2023,"Gibson, Bryan","Gibson, Bryan",Cell Line Creation,,Human,SUV39H1,1,CAGE2764.SUV39H1.9.g2,,,,hSUV39H1-Gibson-CAGE2764_C term Tag_Summary.pptx,,Processing
+1,2618363,"Bajpai, Richa",CAGE2763,07/18/2023,"Gibson, Bryan","Gibson, Bryan",Cell Line Creation,,Human,SUZ12,1,CAGE2763.SUZ12.Cas12a.g7,,,,hSUZ12-Gibson-CAGE2763_C term tag_Summary.pptx,,Processing
+2,2618364,"Hansen, Baranda",CAGE2762,07/17/2023,"Gibson, Bryan","Gibson, Bryan",Cell Line Creation,,Human,NSD2,1,CAGE2762.NSD2.9.g4,,,,hNSD2-Gibson-CAGE2762_N-term_tag_Summary.pptx,,Processing
+3,2618366,"Loughran, Allister",CAGE2761,07/17/2023,"Gibson, Bryan","Gibson, Bryan",Cell Line Creation,,Human,Ring1B,1,CAGE2761.RING1B.12a.g5,,,,hRING1B-Gibson-CAGE2761_N-term Halo Tag_Summary.pptx,,Processing
+4,2618362,"Klein, Jon",CAGE2760,07/17/2023,"Gibson, Bryan","Gibson, Bryan",Cell Line Creation,,Human,CBX5,1,CAGE2760.CBX5.g3,,,,hCBX5-Gibson-CAGE2760_N-term tag_Summary.pptx,,Processing
+5,2615810,"Zhai, Jinbin",CAGE2758,07/14/2023,"Murphy, Andrew","Jablonowski, Carolyn",Cell Line Creation,,Human,UBE2F,1,,,,,hUBE2F-Murphy-CAGE2758_KO_Summary.pptx,,Processing
+6,2615811,"Reynolds-Gagliano, Morgan",CAGE2753,07/11/2023,"Murphy, Andrew","Jablonowski, Carolyn",Cell Line Creation,,Human,RNF7,1,CAGE2753.RNF7.g3,,,,hRNF7-Murphy-CAGE2753_KO_Summary.pptx,,Processing
+7,2616337,"Klein, Jon",CAGE2752,07/11/2023,"Crispino, John","Melo Cardenas, Johanna",gRNA with validation,Synthetic,Mouse,Eed,2,CAGE2752.Eed.9.g13,CAGE2752.Eed.9.g3,,,mEed-Crispino-CAGE2752_KO_Summary.pptx,,Processing
+8,2616336,"Klein, Jon",CAGE2751,07/11/2023,"Crispino, John","Melo Cardenas, Johanna",gRNA with validation,Synthetic,Mouse,Ehmt2,2,CAGE2751.Ehmt2.9.g3,CAGE2751.Ehmt2.9.g6,,,mEhmt2-Crispino-CAGE2751_KO_Summary.pptx,,Processing
+9,2616335,"Klein, Jon",CAGE2750,07/11/2023,"Crispino, John","Melo Cardenas, Johanna",gRNA with validation,Synthetic,Mouse,Ehmt1,2,CAGE2750.Ehmt1.9.g11,CAGE2750.Ehmt1.9.g7,,,mEhmt1-Crispino-CAGE2750_KO_Summary.pptx,,Processing
+10,2616334,"Klein, Jon",CAGE2749,07/11/2023,"Crispino, John","Melo Cardenas, Johanna",gRNA with validation,Synthetic,Mouse,Kdm7a,2,CAGE2749.Kdm7A.9.g2,CAGE2749.Kdm7A.9.g4,,,mKdm7A-Crispino-CAGE2749_KO_Summary.pptx,,Processing
+11,2618361,"Klein, Jon",CAGE2417,07/17/2023,"Gibson, Bryan","Gibson, Bryan",Cell Line Creation,,Human,BRD4,1,CAGE2417.BRD4.g2,,,,hBRD4-Gibson-CAGE2417_N-term tag_Summary.pptx,,Processing

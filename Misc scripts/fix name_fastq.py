@@ -1,5 +1,6 @@
 import os
 import fnmatch
+import numpy as np
 
 file_list=[]
 
