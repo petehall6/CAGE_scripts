@@ -32,7 +32,7 @@ ratio = [ratio for ratio in ratio_df['Ratio']]
 chart_title = "Cell Fitness (CelFi) Assay"
 
     
-bars = ax.barh(gene_name,
+bars = ax.bar(gene_name,
                 ratio, 
                 color='#16A085', 
                 edgecolor='#17202A',
