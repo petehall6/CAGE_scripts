@@ -7,6 +7,29 @@ import re
 import sys
 
 
+'''
+PMH
+8/2023
+This scripts is to replace the orange bar plots with stacked all indel bar plots.
+
+1) You will first need to run the all_indels version of your results summary.
+2) Arrange your samples with WT on top followed by each guide as they are listed in the summary csv columns going from left to right.
+
+Name                    Sample              Total   g1  g2  g3
+Miller-Plate*Whatever   WT
+                        g1
+                        g2
+                        g3
+
+You can name them whatever you want to make it easier but the program will just label the graphs as WT,g1,g2, etc..
+3)Add BP (with or without the underscore) to the end of the all_indels_summary.  You can move it to the barplots_to_be_run folder but the program copies everything there automatically.
+  be sure to give each csv a unique name or the graphs will be copied over.
+4)Follow the prompts.  If you forget to arrange your result summaries before starting the script, there is a forced paused that will prompt you to check your summary csv's
+5)The graphs will be generated and labled as whatever the csv name is so again, make sure they have unique names
+'''
+
+
+
 
 #Replacing orange bar plots
 plot_dir = os.path.join(os.path.dirname(__file__) + "/Barplots_to_be_run/").replace("\\","/")
@@ -109,7 +132,7 @@ def graph_indels(df,title):
     #rotate xticks
     plt.title(label=chart_title,ha='center')
     plt.ylabel(f"% editing")
-    plt.xticks(rotation=45, rotation_mode='anchor',ha='right')
+    plt.xticks(rotation=0, rotation_mode='anchor',ha='center')
     ax.xaxis.labelpad = 10
     #set legend to outside of plot area
     plt.legend(bbox_to_anchor=(1.4,0.5), loc='center right', borderaxespad=0)
@@ -124,7 +147,7 @@ def graph_indels(df,title):
 
 
 find_csv()
-input("Ensure all csv's are formatted properly and press enter to continue.")
+input("\nEnsure all csv's are formatted properly and press enter to continue.\n")
 get_indels()
 
 
