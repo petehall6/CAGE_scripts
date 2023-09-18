@@ -1,0 +1,17 @@
+{
+  "version": 2,
+  "dgSpecHash": "ZTjbNZLvFE/LcYuba86FZKOggEcbjDjq2sRcLftc38YX5la3z+u9ahUZZDduPZnzwNldcfglQhQQXQv2ZmMTKA==",
+  "success": true,
+  "projectFilePath": "Z:\\ResearchHome\\Groups\\millergrp\\home\\common\\Python\\_pete\\New_emailer\\emailer_winforms\\emailer_winforms.csproj",
+  "expectedPackageFiles": [
+    "C:\\Users\\phall3\\.nuget\\packages\\apache.arrow\\2.0.0\\apache.arrow.2.0.0.nupkg.sha512",
+    "C:\\Users\\phall3\\.nuget\\packages\\microsoft.data.analysis\\0.20.1\\microsoft.data.analysis.0.20.1.nupkg.sha512",
+    "C:\\Users\\phall3\\.nuget\\packages\\microsoft.ml.dataview\\2.0.1\\microsoft.ml.dataview.2.0.1.nupkg.sha512",
+    "C:\\Users\\phall3\\.nuget\\packages\\system.buffers\\4.5.1\\system.buffers.4.5.1.nupkg.sha512",
+    "C:\\Users\\phall3\\.nuget\\packages\\system.collections.immutable\\1.5.0\\system.collections.immutable.1.5.0.nupkg.sha512",
+    "C:\\Users\\phall3\\.nuget\\packages\\system.memory\\4.5.3\\system.memory.4.5.3.nupkg.sha512",
+    "C:\\Users\\phall3\\.nuget\\packages\\system.runtime.compilerservices.unsafe\\6.0.0\\system.runtime.compilerservices.unsafe.6.0.0.nupkg.sha512",
+    "C:\\Users\\phall3\\.nuget\\packages\\system.threading.tasks.extensions\\4.5.2\\system.threading.tasks.extensions.4.5.2.nupkg.sha512"
+  ],
+  "logs": []
+}

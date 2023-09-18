@@ -3,9 +3,9 @@ import shutil
 import glob
 import matplotlib.pyplot as plt
 import pandas as pd
+import numpy as np
 import re
 import sys
-
 
 '''
 PMH
@@ -13,7 +13,7 @@ PMH
 This scripts is to replace the orange bar plots with stacked all indel bar plots.
 
 1) You will first need to run the all_indels version of your results summary.
-2) Arrange your samples with WT on top followed by each guide as they are listed in the summary csv columns going from left to right.
+2) Arrange your samples with WT on top next followed by each guide as they are listed in the summary columns going from left to right.
 
 Name                    Sample              Total   g1  g2  g3
 Miller-Plate*Whatever   WT
@@ -22,8 +22,10 @@ Miller-Plate*Whatever   WT
                         g3
 
 You can name them whatever you want to make it easier but the program will just label the graphs as WT,g1,g2, etc..
-3)Add BP (with or without the underscore) to the end of the all_indels_summary.  You can move it to the barplots_to_be_run folder but the program copies everything there automatically.
-  be sure to give each csv a unique name or the graphs will be copied over.
+Be sure to get rid of any extra samples that will not need to be charted.  The program will just look for a WT and pool for each guide.
+
+3)Add BP to the end of the all_indels_summary.  You can move it to the barplots_to_be_run folder but the program copies everything there automatically.
+  be sure to give each csv a unique name.
 4)Follow the prompts.  If you forget to arrange your result summaries before starting the script, there is a forced paused that will prompt you to check your summary csv's
 5)The graphs will be generated and labled as whatever the csv name is so again, make sure they have unique names
 '''
@@ -89,7 +91,11 @@ def get_indels():
         
         indel_df.insert(0,'Sample',guide_columns)
         #convert indel columns to int to round to whole number
-        indel_df = indel_df.astype({'Out-of-frame': int, 'In-frame': int, '0bp': int})
+        indel_df['Out-of-frame'].apply(np.rint)
+        indel_df['In-frame'].apply(np.rint)
+        indel_df['0bp'].apply(np.rint)
+        
+        
         
         print(indel_df)
         
@@ -147,7 +153,7 @@ def graph_indels(df,title):
 
 
 find_csv()
-input("\nEnsure all csv's are formatted properly and press enter to continue.\n")
+input("Ensure all csv's are formatted properly and press enter to continue.")
 get_indels()
 
 
