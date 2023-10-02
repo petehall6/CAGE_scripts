@@ -40,11 +40,15 @@ def df_from_template(template):
                      ]]
        
        
-       results = srm_df.values.tolist()
+       results = srm_df.to_numpy().tolist()
        
        
        print(results)
-       input("hold for input")
        
        
        return results
+
+if __name__ == "__main__":
+  
+    xls = 'Z:\ResearchHome\Groups\millergrp\home\common\Python\_pete\_boostrap_emailer\CAGEServices_Excel Export.xls'   
+    df_from_template(xls)

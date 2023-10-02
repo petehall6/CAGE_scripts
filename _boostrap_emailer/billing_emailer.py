@@ -21,23 +21,17 @@ class Billing_Tab(tbs.Frame):
         self.gene = tbs.StringVar(value="")
         self.data = []
         
-
-        
-        
-        
         self.create_buttonbox()
         self.create_labels()
         
-        
         self.table = self.create_table()
- 
 
 
     def create_buttonbox(self):
         button_container = tbs.Frame(self)
         button_container.pack(fill=X, expand=YES, pady=(15,10))
         
-        srm_load_btn = tbs.Button(
+        self.srm_load_btn = tbs.Button(
             master = button_container,
             text = "Select SRM Template",
             command = self.load_srm,
@@ -45,13 +39,14 @@ class Billing_Tab(tbs.Frame):
             width=15
         )
         
-        srm_load_btn.pack(side=LEFT, padx=5)
+        self.srm_load_btn.pack(side=LEFT, padx=5)
         
     def create_labels(self):
         lbl_container = tbs.Frame(self)
         lbl_container.pack(fill=X, expand=YES, pady=5)
-        self.excel_lbl = tbs.Label(lbl_container, text="Excel Name", font=(18), bootstyle = "SUCCESS")
-        self.excel_lbl.pack(pady=10)
+        self.excel_lbl = tbs.Label(lbl_container, text="Excel Name", font=(10), bootstyle = "SUCCESS")
+        
+        self.excel_lbl.pack(side=LEFT, padx=5)
 
     def create_table(self):
         columns = [
@@ -75,6 +70,7 @@ class Billing_Tab(tbs.Frame):
             stripecolor=LIGHT   
         )
 
+        
         table.pack(fill=BOTH, expand=YES, padx=10, pady=10)
         return table
 
@@ -90,14 +86,6 @@ class Billing_Tab(tbs.Frame):
         a = df_from_template(template)
         
         print(f"This is the srm_order column: {a}")
-        
-        
-        
-        
-        
-        self.data.append(a)
-        self.table.destroy()
-        self.table = self.create_table()
         
         
         print(self.data)
