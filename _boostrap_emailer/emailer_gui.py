@@ -7,12 +7,12 @@ from other_emailer import Other_Tab
 
 app = tbs.Window(
     title="CAGE Emailer",
-    themename = "solar",
-    size=(1200,800),
+    themename = "superhero",
+    size=(1400,800),
     resizable=(False,False),
 )
 
-
+colors = app.style.colors
 note_tab = tbs.Notebook(app)
 
 main_frame = tbs.Frame(note_tab)
@@ -33,5 +33,7 @@ note_tab.add(tab1, text="Billing")
 note_tab.add(tab2, text="NGS")
 note_tab.add(tab3, text="Other")
 note_tab.pack(pady=20)
+
+
 
 app.mainloop()
