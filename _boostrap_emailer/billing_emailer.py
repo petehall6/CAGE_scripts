@@ -219,7 +219,7 @@ class Billing_Tab(tbs.Frame):
 
                 body=f"""Hi {pi} and {requester},
                 <br><br>
-                Great news! Your {gene}_{cell_line} edited cell pool project is complete and ready for pickup.  Please see the attached slide deck for details.
+                Great news! Your {gene} {cell_line} edited cell pool project is complete and ready for pickup.  Please see the attached slide deck for details.
                 <br><br>
                 The last slide is the most informative.  We were able to get over <font color=red>XX%</font> total editing in the pool with <font color=red>~XX%</font> out of frame indels.
                 <br><br>
@@ -253,10 +253,10 @@ class Billing_Tab(tbs.Frame):
             else: 
                 body=f"""Hi {pi} and {requester},
                 <br><br>
-                Great news! Your {cell_line}_{gene}_{objective} project is complete and ready for pick up.  Please see the attached slide deck for details.
+                Great news! Your {cell_line} {gene} {objective} project is complete and ready for pick up.  Please see the attached slide deck for details.
                 <br><br>
                 We currently have a contactless pickup system in place.  Please arrange a time window with <font color=red>XXXXX</font> in which someone can pick up the cells.  
-                At the agreed upon time, he/she will place your frozen vials of cells into a dry ice bucket in M4170.  
+                At the agreed upon time, <font color=red>he/she</font> will place your frozen vials of cells into a dry ice bucket in M4170.  
                 The dry ice bucket will be on the counter in front of you as you walk in.  
                 Your live cultures will be in the first incubator to the right (top incubator, bottom shelf) and labeled accordingly. Please also bring dry ice for the pickup.
                 <br><br>

@@ -39,10 +39,15 @@ def df_from_template(template):
                      'Project Scope',
                      'Cell Line of Choice',
                      'Project Objective',
-                     'Target Gene Name'
+                     'Target Gene Name',
+                     'Species',
+                     'Comments',
+                     'Is this a human pluripotent stem cell (hESC or hiPSC) project?'
                      ]]
        
        results = srm_df.to_numpy().tolist()
+       
+       print(srm_df.columns)
 
        return results
 

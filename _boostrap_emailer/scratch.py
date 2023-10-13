@@ -1,3 +1,11 @@
-import subprocess
+a = "blarh blah blah. More blah.  Foo.  Bar. Lead-Pete Hall."
+c = "Lead-Pete Hall."
 
-subprocess.run('pip install pyautogui')
+
+print(f"a:  {len(a.split('.'))}")
+
+lst = [a,c]
+
+for let in lst:
+    lead = let.split("Lead-")[1]
+    print(lead)

@@ -15,11 +15,10 @@ import glob
 import datetime
 
 
-class Billing_Tab(tbs.Frame):
+class DropOff_Tab(tbs.Frame):
     def __init__(self, master_window):
         super().__init__(master_window, padding=(20,20))
         self.pack(fill=BOTH, expand=YES)
-        #self.colors = master_window.style.colors
         self.excel_name = tbs.StringVar(value="")
         self.srm_order = tbs.StringVar(value="")
         self.PI = tbs.StringVar(value="")
@@ -29,6 +28,9 @@ class Billing_Tab(tbs.Frame):
         self.cell_line = tbs.StringVar(value="")
         self.project_objective = tbs.StringVar(value="")
         self.gene = tbs.StringVar(value="")
+        self.species = tbs.StringVar(value="")
+        self.line_lead = tbs.StringVar(value="")
+        self.stem_cell = tbs.StringVar(value="")
         
         
         self.data = []
@@ -41,9 +43,6 @@ class Billing_Tab(tbs.Frame):
         self.create_gen_emails_btn()
         self.create_clear_btn()
 
-        #TODO FIX the table selection here.  table.view == ttk.Treeview
-        #self.table.view.selection
-        #self.table.view.bind("<<TreeviewSelect>>", clicked(self.table.view.yview()))
         
     def create_srm_load_btn(self):
         button_container = tbs.Frame(self)
@@ -104,10 +103,13 @@ class Billing_Tab(tbs.Frame):
             {"text":'PI'},
             {"text":'Requested By'},
             {"text":'Project Number'},
+            {"text": "Species"},
             {"text":'Project Scope'},
             {"text":'Cell Line of Choice'},
-            {"text":'Project Objective'},
-            {"text":'Target Gene Name'}
+            {"text": 'Project Objective'},
+            {"text":'Target Gene Name'},
+            {"text":'Cell Line Lead'},
+            {"text": 'Stem Cells?'}
         ]
 
         table = Tableview(
@@ -152,6 +154,10 @@ class Billing_Tab(tbs.Frame):
         #this returns a list of lists.  Will need to figure out how to unpack that for however long the list is
         srm_list = df_from_template(template)
         
+        print(srm_list)
+        input()
+        
+        
         #append table to bottom of frame
         #loop through index
         #then loop through element
@@ -166,9 +172,24 @@ class Billing_Tab(tbs.Frame):
                 self.cell_line = srm[5]
                 self.project_objective = srm[6]
                 self.gene = srm[7]
+                self.species = srm[8]
+                self.line_lead = srm[9].split("Lead-")[1]
+                self.stem_cell = srm[10]
                 
-            self.data.append((self.srm_order,self.PI,self.requested_by,self.project_number,self.project_scope,self.cell_line,self.project_objective,self.gene))
+            self.data.append((self.srm_order,
+                              self.PI,
+                              self.requested_by,
+                              self.project_number,
+                              self.species,
+                              self.project_scope,
+                              self.cell_line,
+                              self.project_objective,
+                              self.gene,
+                              self.line_lead,
+                              self.stem_cell))
             
+        print(self.data)
+        input
         #refresh table with new data.
         self.table.destroy()
         self.table.load_table_data()
@@ -176,84 +197,80 @@ class Billing_Tab(tbs.Frame):
 
     def generate_emails(self):
         
-        def _get_subject_line(scope, gene, cell_line, objective):
+        def _get_subject_line(scope,species,gene,cell_line, objective):
             
-            if scope.upper() == "EDITED CELL POOL":
-                sub_line = f"{gene} {cell_line} Edited Cell Pool Complete"
-            elif scope.upper() == "CELL LINE CREATION":
-                sub_line = f"{cell_line} {gene} {objective} Cell Line Complete"
-            elif scope.upper() == "CELL FITNESS/DEPENDENCY ASSAY":
-                sub_line = f"CelFi Assay for {gene} in {cell_line} Cells Complete"
-                    
+            print(f"This is the scope: {scope} and this is the species: {species}")
+            
+            
+            if scope.upper() == "CELL LINE CREATION" and species.upper()  == "HUMAN":
+                sub_line = f"{species} {cell_line} cell line intake"
+            elif scope.upper() == "CELL LINE CREATION" and species.upper() == "MOUSE":
+                sub_line = f"{species} {cell_line} cell line intake"
+            #elif scope.upper() == "CELL FITNESS/DEPENDENCY ASSAY":
+                #sub_line = f"CelFi Assay for {gene} in {cell_line} Cells Complete"
+            else:
+                sub_line = "cell line intake"
             return sub_line
-        
-        #pass email object, cage num
-        def _get_attachment(email, project_num):
-            #find powerpoint
-            try:
-                path = "Z:\ResearchHome\Groups\millergrp\home\common\CORE PROJECTS/"
-                for name in glob.glob(os.path.join(path, "*{}".format(project_num))):
-                    folder = name
 
-                os.chdir(folder)
-                ppt_list = glob.glob("*.pptx")
-                latest_ppt = folder + "/" + max(ppt_list, key=os.path.getctime)
-    
-            except:
-                print("couldn't find slidedeck in CORE Project folder")
-                print("Project Number = {}".format(project_num))
-
-            if latest_ppt is not None:
-                email.Attachments.Add(latest_ppt)
-            
-            
-            return email
-        
         def _body_builder(requester, pi, scope, cell_line, objective):
             
             pi = pi.split(", ")[1]
             requester = requester.split(", ")[1]
             
             
-            if scope.lower() == "edited cell pool":
-
-                body=f"""Hi {pi} and {requester},
+            if scope.upper() == "CELL LINE CREATION" and species.upper()  == "HUMAN":
+                body=f"""Hi {requester},
                 <br><br>
-                Great news! Your {gene}_{cell_line} edited cell pool project is complete and ready for pickup.  Please see the attached slide deck for details.
+                We are ready to intake the {cell_line} cells for your {gene} {objective} projects.
                 <br><br>
-                The last slide is the most informative.  We were able to get over <font color=red>XX%</font> total editing in the pool with <font color=red>~XX%</font> out of frame indels.
+                We have a contactless drop off system in place.  
+                Please arrange for someone to drop off the items below in the new ARC building, 4th floor, M4170.  
+                To find the CAGE, take the elevators to the 4th floor, and turn right at the first two hallways. 
+                We are at the end of the hallway. 
+                The live cells can go in our quarantine incubator, which can be found in the right side of M4170, on the floor under the shelves before the hoods. 
+                It is labeled as quarantine incubator. The door is always unlocked.  The media can go in the same room, in the labeled fridge to the right of the quarantine incubator.  
+                If you need help, feel free to ask anyone in the CAGE.
+                <br><br> 
+                Once drop off is complete, please email [Cell line lead] to let them know.
                 <br><br>
-                We have a contactless pickup system in place right now.  Please coordinate with <b><font color=red>XXXXX</font></b> to let <b><font color=red>XXXX</font></b> know a good time window for you to pick up these cells. 
-                During the agreed upon time, <b><font color=red>XXXX</font></b> will place the frozen vials of cells in a dry ice bucket in M4170. 
-                The bucket will be on the counter in front of you when you walk in.  The door is always unlocked.  
-                If you would like the live cultures as well, please come in the next day or so.  
-                The live cultures will be in the incubator to the right as you walk in (top incubator, bottom shelf).  Please bring dry ice for the pickup.
+                1.	T75 flask of live cells
+                2.	500 ml of complete media
+                3.	An electronic copy of the media recipe and any special culturing conditions
+                4.	A recent (within the last 3 months) STR profile from the Hartwell Center
                 <br><br>
-                Don't hesitate to contact me if you have any questions.
+                Thanks,
                 <br><br>
-                Best,
-                <br><br>
-                SM                
+                Shaina               
                 """
                 
-            elif scope.lower() == "cell fitness/dependency assay":
-                body=f"""Hi {pi} and {requester},
+            elif scope.upper() == "CELL LINE CREATION" and species.upper() == "MOUSE":
+                body=f"""Hi {requester},
                 <br><br>
-                Great news! Your {gene} {cell_line} fitness assay is complete. Please see the attached slide deck for details.
+                We are ready to intake the {cell_line} cells for your {gene} {objective} projects.
                 <br><br>
-                We <font color=red>do/do</font> not see a strong dependency for this gene in this background.
+                We have a contactless drop off system in place.  
+                Please arrange for someone to drop off the items below in the new ARC building, 4th floor, M4170.  
+                To find the CAGE, take the elevators to the 4th floor, and turn right at the first two hallways. 
+                We are at the end of the hallway. 
+                The live cells can go in our quarantine incubator, which can be found in the right side of M4170, on the floor under the shelves before the hoods. 
+                It is labeled as quarantine incubator. The door is always unlocked.  The media can go in the same room, in the labeled fridge to the right of the quarantine incubator.  
+                If you need help, feel free to ask anyone in the CAGE.
                 <br><br>
-                Please let me know if you have any questions.
+                Once drop off is complete, please email <font color=red>[Cell line lead]</font> to let them know.
                 <br><br>
-                Best,
+                1.	T75 flask of live cells
+                2.	500 ml of complete media
+                3.	An electronic copy of the media recipe and any special culturing conditions
                 <br><br>
-                SM
+                Thanks,
+                <br><br>
+                Shaina
                 """
                 
             else: 
                 body=f"""Hi {pi} and {requester},
                 <br><br>
-                Great news! Your {cell_line}_{gene}_{objective} project is complete and ready for pick up.  Please see the attached slide deck for details.
+                Great news! Your {cell_line} {gene} {objective} project is complete and ready for pick up.  Please see the attached slide deck for details.
                 <br><br>
                 We currently have a contactless pickup system in place.  Please arrange a time window with <font color=red>XXXXX</font> in which someone can pick up the cells.  
                 At the agreed upon time, he/she will place your frozen vials of cells into a dry ice bucket in M4170.  
@@ -290,8 +307,12 @@ class Billing_Tab(tbs.Frame):
         #self data is a list of list.  loop through each entry to access each field
         for entry in srm_entries:
             
+            print(entry)
+            
+            input()
+            
   
-            srm_order_num, pi, requester, project_num, scope, cell_line, objective, gene = entry
+            srm_order_num, pi, requester, project_num,species, scope, cell_line, objective, gene = entry
             
             #mail object generator
             outlook = win32com.client.Dispatch("Outlook.Application")
@@ -299,16 +320,14 @@ class Billing_Tab(tbs.Frame):
             email_recip = str(requester)
             email_cc = str(pi)
             
-            email_sub = _get_subject_line(scope,gene,cell_line, objective)
-
-            email = _get_attachment(email,project_num)
+            email_sub = _get_subject_line(scope,species,gene,cell_line, objective)
 
             body = _body_builder(requester,pi,scope,cell_line,objective)
 
             email.To = email_recip
             email.CC = email_cc
 
-            email.bcc = "Shaina Porter"
+            #email.bcc = "Shaina Porter"
             email.Subject = email_sub
 
             #find html signature file in each individual userprofile
