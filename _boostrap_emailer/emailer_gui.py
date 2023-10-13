@@ -1,8 +1,16 @@
+"""
+1a) MAKE SURE YOU ARE IN THE CAGE ENVIRONMENT conda activate cage
+1b) run import packages.py first
+2) conda activate base
+3) conda activate cage
+-should reset the environment?  Might have to restart VS code
+"""
+
 import ttkbootstrap as tbs
 from ttkbootstrap.constants import *
 from billing_emailer import Billing_Tab
 from ngs_emailer import NGS_Tab
-from other_emailer import Other_Tab
+from cell_drop_off_emailer import Other_Tab
 
 
 app = tbs.Window(

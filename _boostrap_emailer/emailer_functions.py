@@ -59,30 +59,34 @@ def radio_select(self):
 
 def parse_signature():
     
-    sig_path = os.path.join((os.environ['USERPROFILE']), 'AppData\Roaming\Microsoft\Signatures')
-    
-    print(sig_path)
-    
-    
-    
-    for file in os.listdir(sig_path):
-        if file.endswith("@stjude.org).htm"):
-            print(f"The signature file: {file}")
-            sig_htm = file
-            
-    
-    with open(sig_htm, "r") as f:
-        html = f.read()
+    try:
+        sig_path = os.path.join((os.environ['USERPROFILE']), 'AppData\Roaming\Microsoft\Signatures')
+        
+        #print(sig_path)
+        
+        os.chdir(sig_path)
+        
+        
+        for file in os.listdir(sig_path):
+            if file.endswith("@stjude.org).htm"):
+                #print(f"The signature file: {file}")
+                sig_htm = file
+                
+        
+        with open(sig_htm, "r") as f:
+            html = f.read()
 
-    #match everything between and including the two body tags
-    body_pattern = "(?:<style)(.|\n)*?<\/html>"
+        #match everything between and including the two body tags
+        body_pattern = "(?:<style)(.|\n)*?<\/html>"
 
-    #returns match object.  matched text is accessed by .group() because reasons?  Strip newline to condense signature
-    text = re.search(body_pattern, html)
+        #returns match object.  matched text is accessed by .group() because reasons?  Strip newline to condense signature
+        text = re.search(body_pattern, html)
 
-    sig = text.group()
+        sig = text.group()
+    except:
+        sig =""
     
-    print(sig) 
+    #print(sig) 
         
     return sig
     
