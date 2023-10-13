@@ -153,11 +153,7 @@ class DropOff_Tab(tbs.Frame):
         
         #this returns a list of lists.  Will need to figure out how to unpack that for however long the list is
         srm_list = df_from_template(template)
-        
-        print(srm_list)
-        input()
-        
-        
+
         #append table to bottom of frame
         #loop through index
         #then loop through element
@@ -188,8 +184,6 @@ class DropOff_Tab(tbs.Frame):
                               self.line_lead,
                               self.stem_cell))
             
-        print(self.data)
-        input
         #refresh table with new data.
         self.table.destroy()
         self.table.load_table_data()
@@ -197,28 +191,23 @@ class DropOff_Tab(tbs.Frame):
 
     def generate_emails(self):
         
-        def _get_subject_line(scope,species,gene,cell_line, objective):
+        def _get_subject_line(scope,species,gene,cell_line, objective, stem_cell):
             
-            print(f"This is the scope: {scope} and this is the species: {species}")
-            
-            
-            if scope.upper() == "CELL LINE CREATION" and species.upper()  == "HUMAN":
+            if scope.upper() == "CELL LINE CREATION" and species.upper() == "HUMAN" and stem_cell.upper() == "NO":
                 sub_line = f"{species} {cell_line} cell line intake"
-            elif scope.upper() == "CELL LINE CREATION" and species.upper() == "MOUSE":
+            elif scope.upper() == "CELL LINE CREATION" and species.upper() == "MOUSE" and stem_cell.upper() == "NO":
                 sub_line = f"{species} {cell_line} cell line intake"
-            #elif scope.upper() == "CELL FITNESS/DEPENDENCY ASSAY":
-                #sub_line = f"CelFi Assay for {gene} in {cell_line} Cells Complete"
-            else:
-                sub_line = "cell line intake"
+            elif stem_cell.upper() == YES:
+                sub_line = f"{cell_line} cell line intake"
+                
             return sub_line
 
-        def _body_builder(requester, pi, scope, cell_line, objective):
-            
+        def _body_builder(requester, pi, scope, cell_line, objective, line_lead, stem_cell):
+
             pi = pi.split(", ")[1]
-            requester = requester.split(", ")[1]
+            requester = requester.split(", ")[1]            
             
-            
-            if scope.upper() == "CELL LINE CREATION" and species.upper()  == "HUMAN":
+            if scope.upper() == "CELL LINE CREATION" and species.upper()  == "HUMAN" and stem_cell.upper() == "NO":
                 body=f"""Hi {requester},
                 <br><br>
                 We are ready to intake the {cell_line} cells for your {gene} {objective} projects.
@@ -231,19 +220,19 @@ class DropOff_Tab(tbs.Frame):
                 It is labeled as quarantine incubator. The door is always unlocked.  The media can go in the same room, in the labeled fridge to the right of the quarantine incubator.  
                 If you need help, feel free to ask anyone in the CAGE.
                 <br><br> 
-                Once drop off is complete, please email [Cell line lead] to let them know.
+                Once drop off is complete, please email {line_lead.split(" ")[0]} to let them know.
                 <br><br>
-                1.	T75 flask of live cells
-                2.	500 ml of complete media
-                3.	An electronic copy of the media recipe and any special culturing conditions
-                4.	A recent (within the last 3 months) STR profile from the Hartwell Center
+                1.	T75 flask of live cells<br>
+                2.	500 ml of complete media<br>
+                3.	An electronic copy of the media recipe and any special culturing conditions<br>
+                4.	A recent (within the last 3 months) STR profile from the Hartwell Center<br>
                 <br><br>
                 Thanks,
                 <br><br>
                 Shaina               
                 """
                 
-            elif scope.upper() == "CELL LINE CREATION" and species.upper() == "MOUSE":
+            elif scope.upper() == "CELL LINE CREATION" and species.upper() == "MOUSE" and stem_cell.upper() == "NO":
                 body=f"""Hi {requester},
                 <br><br>
                 We are ready to intake the {cell_line} cells for your {gene} {objective} projects.
@@ -256,34 +245,39 @@ class DropOff_Tab(tbs.Frame):
                 It is labeled as quarantine incubator. The door is always unlocked.  The media can go in the same room, in the labeled fridge to the right of the quarantine incubator.  
                 If you need help, feel free to ask anyone in the CAGE.
                 <br><br>
-                Once drop off is complete, please email <font color=red>[Cell line lead]</font> to let them know.
+                Once drop off is complete, please email {line_lead.split(" ")[0]} to let them know.
                 <br><br>
-                1.	T75 flask of live cells
-                2.	500 ml of complete media
-                3.	An electronic copy of the media recipe and any special culturing conditions
+                1.	T75 flask of live cells<br>
+                2.	500 ml of complete media<br>
+                3.	An electronic copy of the media recipe and any special culturing conditions<br>
                 <br><br>
                 Thanks,
                 <br><br>
                 Shaina
                 """
                 
-            else: 
-                body=f"""Hi {pi} and {requester},
+            elif stem_cell.upper() == "YES": 
+                body=f"""We are ready to intake the {cell_line} cells for your {gene} {objective} project.
+                <br><br> 
+                We have a contactless drop off system in place.  
+                Please arrange for someone to drop off the items below in the new ARC building, 4th floor, M4170.  
+                To find the CAGE, take the elevators to the 4th floor, and turn right at the first two hallways.
+                We are at the end of the hallway. 
+                The live cells can go in our quarantine incubator, which can be found in the right side of M4170, on the floor under the shelves before the hoods.
+                It is labeled as quarantine incubator. The door is always unlocked.  If you need help, feel free to ask anyone in the CAGE. 
                 <br><br>
-                Great news! Your {cell_line} {gene} {objective} project is complete and ready for pick up.  Please see the attached slide deck for details.
+                Once drop off is complete, please email {line_lead.split(" ")[0]} to let them know.
                 <br><br>
-                We currently have a contactless pickup system in place.  Please arrange a time window with <font color=red>XXXXX</font> in which someone can pick up the cells.  
-                At the agreed upon time, he/she will place your frozen vials of cells into a dry ice bucket in M4170.  
-                The dry ice bucket will be on the counter in front of you as you walk in.  
-                Your live cultures will be in the first incubator to the right (top incubator, bottom shelf) and labeled accordingly. Please also bring dry ice for the pickup.
+                1.	6 wells of a 6 well plate of live cells, 40% confluent<br>
+                2.	An electronic copy of any special culturing conditions<br>
+                3.	A recent (within the last 3 months) STR profile from the Hartwell Center<br>
+                4.	A recent (within two months of the freeze date) karyotype<br>
                 <br><br>
-                As always, please let me know if you have any questions.
+                Thanks,
                 <br><br>
-                Best,
-                <br><br>
-                SM
+                Shaina
                 """
-                
+            
             return body
         
         #gets only rows shown in table and acceses those to generate emails
@@ -307,22 +301,18 @@ class DropOff_Tab(tbs.Frame):
         #self data is a list of list.  loop through each entry to access each field
         for entry in srm_entries:
             
-            print(entry)
-            
-            input()
-            
-  
-            srm_order_num, pi, requester, project_num,species, scope, cell_line, objective, gene = entry
-            
+
+            srm_order_num, pi, requester, project_num,species, scope, cell_line, objective, gene, line_lead, stem_cell = entry
+
             #mail object generator
             outlook = win32com.client.Dispatch("Outlook.Application")
             email = outlook.CreateItem(0)
             email_recip = str(requester)
             email_cc = str(pi)
             
-            email_sub = _get_subject_line(scope,species,gene,cell_line, objective)
+            email_sub = _get_subject_line(scope,species,gene,cell_line, objective, stem_cell)
 
-            body = _body_builder(requester,pi,scope,cell_line,objective)
+            body = _body_builder(requester,pi,scope,cell_line,objective, line_lead, stem_cell)
 
             email.To = email_recip
             email.CC = email_cc
