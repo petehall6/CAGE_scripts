@@ -8,8 +8,18 @@ import re
 import sys
 
 '''
-PMH
-8/2023
+Changelog: 101623 - fixed rounding error not applying to indel_df.  Line: 101
+Changelog: 101723 - removed quick patch from 101623
+                  - reordered legend. Line: 147
+                  - will plot to 2 decimals but only label whole numbers.  Line: 129
+
+'''
+
+
+
+'''
+PMH 8/23
+Version: 20231017.1
 This scripts is to replace the orange bar plots with stacked all indel bar plots.
 
 1) You will first need to run the all_indels version of your results summary.
@@ -30,13 +40,8 @@ Be sure to get rid of any extra samples that will not need to be charted.  The p
 5)The graphs will be generated and labled as whatever the csv name is so again, make sure they have unique names
 '''
 
-
-
-
-#Replacing orange bar plots
+pd.options.mode.chained_assignment = None  # default='warn'
 plot_dir = os.path.join(os.path.dirname(__file__) + "/Barplots_to_be_run/").replace("\\","/")
-
-
 
 
 
@@ -90,12 +95,6 @@ def get_indels():
         print(guide_columns)
         
         indel_df.insert(0,'Sample',guide_columns)
-        #convert indel columns to int to round to whole number
-        indel_df['Out-of-frame'].apply(np.rint)
-        indel_df['In-frame'].apply(np.rint)
-        indel_df['0bp'].apply(np.rint)
-        
-        
         
         print(indel_df)
         
@@ -112,8 +111,9 @@ def graph_indels(df,title):
     
     ax = df.plot.bar(
         stacked=True,
-        color={"Out-of-frame":"#c10f3a","In-frame":"#8D918B","0bp":"black"},
-        )
+        color={"0bp":"black","In-frame":"#8D918B","Out-of-frame":"#c10f3a"}
+    )
+    
     #sets how far below top of element label is placed
     y_offset = -1
     x_offset = 0
@@ -126,22 +126,29 @@ def graph_indels(df,title):
             #set label above or below top of element
             bar.get_y() + bar.get_height() / 2 + y_offset,
             #fix rounding 
-            bar.get_height().astype(int),
+            np.rint(bar.get_height()).astype(int),
             #horizontal alignement
             ha='center',
             color='white',
             weight='bold',
             size=8
-        )   
+    )   
+            
     ax.spines['top'].set_visible(False)
     ax.spines['right'].set_visible(False)
+    
     #rotate xticks
     plt.title(label=chart_title,ha='center')
     plt.ylabel(f"% editing")
     plt.xticks(rotation=0, rotation_mode='anchor',ha='center')
     ax.xaxis.labelpad = 10
-    #set legend to outside of plot area
-    plt.legend(bbox_to_anchor=(1.4,0.5), loc='center right', borderaxespad=0)
+    
+    
+    #set legend to outside of plot area and set order to Oof,If,0bp
+    
+    leg_order = [2,1,0]
+    handles, labels = plt.gca().get_legend_handles_labels()
+    plt.legend([handles[idx] for idx in leg_order],[labels[idx] for idx in leg_order],bbox_to_anchor=(1.4,0.5), loc='center right', borderaxespad=0)
     ax.plot()
     plt.tight_layout()
     plt.savefig(f"{plot_dir}\\{graph_image_name}_barplot.png")
@@ -153,7 +160,7 @@ def graph_indels(df,title):
 
 
 find_csv()
-input("Ensure all csv's are formatted properly and press enter to continue.")
+#input("Ensure all csv's are formatted properly and press enter to continue.")
 get_indels()
 
 

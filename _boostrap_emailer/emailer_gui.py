@@ -16,8 +16,8 @@ from cell_drop_off_emailer import DropOff_Tab
 app = tbs.Window(
     title="CAGE Emailer",
     themename = "superhero",
-    size=(1400,800),
-    resizable=(False,False),
+    size=(1600,800),
+    resizable=(True,True),
 )
 
 colors = app.style.colors

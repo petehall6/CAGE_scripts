@@ -29,74 +29,84 @@ class Billing_Tab(tbs.Frame):
         self.cell_line = tbs.StringVar(value="")
         self.project_objective = tbs.StringVar(value="")
         self.gene = tbs.StringVar(value="")
+        self.line_lead = tbs.StringVar(value="")
         
         
         self.data = []
         
-        self.create_srm_load_btn()
-        self.create_labels()
-
+        self.button_container = tbs.Frame(self)
+        self.button_container.pack(fill=X, expand=YES, pady=(15,10))
         
-        self.table = self.create_table()
+        self.create_labels()
+        
+        self.create_srm_load_btn()
         self.create_gen_emails_btn()
         self.create_clear_btn()
+        
+        self.table = self.create_table()
 
         #TODO FIX the table selection here.  table.view == ttk.Treeview
         #self.table.view.selection
         #self.table.view.bind("<<TreeviewSelect>>", clicked(self.table.view.yview()))
+    def create_labels(self):
+    
+        self.title_lbl = tbs.Label(
+            master = self.button_container,
+            text = "Billing Emailer",
+            font = ('Sans',25,'bold'),
+            bootstyle = WARNING,
+        )
         
+        
+        self.excel_lbl = tbs.Label(
+            master = self.button_container, 
+            text="SRM template", 
+            font=(10), 
+            bootstyle = SUCCESS,
+        )
+        
+        self.title_lbl.grid(column=1,row=0, columnspan=3, padx=20, sticky=W+E+N+S)
+        self.excel_lbl.grid(column=1,row=1, pady=10)
+    
+
     def create_srm_load_btn(self):
-        button_container = tbs.Frame(self)
-        button_container.pack(fill=X, expand=YES, pady=(15,10))
         
         self.srm_load_btn = tbs.Button(
-            master = button_container,
+            master = self.button_container,
             text = "Select SRM Template",
             command = self.load_srm,
             bootstyle=SUCCESS,
             width=25
         )
         
-        self.srm_load_btn.pack(side=LEFT, padx=5)
+        self.srm_load_btn.grid(column=0,row=1, pady=10)
+        
 
     def create_gen_emails_btn(self):
-        button_container = tbs.Frame(self)
-        button_container.pack(fill=X, expand=YES, pady=(20,10))
-        
+
         self.gen_emails_btn = tbs.Button(
-            master = button_container,
+            master = self.button_container,
             text = "Create Emails",
             command = self.generate_emails,
             bootstyle = PRIMARY,
             width = 25   
         )
         
-        self.gen_emails_btn.pack(side=RIGHT, padx=5)
+        self.gen_emails_btn.grid(column=0, row=2, pady=10)
 
     def create_clear_btn(self):
-        button_container = tbs.Frame(self)
-        button_container.pack(fill=X, expand=YES, pady=(30))
-        
+
         self.clear_btn = tbs.Button(
-            master = button_container,
+            master = self.button_container,
             text = "Clear Entries",
             command = self.clear_controls,
             bootstyle = DANGER,
             width = 25   
         )
         
-        self.clear_btn.pack(side=RIGHT, padx=5)
-        
-        
+        self.clear_btn.grid(column=0, row=4,pady=60)
         
         return
-
-    def create_labels(self):
-        lbl_container = tbs.Frame(self)
-        lbl_container.pack(fill=X, expand=YES, pady=5)
-        self.excel_lbl = tbs.Label(lbl_container, text="Excel Name", font=(10), bootstyle = "SUCCESS")
-        
-        self.excel_lbl.pack(side=LEFT, padx=5)
 
     def create_table(self):
         columns = [
@@ -107,7 +117,8 @@ class Billing_Tab(tbs.Frame):
             {"text":'Project Scope'},
             {"text":'Cell Line of Choice'},
             {"text":'Project Objective'},
-            {"text":'Target Gene Name'}
+            {"text":'Target Gene Name'},
+            {"text":'Cell Line Lead'}
         ]
 
         table = Tableview(
@@ -115,14 +126,13 @@ class Billing_Tab(tbs.Frame):
             coldata=columns,
             rowdata=self.data,
             paginated=False,
-            searchable=True,
+            searchable=False,
             bootstyle=PRIMARY,
             stripecolor=LIGHT,
         )
 
         #table.view.selection_set(0)
         #table.view.bind("<<TreeviewSelect>>", clicked(self.table.view.yview()))
-        
         
         table.pack(side=BOTTOM,fill=BOTH, expand=YES, padx=10, pady=10)
         
@@ -142,7 +152,7 @@ class Billing_Tab(tbs.Frame):
         self.data = []
 
     def load_srm(self):
-        
+        self.table.unload_table_data()
         self.data=[]
         #get name of .xls
         template = open_file()
@@ -166,8 +176,20 @@ class Billing_Tab(tbs.Frame):
                 self.cell_line = srm[5]
                 self.project_objective = srm[6]
                 self.gene = srm[7]
+                self.species = srm[8]
+                self.line_lead = srm[9].split("Lead-")[1]
+                self.stem_cell = srm[10]
                 
-            self.data.append((self.srm_order,self.PI,self.requested_by,self.project_number,self.project_scope,self.cell_line,self.project_objective,self.gene))
+            self.data.append((self.srm_order,
+                              self.PI,
+                              self.requested_by,
+                              self.project_number,
+                              self.project_scope,
+                              self.cell_line,
+                              self.project_objective,
+                              self.gene,
+                              self.line_lead
+            ))
             
         #refresh table with new data.
         self.table.destroy()
@@ -202,14 +224,16 @@ class Billing_Tab(tbs.Frame):
             except:
                 print("couldn't find slidedeck in CORE Project folder")
                 print("Project Number = {}".format(project_num))
+                latest_ppt = None
 
             if latest_ppt is not None:
                 email.Attachments.Add(latest_ppt)
+                
             
             
             return email
         
-        def _body_builder(requester, pi, scope, cell_line, objective):
+        def _body_builder(requester, pi, scope, cell_line, objective, line_lead):
             
             pi = pi.split(", ")[1]
             requester = requester.split(", ")[1]
@@ -223,8 +247,8 @@ class Billing_Tab(tbs.Frame):
                 <br><br>
                 The last slide is the most informative.  We were able to get over <font color=red>XX%</font> total editing in the pool with <font color=red>~XX%</font> out of frame indels.
                 <br><br>
-                We have a contactless pickup system in place right now.  Please coordinate with <b><font color=red>XXXXX</font></b> to let <b><font color=red>XXXX</font></b> know a good time window for you to pick up these cells. 
-                During the agreed upon time, <b><font color=red>XXXX</font></b> will place the frozen vials of cells in a dry ice bucket in M4170. 
+                We have a contactless pickup system in place right now.  Please coordinate with {line_lead.split(" ")[0]} to let them know a good time window for you to pick up these cells. 
+                During the agreed upon time, {line_lead.split(" ")[0]} will place the frozen vials of cells in a dry ice bucket in M4170. 
                 The bucket will be on the counter in front of you when you walk in.  The door is always unlocked.  
                 If you would like the live cultures as well, please come in the next day or so.  
                 The live cultures will be in the incubator to the right as you walk in (top incubator, bottom shelf).  Please bring dry ice for the pickup.
@@ -233,7 +257,8 @@ class Billing_Tab(tbs.Frame):
                 <br><br>
                 Best,
                 <br><br>
-                SM                
+                SM
+                <br><br>                
                 """
                 
             elif scope.lower() == "cell fitness/dependency assay":
@@ -248,6 +273,7 @@ class Billing_Tab(tbs.Frame):
                 Best,
                 <br><br>
                 SM
+                <br><br>
                 """
                 
             else: 
@@ -255,8 +281,8 @@ class Billing_Tab(tbs.Frame):
                 <br><br>
                 Great news! Your {cell_line} {gene} {objective} project is complete and ready for pick up.  Please see the attached slide deck for details.
                 <br><br>
-                We currently have a contactless pickup system in place.  Please arrange a time window with <font color=red>XXXXX</font> in which someone can pick up the cells.  
-                At the agreed upon time, <font color=red>he/she</font> will place your frozen vials of cells into a dry ice bucket in M4170.  
+                We currently have a contactless pickup system in place.  Please arrange a time window with {line_lead.split(" ")[0]} in which someone can pick up the cells.  
+                At the agreed upon time, {line_lead.split(" ")[0]} will place your frozen vials of cells into a dry ice bucket in M4170.  
                 The dry ice bucket will be on the counter in front of you as you walk in.  
                 Your live cultures will be in the first incubator to the right (top incubator, bottom shelf) and labeled accordingly. Please also bring dry ice for the pickup.
                 <br><br>
@@ -265,6 +291,7 @@ class Billing_Tab(tbs.Frame):
                 Best,
                 <br><br>
                 SM
+                <br><br>
                 """
                 
             return body
@@ -286,27 +313,27 @@ class Billing_Tab(tbs.Frame):
         'Project Objective',6
         'Target Gene Name' 7
         '''    
-        
+        sig = parse_signature()
         #self data is a list of list.  loop through each entry to access each field
         for entry in srm_entries:
             
   
-            srm_order_num, pi, requester, project_num, scope, cell_line, objective, gene = entry
+            srm_order_num, pi, requester, project_num, scope, cell_line, objective, gene, line_lead = entry
             
             #mail object generator
             outlook = win32com.client.Dispatch("Outlook.Application")
             email = outlook.CreateItem(0)
-            email_recip = str(requester)
-            email_cc = str(pi)
+            email_recip = [requester]
+            email_cc = [pi,line_lead]
             
             email_sub = _get_subject_line(scope,gene,cell_line, objective)
 
             email = _get_attachment(email,project_num)
 
-            body = _body_builder(requester,pi,scope,cell_line,objective)
+            body = _body_builder(requester,pi,scope,cell_line,objective, line_lead)
 
-            email.To = email_recip
-            email.CC = email_cc
+            email.To = ";".join(email_recip)
+            email.CC = ";".join(email_cc).replace(".","")
 
             email.bcc = "Shaina Porter"
             email.Subject = email_sub

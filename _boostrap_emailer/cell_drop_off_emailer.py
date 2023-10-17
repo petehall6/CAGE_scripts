@@ -35,67 +35,73 @@ class DropOff_Tab(tbs.Frame):
         
         self.data = []
         
-        self.create_srm_load_btn()
+        self.button_container = tbs.Frame(self)
+        self.button_container.pack(fill=X, expand=YES, pady=(15,10))
+        
         self.create_labels()
+        self.create_srm_load_btn()
+        
 
         
         self.table = self.create_table()
         self.create_gen_emails_btn()
         self.create_clear_btn()
 
+    def create_labels(self):
         
+        self.title_lbl = tbs.Label(
+            master = self.button_container,
+            text = "Cell Drop Off Emailer",
+            font = ('Sans',25,'bold'),
+            bootstyle = WARNING,
+        )
+        
+        
+        self.excel_lbl = tbs.Label(
+            master = self.button_container, 
+            text="SRM Template", 
+            font=(10), 
+            bootstyle = SUCCESS
+        )
+        
+        self.title_lbl.grid(column=1,row=0, columnspan=3, padx=20, sticky=W+E+N+S)
+        self.excel_lbl.grid(column=1,row=1, pady=10)
+
     def create_srm_load_btn(self):
-        button_container = tbs.Frame(self)
-        button_container.pack(fill=X, expand=YES, pady=(15,10))
         
         self.srm_load_btn = tbs.Button(
-            master = button_container,
+            master = self.button_container,
             text = "Select SRM Template",
             command = self.load_srm,
             bootstyle=SUCCESS,
             width=25
         )
         
-        self.srm_load_btn.pack(side=LEFT, padx=5)
+        self.srm_load_btn.grid(column=0,row=1, pady=10)
 
     def create_gen_emails_btn(self):
-        button_container = tbs.Frame(self)
-        button_container.pack(fill=X, expand=YES, pady=(20,10))
-        
+                
         self.gen_emails_btn = tbs.Button(
-            master = button_container,
+            master = self.button_container,
             text = "Create Emails",
             command = self.generate_emails,
             bootstyle = PRIMARY,
             width = 25   
         )
         
-        self.gen_emails_btn.pack(side=RIGHT, padx=5)
+        self.gen_emails_btn.grid(column=0, row=2, pady=10)
 
     def create_clear_btn(self):
-        button_container = tbs.Frame(self)
-        button_container.pack(fill=X, expand=YES, pady=(30))
         
         self.clear_btn = tbs.Button(
-            master = button_container,
+            master = self.button_container,
             text = "Clear Entries",
             command = self.clear_controls,
             bootstyle = DANGER,
             width = 25   
         )
         
-        self.clear_btn.pack(side=RIGHT, padx=5)
-        
-        
-        
-        return
-
-    def create_labels(self):
-        lbl_container = tbs.Frame(self)
-        lbl_container.pack(fill=X, expand=YES, pady=5)
-        self.excel_lbl = tbs.Label(lbl_container, text="Excel Name", font=(10), bootstyle = "SUCCESS")
-        
-        self.excel_lbl.pack(side=LEFT, padx=5)
+        self.clear_btn.grid(column=0, row=4,pady=60)
 
     def create_table(self):
         columns = [
@@ -117,14 +123,13 @@ class DropOff_Tab(tbs.Frame):
             coldata=columns,
             rowdata=self.data,
             paginated=False,
-            searchable=True,
+            searchable=False,
             bootstyle=PRIMARY,
-            stripecolor=LIGHT,
+            stripecolor=LIGHT,          
         )
 
         #table.view.selection_set(0)
         #table.view.bind("<<TreeviewSelect>>", clicked(self.table.view.yview()))
-        
         
         table.pack(side=BOTTOM,fill=BOTH, expand=YES, padx=10, pady=10)
         
@@ -144,7 +149,7 @@ class DropOff_Tab(tbs.Frame):
         self.data = []
 
     def load_srm(self):
-        
+        self.table.unload_table_data()
         self.data=[]
         #get name of .xls
         template = open_file()
@@ -182,7 +187,8 @@ class DropOff_Tab(tbs.Frame):
                               self.project_objective,
                               self.gene,
                               self.line_lead,
-                              self.stem_cell))
+                              self.stem_cell
+            ))
             
         #refresh table with new data.
         self.table.destroy()
@@ -197,9 +203,9 @@ class DropOff_Tab(tbs.Frame):
                 sub_line = f"{species} {cell_line} cell line intake"
             elif scope.upper() == "CELL LINE CREATION" and species.upper() == "MOUSE" and stem_cell.upper() == "NO":
                 sub_line = f"{species} {cell_line} cell line intake"
-            elif stem_cell.upper() == YES:
+            elif stem_cell.upper() == "YES":
                 sub_line = f"{cell_line} cell line intake"
-                
+
             return sub_line
 
         def _body_builder(requester, pi, scope, cell_line, objective, line_lead, stem_cell):
@@ -229,7 +235,8 @@ class DropOff_Tab(tbs.Frame):
                 <br><br>
                 Thanks,
                 <br><br>
-                Shaina               
+                Shaina
+                <br><br>               
                 """
                 
             elif scope.upper() == "CELL LINE CREATION" and species.upper() == "MOUSE" and stem_cell.upper() == "NO":
@@ -254,6 +261,7 @@ class DropOff_Tab(tbs.Frame):
                 Thanks,
                 <br><br>
                 Shaina
+                <br><br>
                 """
                 
             elif stem_cell.upper() == "YES": 
@@ -276,6 +284,7 @@ class DropOff_Tab(tbs.Frame):
                 Thanks,
                 <br><br>
                 Shaina
+                <br><br>
                 """
             
             return body
@@ -298,30 +307,31 @@ class DropOff_Tab(tbs.Frame):
         'Target Gene Name' 7
         '''    
         
+        #Callled before rest of email generator so it doesnt have to keep loop through folder
+        #find html signature file in each individual userprofile
+        sig = parse_signature()
+        
+        
         #self data is a list of list.  loop through each entry to access each field
         for entry in srm_entries:
             
-
             srm_order_num, pi, requester, project_num,species, scope, cell_line, objective, gene, line_lead, stem_cell = entry
 
             #mail object generator
             outlook = win32com.client.Dispatch("Outlook.Application")
             email = outlook.CreateItem(0)
-            email_recip = str(requester)
-            email_cc = str(pi)
+            email_recip = [requester]
+            email_cc = [pi, line_lead]
             
             email_sub = _get_subject_line(scope,species,gene,cell_line, objective, stem_cell)
 
             body = _body_builder(requester,pi,scope,cell_line,objective, line_lead, stem_cell)
 
-            email.To = email_recip
-            email.CC = email_cc
+            email.To = ";".join(email_recip)
+            email.CC = ";".join(email_cc)
 
             #email.bcc = "Shaina Porter"
             email.Subject = email_sub
-
-            #find html signature file in each individual userprofile
-            sig = parse_signature()
             
             email.HTMLBody = body + sig
             #Display(False) loads all emails at once and gives focus back to ttk window
