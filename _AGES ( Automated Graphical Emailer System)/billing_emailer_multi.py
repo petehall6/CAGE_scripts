@@ -15,7 +15,7 @@ import glob
 import datetime
 
 
-class Design_Tab(tbs.Frame):
+class Billing_Tab(tbs.Frame):
     def __init__(self, master_window):
         super().__init__(master_window, padding=(20,20))
         self.pack(fill=BOTH, expand=YES)

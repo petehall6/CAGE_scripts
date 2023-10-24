@@ -1,38 +1,15 @@
-import pandas as pd
-#from icecream import ic
-def df_from_template(template):
-       info = pd.read_excel(template)
-       
-       tmp = pd.DataFrame(info)
+import sys
+import os
 
-       srm_df = tmp[['PI',
-                     'SRM Order #',
-                     'Requested By',
-                     'Project Number',
-                     'Project Scope',
-                     'Cell Line of Choice',
-                     'Project Objective',
-                     'Target Gene Name',
-                     'Species',
-                     'Comments',
-                     'Is this a human pluripotent stem cell (hESC or hiPSC) project?'
-        ]]
-       
-       #results = srm_df.to_numpy().tolist()
-       
-       #print(srm_df.columns)
+functions = os.path.join(os.getcwd(),'functions')
 
-       return srm_df
+print(functions)
 
-template = "_CAGEServices_Excel Export_shondra.xls"
+sys.path.append(functions)
 
-df = df_from_template(template)
+import test_script
 
 
+a = test_script.found_it()
 
-pi_list = list(set(df["PI"].values.tolist()))
-
-print(pi_list)
-
-
-
+a

@@ -46,9 +46,7 @@ def df_from_template(template):
         ]]
        
        results = srm_df.to_numpy().tolist()
-       
-       print(srm_df.columns)
-
+       #print(results)
        return results
 
 def clicked(a):
@@ -56,9 +54,7 @@ def clicked(a):
 
 def radio_select(self):
     
-    radio_var = self.radio_choce
-    
-    #print(radio_var)
+    radio_var = self.radio_choice
     
     return radio_var
 
@@ -88,12 +84,10 @@ def parse_signature():
 
         #returns match object.  matched text is accessed by .group() because reasons?  Strip newline to condense signature
         text = re.search(body_pattern, html)
-        
-        print(text)
-        
+
         sig = text.group()
     else:
-        print("No signature found.")
+        print("No signature found. I will still work.")
         sig =""
     
 

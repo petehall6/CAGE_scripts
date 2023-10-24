@@ -37,35 +37,30 @@ class Billing_Tab(tbs.Frame):
         self.data = []
 
         self.create_labels()
-        
         self.create_srm_load_btn()
         self.create_gen_emails_btn()
         self.create_clear_btn()
-        
         self.table = self.create_table()
 
-        #TODO FIX the table selection here.  table.view == ttk.Treeview
-        #self.table.view.selection
-        #self.table.view.bind("<<TreeviewSelect>>", clicked(self.table.view.yview()))
     def create_labels(self):
     
         self.title_lbl = tbs.Label(
             master = self.button_container,
             text = "Billing Emailer",
+            font = ('Sans',25,'bold'),
             bootstyle = WARNING,
         )
         
         
         self.excel_lbl = tbs.Label(
             master = self.button_container, 
-            text="SRM template", 
+            text="SRM Template", 
             font=(10), 
-            bootstyle = SUCCESS,
+            bootstyle = SUCCESS
         )
         
         self.title_lbl.grid(column=1,row=0, columnspan=3, padx=20, sticky=W+E+N+S)
         self.excel_lbl.grid(column=1,row=1, pady=10)
-    
 
     def create_srm_load_btn(self):
         
@@ -78,7 +73,6 @@ class Billing_Tab(tbs.Frame):
         )
         
         self.srm_load_btn.grid(column=0,row=1, pady=10)
-        
 
     def create_gen_emails_btn(self):
 
@@ -103,8 +97,6 @@ class Billing_Tab(tbs.Frame):
         )
         
         self.clear_btn.grid(column=0, row=4,pady=60)
-        
-        return
 
     def create_table(self):
         columns = [
@@ -220,121 +212,103 @@ class Billing_Tab(tbs.Frame):
 
     def generate_emails(self):
         
-        def _get_subject_line(scope, gene, cell_line, objective):
+        signature = parse_signature()
+        
+        def _email_writer_single(project_details):
             
-            if scope.upper() == "EDITED CELL POOL":
-                sub_line = f"{gene} {cell_line} Edited Cell Pool Complete"
-            elif scope.upper() == "CELL LINE CREATION":
-                sub_line = f"{cell_line} {gene} {objective} Cell Line Complete"
-            elif scope.upper() == "CELL FITNESS/DEPENDENCY ASSAY":
-                sub_line = f"CelFi Assay for {gene} in {cell_line} Cells Complete"
+            srm_order_num, pi, requester, project_num, scope, cell_line, objective, gene, line_lead = project_details
+            
+            def _get_subject_line(scope, gene, cell_line, objective):
+            
+                if scope.upper() == "EDITED CELL POOL":
+                    sub_line = f"{gene} {cell_line} Edited Cell Pool Complete"
+                elif scope.upper() == "CELL LINE CREATION":
+                    sub_line = f"{cell_line} {gene} {objective} Cell Line Complete"
+                elif scope.upper() == "CELL FITNESS/DEPENDENCY ASSAY":
+                    sub_line = f"CelFi Assay for {gene} in {cell_line} Cells Complete"    
+                return sub_line
+            
+            def _get_attachment(email, project_num):
+                #find powerpoint
+                try:
+                    path = "Z:\ResearchHome\Groups\millergrp\home\common\CORE PROJECTS/"
+                    for name in glob.glob(os.path.join(path, "*{}".format(project_num))):
+                        folder = name
+
+                    os.chdir(folder)
+                    ppt_list = glob.glob("*.pptx")
+                    latest_ppt = folder + "/" + max(ppt_list, key=os.path.getctime)
+        
+                except:
+                    print("couldn't find slidedeck in CORE Project folder")
+                    print("Project Number = {}".format(project_num))
+                    latest_ppt = None
+
+                if latest_ppt is not None:
+                    email.Attachments.Add(latest_ppt)
                     
-            return sub_line
+                
+                
+                return email
         
-        #pass email object, cage num
-        def _get_attachment(email, project_num):
-            #find powerpoint
-            try:
-                path = "Z:\ResearchHome\Groups\millergrp\home\common\CORE PROJECTS/"
-                for name in glob.glob(os.path.join(path, "*{}".format(project_num))):
-                    folder = name
+            def _body_builder(greeting, scope, cell_line, objective, line_lead):
+                if scope.lower() == "edited cell pool":
 
-                os.chdir(folder)
-                ppt_list = glob.glob("*.pptx")
-                latest_ppt = folder + "/" + max(ppt_list, key=os.path.getctime)
-    
-            except:
-                print("couldn't find slidedeck in CORE Project folder")
-                print("Project Number = {}".format(project_num))
-                latest_ppt = None
-
-            if latest_ppt is not None:
-                email.Attachments.Add(latest_ppt)
-                
+                    body=f"""{greeting},
+                    <br><br>
+                    Great news! Your {gene} {cell_line} edited cell pool project is complete and ready for pickup.  Please see the attached slide deck for details.
+                    <br><br>
+                    The last slide is the most informative.  We were able to get over <font color=red>XX%</font> total editing in the pool with <font color=red>~XX%</font> out of frame indels.
+                    <br><br>
+                    We have a contactless pickup system in place.  Please coordinate with {line_lead.split(" ")[0]} to determine a good time window for you to pick up these cells. 
+                    During the agreed upon time, {line_lead.split(" ")[0]} will place the frozen vials of cells in a dry ice bucket in M4170. 
+                    The bucket will be on the counter in front of you when you walk in.  The door is always unlocked.  
+                    If you would like the live cultures as well, please come in the next day or so.  
+                    The live cultures will be in the incubator to the right as you walk in (top incubator, bottom shelf).  Please bring dry ice for the pickup.
+                    <br><br>
+                    Don't hesitate to contact me if you have any questions.
+                    <br><br>
+                    Best,
+                    <br><br>
+                    SM
+                    <br><br>                
+                    """
+                    
+                elif scope.lower() == "cell fitness/dependency assay":
+                    body=f"""{greeting},
+                    <br><br>
+                    Great news! Your {gene} {cell_line} fitness assay is complete. Please see the attached slide deck for details.
+                    <br><br>
+                    We do/do not see a strong dependency for this gene in this background.
+                    <br><br>
+                    Please let me know if you have any questions.
+                    <br><br>
+                    Best,
+                    <br><br>
+                    SM
+                    <br><br>
+                    """
+                    
+                else: 
+                    body=f"""{greeting},
+                    <br><br>
+                    Great news! Your {cell_line} {gene} {objective} project is complete and ready for pick up.  Please see the attached slide deck for details.
+                    <br><br>
+                    We have a contactless pickup system in place.  Please coordinate with {line_lead.split(" ")[0]} to determine a good time window for you to pick up these cells. 
+                    During the agreed upon time, {line_lead.split(" ")[0]} will place the frozen vials of cells in a dry ice bucket in M4170. 
+                    The bucket will be on the counter in front of you when you walk in.  The door is always unlocked.  
+                    The live cultures will be in the incubator to the right as you walk in (top incubator, bottom shelf).  Please bring dry ice for the pickup.
+                    <br><br>
+                    Best,
+                    <br><br>
+                    SM
+                    <br><br>
+                    """
+                    
+                return body
             
             
-            return email
-        
-        def _body_builder(greeting, scope, cell_line, objective, line_lead):
-            
-            if scope.lower() == "edited cell pool":
-
-                body=f"""{greeting},
-                <br><br>
-                Great news! Your {gene} {cell_line} edited cell pool project is complete and ready for pickup.  Please see the attached slide deck for details.
-                <br><br>
-                The last slide is the most informative.  We were able to get over <font color=red>XX%</font> total editing in the pool with <font color=red>~XX%</font> out of frame indels.
-                <br><br>
-                We have a contactless pickup system in place.  Please coordinate with {line_lead.split(" ")[0]} to determine a good time window for you to pick up these cells. 
-                During the agreed upon time, {line_lead.split(" ")[0]} will place the frozen vials of cells in a dry ice bucket in M4170. 
-                The bucket will be on the counter in front of you when you walk in.  The door is always unlocked.  
-                If you would like the live cultures as well, please come in the next day or so.  
-                The live cultures will be in the incubator to the right as you walk in (top incubator, bottom shelf).  Please bring dry ice for the pickup.
-                <br><br>
-                Don't hesitate to contact me if you have any questions.
-                <br><br>
-                Best,
-                <br><br>
-                SM
-                <br><br>                
-                """
-                
-            elif scope.lower() == "cell fitness/dependency assay":
-                body=f"""{greeting},
-                <br><br>
-                Great news! Your {gene} {cell_line} fitness assay is complete. Please see the attached slide deck for details.
-                <br><br>
-                We do/do not see a strong dependency for this gene in this background.
-                <br><br>
-                Please let me know if you have any questions.
-                <br><br>
-                Best,
-                <br><br>
-                SM
-                <br><br>
-                """
-                
-            else: 
-                body=f"""{greeting},
-                <br><br>
-                Great news! Your {cell_line} {gene} {objective} project is complete and ready for pick up.  Please see the attached slide deck for details.
-                <br><br>
-                We have a contactless pickup system in place.  Please coordinate with {line_lead.split(" ")[0]} to determine a good time window for you to pick up these cells. 
-                During the agreed upon time, {line_lead.split(" ")[0]} will place the frozen vials of cells in a dry ice bucket in M4170. 
-                The bucket will be on the counter in front of you when you walk in.  The door is always unlocked.  
-                The live cultures will be in the incubator to the right as you walk in (top incubator, bottom shelf).  Please bring dry ice for the pickup.
-                <br><br>
-                Best,
-                <br><br>
-                SM
-                <br><br>
-                """
-                
-            return body
-        
-        #gets only rows shown in table and acceses those to generate emails
-        intact_rows = self.table.get_rows(visible=True)        
-        srm_entries=[]
-        
-        for row in intact_rows:
-            srm_entries.append(row.values)
-                
-        '''
-        'SRM Order #',0
-        'PI',1
-        'Requested By',2
-        'Project Number',3
-        'Project Scope',4
-        'Cell Line of Choice',5
-        'Project Objective',6
-        'Target Gene Name' 7
-        '''    
-        sig = parse_signature()
-        #self data is a list of list.  loop through each entry to access each field
-        for entry in srm_entries:
-            srm_order_num, pi, requester, project_num, scope, cell_line, objective, gene, line_lead = entry
-            
-            #mail object generator
+        #mail object generator
             outlook = win32com.client.Dispatch("Outlook.Application")
             email = outlook.CreateItem(0)
             
@@ -362,12 +336,172 @@ class Billing_Tab(tbs.Frame):
             email.Subject = email_sub
 
             #find html signature file in each individual userprofile
-            sig = parse_signature()
             
-            email.HTMLBody = body + sig
+            email.HTMLBody = body + signature
             #Display(False) loads all emails at once and gives focus back to ttk window
             email.Display(False)
 
+        def _email_writer_multi(project_df):
+            
+            projects = project_df.values.tolist()
+            
+            #initizlie all the lsit at once
+            srm_order_num, pi, requester, project_num, scope, cell_line, objective, gene, line_lead = ([] for i in range(9))
+            #unpacked nested list into individual list
+            srm_order_num, pi, requester, project_num, scope, cell_line, objective, gene, line_lead = map(list,zip(*projects))
+
+            
+            def _get_attachment(email, project_num):
+                #find powerpoint
+                
+                for proj in project_num:
+                
+                    try:
+                        path = "Z:\ResearchHome\Groups\millergrp\home\common\CORE PROJECTS/"
+                        for name in glob.glob(os.path.join(path, "*{}".format(proj))):
+                            folder = name
+
+                        os.chdir(folder)
+                        ppt_list = glob.glob("*.pptx")
+                        latest_ppt = folder + "/" + max(ppt_list, key=os.path.getctime)
+            
+                    except:
+                        print("couldn't find slidedeck in CORE Project folder")
+                        print("Project Number = {}".format(proj))
+                        latest_ppt = None
+
+                    if latest_ppt is not None:
+                        email.Attachments.Add(latest_ppt)
+                        
+                return email
+        
+            def _bullet_maker(srm_order_num, gene, scope, objective):
+                bullet_list =""
+                for order, proj_gene, proj_scope, proj_obj in zip(srm_order_num,gene,scope, objective):
+                    bullet_list += (f"<li>SRM: {order}- {proj_gene} {proj_obj} {proj_scope} </li>")
+                
+                #print(f"The bullet_list {bullet_list}")
+                    
+                return bullet_list
+
+        
+            def _body_builder(srm_order_num,greeting, scope, cell_line, objective, line_lead):
+                
+                bullets = _bullet_maker(srm_order_num,gene,scope, objective)
+                
+                body = f"""{greeting},
+                <br><br>
+                Great news! The following projects are ready for pickup.  Please see the attached slide decks for details:
+                <br><br>
+                <ul>
+                {bullets}
+                </ul>
+                <br>
+                We have a contactless pickup system in place. Please arrange a time window with XXXXX in which someone can pick 
+                up the cells and will place your frozen vials of cells into a dry ice bucket in M4170. The dry ice bucket will 
+                be straight in front as you walk in. Your live cultures will be in the top incubator to the right of the dry 
+                ice bucket on on the bottom shelf of the top incubator around the corner to the right from the dry ice bucket. 
+                Please also bring dry ice for the pickup.
+                <br><br>
+                As always, please let me know if you have any questions.<br>
+                <br>
+                Best,<br>
+                SM
+                <br><br>
+
+                """
+
+                return body
+            
+            outlook = win32com.client.Dispatch("Outlook.Application")
+            email = outlook.CreateItem(0)
+            
+            #removes duplicates and rephrases the greeting to a single person
+            recip_list = requester + pi
+            
+            email_recip = list(set(recip_list))
+            
+            if len(email_recip) > 1:
+                first_names=[]
+                for req in requester:
+                    first_names.append(req.split(',')[1])
+    
+                #insert 'and' in front of last element            
+                first_names[-1] = ' and '+first_names[-1] 
+     
+                greeting = f"Hi {pi[0].split(',')[1]}, {(','.join(first_names))}"
+            else:
+                greeting = f"Hi {pi[0].split(',')[1]}"
+            
+            email_cc = line_lead
+                            
+            email_sub = "Projects ready for pickup"
+
+            email = _get_attachment(email,project_num)
+
+            body = _body_builder(srm_order_num,greeting,scope,cell_line,objective, line_lead)
+
+            email.To = ";".join(email_recip)
+            email.CC = ";".join(email_cc)
+
+            email.bcc = "Shaina Porter"
+            email.Subject = email_sub
+
+            #find html signature file in each individual userprofile
+            
+            email.HTMLBody = body + signature
+            #Display(False) loads all emails at once and gives focus back to ttk window
+            email.Display(False)
+            
+            
+            return
+        #gets only rows shown in table and access those to create the emails
+        intact_rows = self.table.get_rows(visible=True)
+        srm_entries=[]
+        for row in intact_rows:
+            srm_entries.append(row.values)
+
+        #convert to df to create pi_specific sub frame
+        columns = [
+                     'SRM Order #',
+                     'PI',
+                     'Requested By',
+                     'Project Number',
+                     'Project Scope',
+                     'Cell Line of Choice',
+                     'Project Objective',
+                     'Target Gene Name',
+                     'Line Lead',
+        ]
+        
+        srm_entries_df = pd.DataFrame(srm_entries, columns=columns)
+        
+        print(srm_entries_df)
+        
+        #get a list of unique PIs in request
+        pi_list = list(set(srm_entries_df["PI"].values.tolist()))
+
+        #loop create pi specific df by loop though srm_df matching for pi name
+
+        for pi in pi_list:
+            pi_specifc_df = srm_entries_df.loc[srm_entries_df['PI'] == pi]
+
+            #check for number of rows and pass to either multi or single project format
+            #multiple entries per PI
+            if pi_specifc_df.shape[0] > 1:
+                    #print(f"Multiple projects: {pi_specifc_df.iloc[0][1]}")
+                    #pass to body_builder_multi
+                    _email_writer_multi(pi_specifc_df) 
+            else:
+                    #print(f"single project: {pi_specifc_df.iloc[0][1]}")
+                    #convert back into list and pass to writer_single
+                    #kept in list form since single mode was originally written and multi project was an added on feature
+                    proj_details = pi_specifc_df.values.tolist()[0]
+                    
+                    _email_writer_single(proj_details)
+                    
+        return
+        
 
 if __name__ == "__main__":
     import _emailer_gui_RUN_THIS_SCRIPT
