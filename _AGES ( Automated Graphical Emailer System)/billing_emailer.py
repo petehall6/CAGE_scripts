@@ -264,7 +264,7 @@ class Billing_Tab(tbs.Frame):
                     During the agreed upon time, {line_lead.split(" ")[0]} will place the frozen vials of cells in a dry ice bucket in M4170. 
                     The bucket will be on the counter in front of you when you walk in.  The door is always unlocked.  
                     If you would like the live cultures as well, please come in the next day or so.  
-                    The live cultures will be in the incubator to the right as you walk in (top incubator, bottom shelf).  Please bring dry ice for the pickup.
+                    Your live cultures will be on the bottom shelf of the "Pick-up" incubator, which is labeled accordingly.  Please bring dry ice for the pickup.
                     <br><br>
                     Don't hesitate to contact me if you have any questions.
                     <br><br>
@@ -297,7 +297,7 @@ class Billing_Tab(tbs.Frame):
                     We have a contactless pickup system in place.  Please coordinate with {line_lead.split(" ")[0]} to determine a good time window for you to pick up these cells. 
                     During the agreed upon time, {line_lead.split(" ")[0]} will place the frozen vials of cells in a dry ice bucket in M4170. 
                     The bucket will be on the counter in front of you when you walk in.  The door is always unlocked.  
-                    The live cultures will be in the incubator to the right as you walk in (top incubator, bottom shelf).  Please bring dry ice for the pickup.
+                    Your live cultures will be on the bottom shelf of the "Pick-up" incubator, which is labeled accordingly.  Please bring dry ice for the pickup.
                     <br><br>
                     Best,
                     <br><br>
@@ -375,10 +375,10 @@ class Billing_Tab(tbs.Frame):
                         
                 return email
         
-            def _bullet_maker(srm_order_num, gene, scope, objective):
+            def _bullet_maker(srm_order_num, gene, scope, objective, cell_line):
                 bullet_list =""
-                for order, proj_gene, proj_scope, proj_obj in zip(srm_order_num,gene,scope, objective):
-                    bullet_list += (f"<li>SRM: {order}- {proj_gene} {proj_obj} {proj_scope} </li>")
+                for order, proj_gene, proj_scope, proj_obj,cells in zip(srm_order_num,gene,scope, objective, cell_line):
+                    bullet_list += (f"<li>SRM: {order}- {cells} {proj_gene} {proj_obj} {proj_scope} </li>")
                 
                 #print(f"The bullet_list {bullet_list}")
                     
@@ -399,9 +399,7 @@ class Billing_Tab(tbs.Frame):
                 <br>
                 We have a contactless pickup system in place. Please arrange a time window with XXXXX in which someone can pick 
                 up the cells and will place your frozen vials of cells into a dry ice bucket in M4170. The dry ice bucket will 
-                be straight in front as you walk in. Your live cultures will be in the top incubator to the right of the dry 
-                ice bucket on on the bottom shelf of the top incubator around the corner to the right from the dry ice bucket. 
-                Please also bring dry ice for the pickup.
+                be straight in front as you walk in. Your live cultures will be on the bottom shelf of the "Pick-up" incubator, which is labeled accordingly.
                 <br><br>
                 As always, please let me know if you have any questions.<br>
                 <br>
