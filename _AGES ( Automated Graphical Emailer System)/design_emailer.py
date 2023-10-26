@@ -2,8 +2,7 @@ import ttkbootstrap as tbs
 from ttkbootstrap.constants import *
 from ttkbootstrap.tableview import Tableview
 from emailer_functions import (open_file,
-                               df_from_template,
-                               clicked,
+                               df_from_design_template,
                                parse_signature
                             )
 import pandas as pd
@@ -15,7 +14,7 @@ import glob
 import datetime
 
 
-class Billing_Tab(tbs.Frame):
+class Design_Tab(tbs.Frame):
     def __init__(self, master_window):
         super().__init__(master_window, padding=(20,20))
         self.pack(fill=BOTH, expand=YES)
@@ -32,21 +31,73 @@ class Billing_Tab(tbs.Frame):
         self.project_objective = tbs.StringVar(value="")
         self.gene = tbs.StringVar(value="")
         self.line_lead = tbs.StringVar(value="")
-        
+        self.initial_choice = tbs.StringVar(value="")
         
         self.data = []
 
         self.create_labels()
-        self.create_srm_load_btn()
-        self.create_gen_emails_btn()
-        self.create_clear_btn()
+        self.create_buttons()
+        self.create_radiobtns()
+
         self.table = self.create_table()
 
+    def create_buttons(self):
+        
+
+        self.srm_load_btn = tbs.Button(
+            master = self.button_container,
+            text = "Select SRM Template",
+            command = self.load_srm,
+            bootstyle=SUCCESS,
+            width=25
+        )
+        
+        self.gen_emails_btn = tbs.Button(
+            master = self.button_container,
+            text = "Create Emails",
+            command = self.generate_emails,
+            bootstyle = PRIMARY,
+            width = 25   
+        )
+        
+        self.clear_btn = tbs.Button(
+            master = self.button_container,
+            text = "Clear Entries",
+            command = self.clear_controls,
+            bootstyle = DANGER,
+            width = 25
+        )
+        
+        self.srm_load_btn.grid(column=0,row=1, pady=10)
+        self.gen_emails_btn.grid(column=0, row=2, pady=10)
+        self.clear_btn.grid(column=0, row=4,pady=60)
+        
+    def create_radiobtns(self):
+    
+        self.jk_radiobtn = tbs.Radiobutton(
+        master = self.button_container,
+        bootstyle = "info",
+        variable = self.initial_choice,
+        text = "JK",
+        value = "JK",
+    )
+    
+        self.bh_radiobtn = tbs.Radiobutton(
+        master = self.button_container,
+        bootstyle = "info",
+        variable = self.initial_choice,
+        text = "BH",
+        value = "BH",
+    )
+    
+        self.jk_radiobtn.grid(column=3,row=1,sticky=W)
+        self.bh_radiobtn.grid(column=3,row=2,sticky=W)
+        
     def create_labels(self):
     
         self.title_lbl = tbs.Label(
             master = self.button_container,
-            text = "Billing Emailer",
+            text = "Designs Emailer",
             font = ('Sans',25,'bold'),
             bootstyle = WARNING,
         )
@@ -61,43 +112,7 @@ class Billing_Tab(tbs.Frame):
         
         self.title_lbl.grid(column=1,row=0, columnspan=3, padx=20, sticky=W+E+N+S)
         self.excel_lbl.grid(column=1,row=1, pady=10)
-
-    def create_srm_load_btn(self):
-        
-        self.srm_load_btn = tbs.Button(
-            master = self.button_container,
-            text = "Select SRM Template",
-            command = self.load_srm,
-            bootstyle=SUCCESS,
-            width=25
-        )
-        
-        self.srm_load_btn.grid(column=0,row=1, pady=10)
-
-    def create_gen_emails_btn(self):
-
-        self.gen_emails_btn = tbs.Button(
-            master = self.button_container,
-            text = "Create Emails",
-            command = self.generate_emails,
-            bootstyle = PRIMARY,
-            width = 25   
-        )
-        
-        self.gen_emails_btn.grid(column=0, row=2, pady=10)
-
-    def create_clear_btn(self):
-
-        self.clear_btn = tbs.Button(
-            master = self.button_container,
-            text = "Clear Entries",
-            command = self.clear_controls,
-            bootstyle = DANGER,
-            width = 25   
-        )
-        
-        self.clear_btn.grid(column=0, row=4,pady=60)
-
+    
     def create_table(self):
         columns = [
             {"text":"SRM Order#"},
@@ -139,6 +154,7 @@ class Billing_Tab(tbs.Frame):
         table.delete_rows()
         
         self.data = []
+        self.initial_choice.set("")
 
     def load_srm(self):
         self.table.unload_table_data()
@@ -149,27 +165,26 @@ class Billing_Tab(tbs.Frame):
         #convert to dataframe
         
         #this returns a list of lists.  Will need to figure out how to unpack that for however long the list is
-        srm_list = df_from_template(template)
+        srm_list = df_from_design_template(template)
         
         #append table to bottom of frame
         #loop through index
         #then loop through element
-
+        
         try:
             for srm in srm_list:
                 for entry in srm:
                     self.srm_order = srm[0]
-                    self.PI = srm[1]
-                    self.requested_by = srm[2]
-                    self.project_number = srm[3]
+                    self.project_number = srm[1].strip().split(" and")[0]
+                    self.PI = srm[2]
+                    self.requested_by = srm[3]
                     self.project_scope = srm[4]
-                    self.cell_line = srm[5]
-                    self.project_objective = srm[6]
-                    self.gene = srm[7]
-                    self.species = srm[8]
-                    self.line_lead = srm[9].split("Lead-")[1]
-                    self.stem_cell = srm[10]
-                    
+                    self.gene = srm[5]
+                    self.grna_num = srm[6]
+                    self.grna1 = srm[7]
+                    self.grna2 = srm[8]
+                    self.grna3 = srm[9]
+                    self.grna_final = srm[10]                    
                 self.data.append((self.srm_order,
                                 self.PI,
                                 self.requested_by,
@@ -180,6 +195,7 @@ class Billing_Tab(tbs.Frame):
                                 self.gene,
                                 self.line_lead
                 ))
+            print(f"Project: {self.project_number}")
         except: #will catch if no lead is in comments
             for srm in srm_list:
                 for entry in srm:
@@ -213,19 +229,16 @@ class Billing_Tab(tbs.Frame):
     def generate_emails(self):
         
         signature = parse_signature()
+        initial_choice = self.initial_choice.get()
         
-        def _email_writer_single(project_details):
+        def _email_writer_single(project_details,initial_choice):
             
             srm_order_num, pi, requester, project_num, scope, cell_line, objective, gene, line_lead = project_details
             
-            def _get_subject_line(scope, gene, cell_line, objective):
+            def _get_subject_line(gene, srm_order_num):
             
-                if scope.upper() == "EDITED CELL POOL":
-                    sub_line = f"{gene} {cell_line} Edited Cell Pool Complete"
-                elif scope.upper() == "CELL LINE CREATION":
-                    sub_line = f"{cell_line} {gene} {objective} Cell Line Complete"
-                elif scope.upper() == "CELL FITNESS/DEPENDENCY ASSAY":
-                    sub_line = f"CelFi Assay for {gene} in {cell_line} Cells Complete"    
+                sub_line = f"gRNA Designs for {gene}, SRM order {srm_order_num}"
+                
                 return sub_line
             
             def _get_attachment(email, project_num):
@@ -246,64 +259,23 @@ class Billing_Tab(tbs.Frame):
 
                 if latest_ppt is not None:
                     email.Attachments.Add(latest_ppt)
-                    
-                
-                
+
                 return email
         
-            def _body_builder(greeting, scope, cell_line, objective, line_lead):
-                if scope.lower() == "edited cell pool":
+            def _body_builder(greeting, gene, scope, initial_choice):
 
-                    body=f"""{greeting},
-                    <br><br>
-                    Great news! Your {gene} {cell_line} edited cell pool project is complete and ready for pickup.  Please see the attached slide deck for details.
-                    <br><br>
-                    The last slide is the most informative.  We were able to get over <font color=red>XX%</font> total editing in the pool with <font color=red>~XX%</font> out of frame indels.
-                    <br><br>
-                    We have a contactless pickup system in place.  Please coordinate with {line_lead.split(" ")[0]} to determine a good time window for you to pick up these cells. 
-                    During the agreed upon time, {line_lead.split(" ")[0]} will place the frozen vials of cells in a dry ice bucket in M4170. 
-                    The bucket will be on the counter in front of you when you walk in.  The door is always unlocked.  
-                    If you would like the live cultures as well, please come in the next day or so.  
-                    Your live cultures will be on the bottom shelf of the "Pick-up" incubator, which is labeled accordingly.  Please bring dry ice for the pickup.
-                    <br><br>
-                    Don't hesitate to contact me if you have any questions.
-                    <br><br>
-                    Best,
-                    <br><br>
-                    SM
-                    <br><br>                
-                    """
-                    
-                elif scope.lower() == "cell fitness/dependency assay":
-                    body=f"""{greeting},
-                    <br><br>
-                    Great news! Your {gene} {cell_line} fitness assay is complete. Please see the attached slide deck for details.
-                    <br><br>
-                    We do/do not see a strong dependency for this gene in this background.
-                    <br><br>
-                    Please let me know if you have any questions.
-                    <br><br>
-                    Best,
-                    <br><br>
-                    SM
-                    <br><br>
-                    """
-                    
-                else: 
-                    body=f"""{greeting},
-                    <br><br>
-                    Great news! Your {cell_line} {gene} {objective} project is complete and ready for pick up.  Please see the attached slide deck for details.
-                    <br><br>
-                    We have a contactless pickup system in place.  Please coordinate with {line_lead.split(" ")[0]} to determine a good time window for you to pick up these cells. 
-                    During the agreed upon time, {line_lead.split(" ")[0]} will place the frozen vials of cells in a dry ice bucket in M4170. 
-                    The bucket will be on the counter in front of you when you walk in.  The door is always unlocked.  
-                    Your live cultures will be on the bottom shelf of the "Pick-up" incubator, which is labeled accordingly.  Please bring dry ice for the pickup.
-                    <br><br>
-                    Best,
-                    <br><br>
-                    SM
-                    <br><br>
-                    """
+                body=f"""{greeting},
+                <br><br>
+                Great news!  Attached are the designs, off-target analysis, and our recommendations for which gRNAs to move forward 
+                with for your {gene} ({scope}).
+                <br><br>
+                Please let me know if you have any questions or if you would like to move forward with our recommendations.
+                <br><br>
+                Best,
+                <br><br>
+                {initial_choice}
+                <br><br>
+                """
                     
                 return body
             
@@ -315,33 +287,36 @@ class Billing_Tab(tbs.Frame):
             #removes duplicates and rephrases the greeting to a single person
             recip_list = [requester,pi]
             email_recip = list(set(recip_list))
+            #copies either Jon or Barnanda depending on who sent the email
+            email_cc = ["Shondra Miller"]
+            if initial_choice == "JK":
+                email_cc.append("Baranda Hanson")
+            else:
+                email_cc.append("Jon Klein")
+            
             
             if len(email_recip) > 1:
                 greeting = f"Hi {pi.split(',')[1]} and {requester.split(',')[1]}"
             else:
                 greeting = f"Hi {pi.split(',')[1]}"
-            
-            email_cc = [line_lead]
                             
-            email_sub = _get_subject_line(scope,gene,cell_line, objective)
+            email_sub = _get_subject_line(scope,srm_order_num)
 
             email = _get_attachment(email,project_num)
 
-            body = _body_builder(greeting,scope,cell_line,objective, line_lead)
+            body = _body_builder(greeting,gene,scope,initial_choice)
 
             email.To = ";".join(email_recip)
             email.CC = ";".join(email_cc).replace(".","")
-
-            email.bcc = "Shaina Porter"
             email.Subject = email_sub
 
             #find html signature file in each individual userprofile
-            
             email.HTMLBody = body + signature
+            
             #Display(False) loads all emails at once and gives focus back to ttk window
             email.Display(False)
 
-        def _email_writer_multi(project_df):
+        def _email_writer_multi(project_df, initial_choice):
             
             projects = project_df.values.tolist()
             
@@ -350,7 +325,6 @@ class Billing_Tab(tbs.Frame):
             #unpacked nested list into individual list
             srm_order_num, pi, requester, project_num, scope, cell_line, objective, gene, line_lead = map(list,zip(*projects))
 
-            
             def _get_attachment(email, project_num):
                 #find powerpoint
                 
@@ -360,14 +334,14 @@ class Billing_Tab(tbs.Frame):
                         path = "Z:\ResearchHome\Groups\millergrp\home\common\CORE PROJECTS/"
                         for name in glob.glob(os.path.join(path, "*{}".format(proj))):
                             folder = name
-
+                        print(f"folder: {folder}")
                         os.chdir(folder)
                         ppt_list = glob.glob("*.pptx")
                         latest_ppt = folder + "/" + max(ppt_list, key=os.path.getctime)
             
                     except:
                         print("couldn't find slidedeck in CORE Project folder")
-                        print("Project Number = {}".format(proj))
+                        print(f"Project Number = {proj}")
                         latest_ppt = None
 
                     if latest_ppt is not None:
@@ -375,38 +349,32 @@ class Billing_Tab(tbs.Frame):
                         
                 return email
         
-            def _bullet_maker(srm_order_num, gene, scope, objective, cell_line):
+            def _bullet_maker(srm_order_num, gene, scope):
                 bullet_list =""
-                for order, proj_gene, proj_scope, proj_obj,cells in zip(srm_order_num,gene,scope, objective, cell_line):
-                    bullet_list += (f"<li>SRM: {order}- {cells} {proj_gene} {proj_obj.replace('Gene','')} {proj_scope} </li>")
-                
-                #print(f"The bullet_list {bullet_list}")
+                for order, proj_gene, proj_scope in zip(srm_order_num,gene,scope):
+                    bullet_list += (f"<li>SRM: {order}: {proj_gene} ({proj_scope})</li>")
+                    
+                print(f"The bullet_list {bullet_list}")
                     
                 return bullet_list
 
-        
-            def _body_builder(srm_order_num,greeting, scope, cell_line, objective, line_lead):
+            def _body_builder(srm_order_num,greeting, scope, initial_choice):
                 
-                bullets = _bullet_maker(srm_order_num,gene,scope, objective, cell_line)
+                bullets = _bullet_maker(srm_order_num,gene,scope)
                 
                 body = f"""{greeting},
                 <br><br>
-                Great news! The following projects are ready for pickup.  Please see the attached slide decks for details:
+                Great news! Attached are the designs, off-target analysis, 
+                and our recommendations for which gRNAs to move forward with for the following projects:
                 <br><br>
                 <ul>
                 {bullets}
                 </ul>
-                <br>
-                We have a contactless pickup system in place. Please arrange a time window with XXXXX in which someone can pick 
-                up the cells and will place your frozen vials of cells into a dry ice bucket in M4170. The dry ice bucket will 
-                be straight in front as you walk in. Your live cultures will be on the bottom shelf of the "Pick-up" incubator, which is labeled accordingly.
+                Please let me know if you have any questions or if you would like to move forward with our recommendations.
                 <br><br>
-                As always, please let me know if you have any questions.<br>
-                <br>
                 Best,<br>
-                SM
+                {initial_choice}
                 <br><br>
-
                 """
 
                 return body
@@ -431,18 +399,22 @@ class Billing_Tab(tbs.Frame):
             else:
                 greeting = f"Hi {pi[0].split(',')[1]}"
             
-            email_cc = line_lead
+             #copies either Jon or Barnanda depending on who sent the email
+            email_cc = ["Shondra Miller"]
+            if initial_choice == "JK":
+                email_cc.append("Baranda Hanson")
+            else:
+                email_cc.append("Jon Klein")
                             
             email_sub = "Projects ready for pickup"
 
             email = _get_attachment(email,project_num)
 
-            body = _body_builder(srm_order_num,greeting,scope,cell_line,objective, line_lead)
+            body = _body_builder(srm_order_num,greeting,scope,initial_choice)
 
             email.To = ";".join(email_recip)
             email.CC = ";".join(email_cc)
 
-            email.bcc = "Shaina Porter"
             email.Subject = email_sub
 
             #find html signature file in each individual userprofile
@@ -489,14 +461,14 @@ class Billing_Tab(tbs.Frame):
             if pi_specifc_df.shape[0] > 1:
                     #print(f"Multiple projects: {pi_specifc_df.iloc[0][1]}")
                     #pass to body_builder_multi
-                    _email_writer_multi(pi_specifc_df) 
+                    _email_writer_multi(pi_specifc_df,initial_choice) 
             else:
                     #print(f"single project: {pi_specifc_df.iloc[0][1]}")
                     #convert back into list and pass to writer_single
                     #kept in list form since single mode was originally written and multi project was an added on feature
                     proj_details = pi_specifc_df.values.tolist()[0]
                     
-                    _email_writer_single(proj_details)
+                    _email_writer_single(proj_details,initial_choice)
                     
         return
         
