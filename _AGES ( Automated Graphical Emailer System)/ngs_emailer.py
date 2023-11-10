@@ -51,7 +51,7 @@ class NGS_Tab(tbs.Frame):
     
         self.title_lbl = tbs.Label(
             master = self.button_container,
-            text = "Design Emailer",
+            text = "NGS Emailer",
             font = ('Sans',25,'bold'),
             bootstyle = WARNING,
         )

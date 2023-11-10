@@ -13,9 +13,9 @@ import os
 from billing_emailer import Billing_Tab
 from cell_drop_off_emailer import DropOff_Tab
 from status_emailer import Status_Tab
-from ngs_emailer import NGS_Tab
 from design_emailer import Design_Tab
-
+from ngs_emailer import NGS_Tab
+from tails_emailer import Tails_Tab
 
 app = tbs.Window(
     title="CAGE Emailer",
@@ -33,25 +33,28 @@ main_frame = tbs.Frame(note_tab)
 bill_tab = tbs.Frame(note_tab)
 drop_tab = tbs.Frame(note_tab)
 stats_tab = tbs.Frame(note_tab)
-ngs_tab = tbs.Frame(note_tab)
 design_tab = tbs.Frame(note_tab)
+ngs_tab = tbs.Frame(note_tab)
+tails_tab = tbs.Frame(note_tab)
 
 #call individual emailer scripts to fill in tabs
 Billing_Tab(bill_tab)
 DropOff_Tab(drop_tab)
 Status_Tab(stats_tab)
-NGS_Tab(ngs_tab)
 Design_Tab(design_tab)
+NGS_Tab(ngs_tab)
+Tails_Tab(tails_tab)
 
 note_tab.add(bill_tab, text="Billing")
 note_tab.add(drop_tab, text="Cell Drop Off")
 note_tab.add(stats_tab, text="Status")
-note_tab.add(ngs_tab, text="NGS Analsysis")
 note_tab.add(design_tab, text="gRNA Designs")
+note_tab.add(ngs_tab, text="NGS Analsysis")
+note_tab.add(tails_tab, text="Tails")
 note_tab.pack(pady=20)
 
 
-note_tab.select(design_tab)
+note_tab.select(tails_tab)
 app.mainloop()
 
 

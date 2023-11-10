@@ -71,6 +71,28 @@ def df_from_design_template(template):
        #print(results)
        return results
 
+def df_from_tails_template(template):
+    
+    info = pd.read_excel(template)
+    
+    tmp = pd.DataFrame(info)
+    
+    srm_df = tmp[['CAGE Project #',
+                  'Gene Name/Gene ID',
+                  'Number of Tube Samples/Plates',
+                  'Sample Format',
+                  'SRM Order #',
+                  'Requested By',
+                  
+                  
+                  
+                  
+                  ]]
+    
+    
+    results = srm_df.to_numpy().tolist()
+    
+    return results
 
 def clicked(a):
     print("clicked") 
