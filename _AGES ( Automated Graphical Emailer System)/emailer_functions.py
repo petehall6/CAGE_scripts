@@ -77,16 +77,20 @@ def df_from_tails_template(template):
     
     tmp = pd.DataFrame(info)
     
-    srm_df = tmp[['CAGE Project #',
+    srm_df = tmp[['Principal Investigator',
+                  'Entered By',
+                  'Date Ordered',
+                  'CAGE Project #',
                   'Gene Name/Gene ID',
                   'Number of Tube Samples/Plates',
                   'Sample Format',
+                  'Sample Type',
                   'SRM Order #',
+                  'SRM Sample #',
                   'Requested By',
-                  
-                  
-                  
-                  
+                  'Consolidation Plate?',
+                  'User Comments',
+                  'Lab Comments'
                   ]]
     
     

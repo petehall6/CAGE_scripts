@@ -270,7 +270,6 @@ class Billing_Tab(tbs.Frame):
                     <br><br>
                     Best,
                     <br><br>
-                    SM
                     <br><br>                
                     """
                     
@@ -285,7 +284,6 @@ class Billing_Tab(tbs.Frame):
                     <br><br>
                     Best,
                     <br><br>
-                    SM
                     <br><br>
                     """
                     
@@ -301,7 +299,6 @@ class Billing_Tab(tbs.Frame):
                     <br><br>
                     Best,
                     <br><br>
-                    SM
                     <br><br>
                     """
                     

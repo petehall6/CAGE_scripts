@@ -63,7 +63,6 @@ class DropOff_Tab(tbs.Frame):
         
         self.title_lbl.grid(column=1,row=0, columnspan=3, padx=20, sticky=W+E+N+S)
         self.excel_lbl.grid(column=1,row=1, pady=10)
-    
 
     def create_srm_load_btn(self):
         
@@ -76,7 +75,6 @@ class DropOff_Tab(tbs.Frame):
         )
         
         self.srm_load_btn.grid(column=0,row=1, pady=10)
-        
 
     def create_gen_emails_btn(self):
 
@@ -101,7 +99,6 @@ class DropOff_Tab(tbs.Frame):
         )
         
         self.clear_btn.grid(column=0, row=4,pady=60)
-
 
     def create_table(self):
         columns = [

@@ -3,7 +3,7 @@ from ttkbootstrap.constants import *
 from ttkbootstrap.tableview import Tableview
 from emailer_functions import (open_file,
                                df_from_tails_template,
-                               parse_signature
+                               parse_signature,
                             )
 import pandas as pd
 import numpy as np
@@ -18,8 +18,14 @@ class Tails_Tab(tbs.Frame):
     def __init__(self, master_window):
         super().__init__(master_window, padding=(20,20))
         self.pack(fill=BOTH, expand=YES)
+        self.header_container = tbs.Frame(self)
+        self.header_container.pack(side=TOP,fill=X, expand=YES, pady=(15,10))
+        
+        self.table_container = tbs.Frame(self)
+        self.table_container.pack(fill=BOTH,expand=YES, pady=(5,5))
+        
         self.button_container = tbs.Frame(self)
-        self.button_container.pack(fill=X, expand=YES, pady=(15,10))
+        self.button_container.pack(side=BOTTOM, fill=X, expand=YES, pady=(10,10))
         
         self.excel_name = tbs.StringVar(value="")
         self.srm_order = tbs.StringVar(value="")
@@ -31,22 +37,22 @@ class Tails_Tab(tbs.Frame):
         self.project_objective = tbs.StringVar(value="")
         self.gene = tbs.StringVar(value="")
         self.line_lead = tbs.StringVar(value="")
-        self.initial_choice = tbs.StringVar(value="")
-        self.ngs_date = tbs.StringVar(value="")
+        self.success_choice = tbs.StringVar(value="")
+        self.edit_choice = tbs.StringVar(value="")
+    
         
         self.data = []
 
         self.create_labels()
         self.create_buttons()
-        self.create_radiobtns()
-        self.create_txtboxes()
+        self.create_comboxes()
 
         self.table = self.create_table()
 
     def create_buttons(self):
         
         self.srm_load_btn = tbs.Button(
-            master = self.button_container,
+            master = self.header_container,
             text = "Select SRM Template",
             command = self.load_srm,
             bootstyle=SUCCESS,
@@ -69,119 +75,145 @@ class Tails_Tab(tbs.Frame):
             width = 25
         )
         
+        self.store_btn = tbs.Button(
+            master = self.button_container,
+            text = 'Store',
+            command =self.store_values,
+            bootstyle = SUCCESS,
+            width = 25
+        )
+        
+        self.next_btn = tbs.Button(
+            master = self.button_container,
+            text = 'Next',
+            command = self.nextbtn_click,
+            bootstyle = INFO,
+            width = 25
+        )
+        
+        self.prev_btn = tbs.Button(
+            master = self.button_container,
+            text = 'Previous',
+            command =self.prvbtn_click,
+            bootstyle = INFO,
+            width = 25
+        )
+        
         self.srm_load_btn.grid(column=0,row=1, pady=10)
-        self.gen_emails_btn.grid(column=0, row=4, pady=30)
-        self.clear_btn.grid(column=0, row=5,pady=10)
+        self.store_btn.grid(column=1, row=6,pady=10, padx=5)
+        self.prev_btn.grid(column=3, row=6,pady=10,padx=5)
+        self.next_btn.grid(column=4, row=6,pady=10,padx=5)
+        self.gen_emails_btn.grid(column=0, row=7, pady=60)
+        self.clear_btn.grid(column=2, row=7,pady=60, sticky=E, padx = 10)
         
-    def create_radiobtns(self):
-    
-        self.jk_radiobtn = tbs.Radiobutton(
-        master = self.button_container,
-        bootstyle = "info",
-        variable = self.initial_choice,
-        text = "JK",
-        value = "JK",
-    )
-    
-        self.snp_radiobtn = tbs.Radiobutton(
-        master = self.button_container,
-        bootstyle = "info",
-        variable = self.initial_choice,
-        text = "SNP",
-        value = "SNP",
-        )
-        
-        self.mp_radiobtn = tbs.Radiobutton(
-        master = self.button_container,
-        bootstyle = "info",
-        variable = self.initial_choice,
-        text = "MP",
-        value = "MP",
-        )
-    
-        self.jk_radiobtn.grid(column=3,row=1,sticky=W)
-        self.snp_radiobtn.grid(column=3,row=2,sticky=W)
-        self.mp_radiobtn.grid(column=3,row=3,sticky=W)
-        
-    def create_txtboxes(self):
-        
-        self.ngs_date_box = tbs.Entry(
-            master = self.button_container,
-            bootstyle =PRIMARY,
-            textvariable=self.ngs_date,
-        )
-    
-        self.ngs_date_box.grid(column=1, row=2)
-        
-    def create_labels(self):
-    
+    def create_labels(self):    
         self.title_lbl = tbs.Label(
-            master = self.button_container,
+            master = self.header_container,
             text = "Tails Emailer",
             font = ('Sans',25,'bold'),
             bootstyle = WARNING,
         )
         
         self.excel_lbl = tbs.Label(
-            master = self.button_container, 
+            master = self.header_container, 
             text="SRM Template", 
             font=(10), 
             bootstyle = SUCCESS
         )
         
-        self.ngs_date_lbl = tbs.Label(
+        self.proj_lbl = tbs.Label(
             master = self.button_container,
-            text = "NGS Date:",
-            font = (10),
+            text = "Current Project: ",
+            font=(10),
             bootstyle = SUCCESS
         )
         
+        self.active_proj_lbl = tbs.Label(
+            master = self.button_container,
+            text = 'PLACE HOLDER',
+            font=(10),
+            bootstyle = SUCCESS
+        )
+        
+        self.success_lbl = tbs.Label(
+            master = self.button_container,
+            text = 'Success?',
+            font=(10),
+            bootstyle = SUCCESS
+        )
+        
+        self.edit_lbl = tbs.Label(
+            master = self.button_container,
+            text = 'Edit:',
+            font=(10),
+            bootstyle = SUCCESS
+        )
+        
+        
         self.title_lbl.grid(column=1,row=0, columnspan=3, padx=20, sticky=W+E+N+S)
-        self.ngs_date_lbl.grid(column=0, row=2,pady=10, sticky=E)
-        self.excel_lbl.grid(column=1,row=1, pady=10)
+        self.excel_lbl.grid(column=1,row=1, pady=10, sticky=W)
+        self.proj_lbl.grid(column = 0,row=3, sticky=E)
+        self.active_proj_lbl.grid(column=1,row=3, columnspan=3, sticky=W+E+N+S)
+        self.success_lbl.grid(column=0,row=4, pady=10)
+        self.edit_lbl.grid(column=0, row=5, pady=10)
     
     def create_table(self):
         columns = [
             {"text":"SRM Order#"},
             {"text":'PI'},
             {"text":'Requested By'},
+            {"text":'Entered By'},
             {"text":'Project Number'},
-            {"text":'Project Scope'},
-            {"text":'Cell Line of Choice'},
-            {"text":'Project Objective'},
-            {"text":'Target Gene Name'},
-            {"text":'Cell Line Lead'}
+            {"text":'Gene'},
+            {"text":'Number of Sample'},
+            {"text":'Sample Format'},
+            {"text":'Sample Type'},
+            {"text":'Success'},
+            {"text":'Edit'},
         ]
 
-        table = Tableview(
-            master = self,
+        self.table = Tableview(
+            master = self.table_container,
             coldata=columns,
             rowdata=self.data,
             paginated=False,
             searchable=False,
             bootstyle=PRIMARY,
             stripecolor=LIGHT,
+            autoalign=False,
+        )
+        
+        #self.table.view.selection_set(0)
+        self.table.view.bind("<<TreeviewSelect>>", self.tableview_clicked)
+        
+        self.table.pack(side=BOTTOM,fill=BOTH, expand=YES, padx=10, pady=10)
+        
+        return self.table
+
+    def create_comboxes(self):
+        
+        
+        outcomes = [' ','Yes','No']
+        edits = [' ','KO','KI','CKO','Del','ssODN','PM','Data']
+        
+        self.success_box = tbs.Combobox(
+            master = self.button_container,
+            bootstyle = "info",
+            value = outcomes,
+        )
+        
+        self.edits_box = tbs.Combobox(
+            master = self.button_container,
+            bootstyle = "info",
+            value = edits,
         )
 
-        #table.view.selection_set(0)
-        #table.view.bind("<<TreeviewSelect>>", clicked(self.table.view.yview()))
-        
-        table.pack(side=BOTTOM,fill=BOTH, expand=YES, padx=10, pady=10)
-        
-        return table
+        self.success_box.grid(column=1,row=4, sticky=W)
+        self.edits_box.grid(column=1, row=5, sticky=W)
 
-    def clear_controls(self):
-        
-        table = self.table
-        
-        #clear label and loaded template
-        self.excel_name = tbs.StringVar(value="")
-        self.excel_lbl.config(text="")
-        
-        table.delete_rows()
-        
-        self.data = []
-        self.initial_choice.set("")
+
+
+
 
     def load_srm(self):
         self.table.unload_table_data()
@@ -197,61 +229,50 @@ class Tails_Tab(tbs.Frame):
         #append table to bottom of frame
         #loop through index
         #then loop through element
-        
-        try:
-            for srm in srm_list:
-                for entry in srm:
-                    self.srm_order = srm[0]
-                    self.project_number = srm[1].strip().split(" and")[0]
-                    self.PI = srm[2]
-                    self.requested_by = srm[3]
-                    self.project_scope = srm[4]
-                    self.gene = srm[5]
-                    self.grna_num = srm[6]
-                    self.grna1 = srm[7]
-                    self.grna2 = srm[8]
-                    self.grna3 = srm[9]
-                    self.grna_final = srm[10]                    
-                self.data.append((self.srm_order,
-                                self.PI,
-                                self.requested_by,
-                                self.project_number,
-                                self.project_scope,
-                                self.cell_line,
-                                self.project_objective,
-                                self.gene,
-                                self.line_lead
-                ))
-            print(f"Project: {self.project_number}")
-        except: #will catch if no lead is in comments
-            for srm in srm_list:
-                for entry in srm:
-                    self.srm_order = srm[0]
-                    self.PI = srm[1]
-                    self.requested_by = srm[2]
-                    self.project_number = srm[3]
-                    self.project_scope = srm[4]
-                    self.cell_line = srm[5]
-                    self.project_objective = srm[6]
-                    self.gene = srm[7]
-                    self.species = srm[8]
-                    self.line_lead = ""
-                    self.stem_cell = srm[10]
-                    
-                self.data.append((self.srm_order,
-                                self.PI,
-                                self.requested_by,
-                                self.project_number,
-                                self.project_scope,
-                                self.cell_line,
-                                self.project_objective,
-                                self.gene,
-                                self.line_lead
-                ))    
+            
+        for srm in srm_list:
+            for entry in srm:
+                self.srm_order = srm[9]
+                self.PI = srm[0]
+                self.requested_by = srm[10]
+                self.entered_by = srm[1]
+                self.project_number = srm[3].strip().split(" and")[0]
+                self.gene = srm[4]
+                self.sample_num = srm[5]
+                self.sample_format = srm[6]
+                self.sample_type = srm[7]                   
+            self.data.append((self.srm_order,
+                            self.PI,
+                            self.requested_by,
+                            self.entered_by,
+                            self.project_number,
+                            self.gene,
+                            self.sample_num,
+                            self.sample_format,
+                            self.sample_type
+            ))
         #refresh table with new data.
         self.table.destroy()
         self.table.load_table_data()
         self.table = self.create_table()    
+
+    def tableview_clicked(self,event):
+        
+        #item will return a tuple with text,values and other info.  access info
+        selected_proj_info = self.table.view.item(self.table.view.focus(),"values"[0])
+        
+        #set label to PI and srm#
+        pi = selected_proj_info[1].split(",")[0]
+        srm_no = selected_proj_info[0]
+        self.active_proj_lbl.configure(text=f"SRM: {srm_no}. PI: {pi}")
+        
+        if len(selected_proj_info) != 9:
+            print("setting combo value")
+            self.success_box.set(selected_proj_info[9])
+            self.edits_box.set(selected_proj_info[10])
+        else:
+            self.success_box.set(" ")
+            self.edits_box.set(" ")
 
     def generate_emails(self):
         
@@ -498,8 +519,88 @@ class Tails_Tab(tbs.Frame):
                     _email_writer_single(proj_details,initial_choice)
                     
         return
-        
 
+    def clear_controls(self):
+        
+        table = self.table
+        
+        #clear label and loaded template
+        self.excel_name = tbs.StringVar(value="")
+        self.excel_lbl.config(text="")
+        
+        table.delete_rows()
+        
+        self.success_box.set("")
+        self.edits_box.set(" ")
+        
+        
+        self.data = []
+
+    def store_values(self):
+        
+        #get combobox input
+        self.success_choice = self.success_box.get()
+        self.edit_choice = self.edits_box.get()
+
+        #get row tuple where focus is (highlighted row)
+        selected_proj_info = self.table.view.item(self.table.view.focus(),"values")
+        
+        proj_appended=[]
+        
+        #transfer tuple values to list for appending and any necessary overwriting
+        #if line has already been edited (len(tuple)=9), replace edit and success indecies
+        if len(selected_proj_info) == 9:
+            for info in selected_proj_info:
+                proj_appended.append(info)
+                
+        else:#only get first 9 tuple values
+            for info in selected_proj_info[:9]:
+                proj_appended.append(info)
+        
+        proj_appended.append(self.success_choice)
+        proj_appended.append(self.edit_choice)
+        
+        #convert back to tuple to plug back into item()
+        updated_proj_info = tuple(proj_appended)
+        #text is normally blank, have to specifiy value update
+        self.table.view.item(self.table.view.focus(),text="",values=updated_proj_info)
+
+    def nextbtn_click(self):
+        #get current table index
+        curr_index = int(self.table.view.focus()[1:])
+        print(curr_index)
+        
+        #add 1 and any necessary 0's to make it 00n.  
+        next_index = str("I"+(str(curr_index+1).zfill(3)))
+        print(f"next index: {next_index}")
+        #loop back through list
+        try:
+            self.table.view.selection_set(next_index)
+            self.table.view.focus(next_index)
+            print(f"Moved focus: {next_index}")
+        except:#go back to the top of the list if it overruns num of rows
+            self.table.view.selection_set('I001')
+            self.table.view.focus('I001')
+    
+    def prvbtn_click(self):
+        #get current table index, strip 'I'
+        curr_index = int(self.table.view.focus()[1:])
+        
+        #add 1 and any necessary 0's to make it 00n.  
+        next_index = str("I"+(str(curr_index-1).zfill(3)))
+
+        #loop back through list
+        try:
+            self.table.view.selection_set(next_index)
+            self.table.view.focus(next_index)
+            print(f"Moved focus: {next_index}")
+        except:
+            #go back to the bottom of the list and loop back
+            max_row = str("I"+str(len(self.table.get_rows())).zfill(3))
+            self.table.view.selection_set(max_row)
+            self.table.view.focus(max_row)
+            
+            
 if __name__ == "__main__":
     import _emailer_gui_RUN_THIS_SCRIPT
     _emailer_gui_RUN_THIS_SCRIPT.app.mainloop()

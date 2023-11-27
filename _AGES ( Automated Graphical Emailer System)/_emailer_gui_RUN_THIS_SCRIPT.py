@@ -57,5 +57,3 @@ note_tab.pack(pady=20)
 note_tab.select(tails_tab)
 app.mainloop()
 
-
-

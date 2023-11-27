@@ -594,6 +594,9 @@ def send_project(NGS_df):
     print(xlsx)
     print(type(txt))
     print(txt)
+    
+    #will need to make return 
+    
     Emailer(
         xlsx,
         txt,
