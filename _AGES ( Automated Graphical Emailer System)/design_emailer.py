@@ -43,7 +43,6 @@ class Design_Tab(tbs.Frame):
 
     def create_buttons(self):
         
-
         self.srm_load_btn = tbs.Button(
             master = self.button_container,
             text = "Select SRM Template",

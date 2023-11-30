@@ -8,11 +8,13 @@ from emailer_functions import (open_file,
 import pandas as pd
 import numpy as np
 import shutil
+import re
 import os
 import win32com.client
 import glob
 import datetime
-
+from itertools import chain
+import time
 
 class Tails_Tab(tbs.Frame):
     def __init__(self, master_window):
@@ -22,7 +24,7 @@ class Tails_Tab(tbs.Frame):
         self.header_container.pack(side=TOP,fill=X, expand=YES, pady=(15,10))
         
         self.table_container = tbs.Frame(self)
-        self.table_container.pack(fill=BOTH,expand=YES, pady=(5,5))
+        self.table_container.pack(fill=BOTH,expand=YES, pady=5)
         
         self.button_container = tbs.Frame(self)
         self.button_container.pack(side=BOTTOM, fill=X, expand=YES, pady=(10,10))
@@ -39,15 +41,24 @@ class Tails_Tab(tbs.Frame):
         self.line_lead = tbs.StringVar(value="")
         self.success_choice = tbs.StringVar(value="")
         self.edit_choice = tbs.StringVar(value="")
+        self.cage_nums = tbs.StringVar(value="")
+        self.cage_dir = tbs.StringVar(value="")
+        self.dir_selected = tbs.StringVar(value="")
     
         
         self.data = []
-
+        self.cage_data = []
+        self.selected_projects = []
+        
+        
+        
         self.create_labels()
         self.create_buttons()
         self.create_comboxes()
+        self.create_ngs_datepicker()
 
         self.table = self.create_table()
+        self.cage_table = self.create_cage_table()
 
     def create_buttons(self):
         
@@ -78,7 +89,7 @@ class Tails_Tab(tbs.Frame):
         self.store_btn = tbs.Button(
             master = self.button_container,
             text = 'Store',
-            command =self.store_values,
+            command =self.store_clicked,
             bootstyle = SUCCESS,
             width = 25
         )
@@ -99,12 +110,21 @@ class Tails_Tab(tbs.Frame):
             width = 25
         )
         
+        self.find_crispy_btn = tbs.Button(
+            master=self.button_container,
+            text='Find CRISPY Programs',
+            command=self.find_crispy_files,
+            bootstyle = SECONDARY,
+            width = 30
+        )
+        
         self.srm_load_btn.grid(column=0,row=1, pady=10)
-        self.store_btn.grid(column=1, row=6,pady=10, padx=5)
-        self.prev_btn.grid(column=3, row=6,pady=10,padx=5)
-        self.next_btn.grid(column=4, row=6,pady=10,padx=5)
-        self.gen_emails_btn.grid(column=0, row=7, pady=60)
-        self.clear_btn.grid(column=2, row=7,pady=60, sticky=E, padx = 10)
+        self.store_btn.grid(column=1, row=10,pady=10,sticky=W)
+        self.prev_btn.grid(column=0, row=12,pady=10,padx=5)
+        self.next_btn.grid(column=2, row=12,pady=10,padx=5)
+        self.gen_emails_btn.grid(column=0, row=14, pady=60)
+        self.clear_btn.grid(column=2, row=14,pady=60, sticky=N+S+E+W, padx = 10)
+        self.find_crispy_btn.grid(column=3, row=5, pady=10, sticky=W)
         
     def create_labels(self):    
         self.title_lbl = tbs.Label(
@@ -149,6 +169,35 @@ class Tails_Tab(tbs.Frame):
             bootstyle = SUCCESS
         )
         
+        self.cage_num_lbl = tbs.Label(
+            master = self.button_container,
+            text = 'Enter CAGE Numbers:',
+            font=(10),
+            bootstyle = SUCCESS,
+        )
+        
+        self.ngs_date_lbl = tbs.Label(
+            master = self.button_container,
+            text = 'Select NGS Date:',
+            font=(10),
+            bootstyle = SUCCESS,
+        )
+        
+        self.ngs_date_error_lbl = tbs.Label(
+            master = self.button_container,
+            text="",
+            font = (8),
+            bootstyle = DANGER
+            
+        )
+        
+        self.crispy_status_lbl = tbs.Label(
+            master = self.button_container,
+            text=" ",
+            font=(10),
+            bootstyle = INFO
+        )
+        
         
         self.title_lbl.grid(column=1,row=0, columnspan=3, padx=20, sticky=W+E+N+S)
         self.excel_lbl.grid(column=1,row=1, pady=10, sticky=W)
@@ -156,6 +205,10 @@ class Tails_Tab(tbs.Frame):
         self.active_proj_lbl.grid(column=1,row=3, columnspan=3, sticky=W+E+N+S)
         self.success_lbl.grid(column=0,row=4, pady=10)
         self.edit_lbl.grid(column=0, row=5, pady=10)
+        self.cage_num_lbl.grid(column=0,row=6, pady=10)
+        self.ngs_date_lbl.grid(column=0, row=7, pady=10)
+        self.ngs_date_error_lbl.grid(column=2, row=7, pady=10)
+        self.crispy_status_lbl.grid(column=3, row=4)
     
     def create_table(self):
         columns = [
@@ -190,8 +243,33 @@ class Tails_Tab(tbs.Frame):
         
         return self.table
 
-    def create_comboxes(self):
+    def create_cage_table(self):
         
+        columns = [
+            {"text":'Programs'},
+            {"text":'Selected'}
+        ]
+        
+        
+        self.cage_table = Tableview(
+            master = self.button_container,
+            coldata=columns,
+            rowdata=self.cage_data,
+            paginated=False,
+            searchable=False,
+            bootstyle=PRIMARY,
+            stripecolor=LIGHT,
+            autoalign=False,
+        )
+    
+        #self.table.view.selection_set(0)
+        self.cage_table.view.bind()
+        self.cage_table.view.bind("<<TreeviewOpen>>", self.cage_table_clicked)
+        self.cage_table.grid(column=6,row=4,columnspan=4, rowspan=3)
+        
+        return self.cage_table
+
+    def create_comboxes(self):
         
         outcomes = [' ','Yes','No']
         edits = [' ','KO','KI','CKO','Del','ssODN','PM','Data']
@@ -207,14 +285,31 @@ class Tails_Tab(tbs.Frame):
             bootstyle = "info",
             value = edits,
         )
+        
+        self.cage_box = tbs.Entry(
+            master = self.button_container,
+            bootstyle = "info",
+            width=25
+            
+        )
 
-        self.success_box.grid(column=1,row=4, sticky=W)
-        self.edits_box.grid(column=1, row=5, sticky=W)
+        self.success_box.grid(column=1,row=4, sticky=W+E)
+        self.edits_box.grid(column=1, row=5, sticky=W+E)
+        self.cage_box.grid(column=1, row=6, sticky=W+E)
+        
+    def create_ngs_datepicker(self):
+        
+        self.ngs_date_picker = tbs.DateEntry(
+            master = self.button_container,
+            dateformat="%m%d%y",
 
+        )
 
-
-
-
+        self.ngs_date_picker.grid(column=1, row=7)
+  
+  
+  
+        
     def load_srm(self):
         self.table.unload_table_data()
         self.data=[]
@@ -240,7 +335,8 @@ class Tails_Tab(tbs.Frame):
                 self.gene = srm[4]
                 self.sample_num = srm[5]
                 self.sample_format = srm[6]
-                self.sample_type = srm[7]                   
+                self.sample_type = srm[7]
+            #* its a tuple dummy                   
             self.data.append((self.srm_order,
                             self.PI,
                             self.requested_by,
@@ -255,6 +351,7 @@ class Tails_Tab(tbs.Frame):
         self.table.destroy()
         self.table.load_table_data()
         self.table = self.create_table()    
+
 
     def tableview_clicked(self,event):
         
@@ -274,10 +371,41 @@ class Tails_Tab(tbs.Frame):
             self.success_box.set(" ")
             self.edits_box.set(" ")
 
+    def cage_table_clicked(self,event):
+        
+        program_select = self.cage_table.view.item(self.cage_table.view.focus(), "values"[0])
+        
+        print(f"program_sel: {program_select}")
+        print(f"program_sel[1]: {program_select[1]}")
+        
+        if program_select[1] == ' ':
+            pick_update = "Yes"
+        elif program_select[1] == "Yes":
+            pick_update = "No"
+        elif program_select[1] == "No":
+            pick_update = "Yes"
+        
+        
+        #get row tuple where focus is (highlighted row)
+        selected_proj_info = self.cage_table.view.item(self.cage_table.view.focus(),"values")
+        
+        proj_appended=[]
+        
+        
+        for info in selected_proj_info:
+                proj_appended.append(info)
+                
+        
+        proj_appended[1] = pick_update
+        
+        #convert back to tuple to plug back into item()
+        updated_proj_info = tuple(proj_appended)
+        #text is normally blank, have to specifiy value update
+        self.cage_table.view.item(self.cage_table.view.focus(),text="",values=updated_proj_info)
+
     def generate_emails(self):
         
         signature = parse_signature()
-        initial_choice = self.initial_choice.get()
         
         def _email_writer_single(project_details,initial_choice):
             
@@ -509,14 +637,14 @@ class Tails_Tab(tbs.Frame):
             if pi_specifc_df.shape[0] > 1:
                     #print(f"Multiple projects: {pi_specifc_df.iloc[0][1]}")
                     #pass to body_builder_multi
-                    _email_writer_multi(pi_specifc_df,initial_choice) 
+                    _email_writer_multi(pi_specifc_df) 
             else:
                     #print(f"single project: {pi_specifc_df.iloc[0][1]}")
                     #convert back into list and pass to writer_single
                     #kept in list form since single mode was originally written and multi project was an added on feature
                     proj_details = pi_specifc_df.values.tolist()[0]
                     
-                    _email_writer_single(proj_details,initial_choice)
+                    _email_writer_single(proj_details)
                     
         return
 
@@ -532,20 +660,32 @@ class Tails_Tab(tbs.Frame):
         
         self.success_box.set("")
         self.edits_box.set(" ")
+        self.cage_box.delete(0, 'end')
         
         
         self.data = []
 
-    def store_values(self):
+    def store_clicked(self):
         
-        #get combobox input
+        #get combobox print
         self.success_choice = self.success_box.get()
         self.edit_choice = self.edits_box.get()
-
+        #returns string. will need to split at comma and append CAGE where necessary
+        self.cage_nums = self.cage_box.get().strip()
+        
+        cage_num_list = self.cage_nums.split(",")
+        
+        #check if any letters are in the item and replace with corrected format
+        for project in cage_num_list:
+            if re.search('[a-zA-Z]', project) == None and len(cage_num_list)>=1:
+                cage_num_list = list(map(lambda x: x.replace(project,"CAGE"+project), cage_num_list))
+        
+        cage_nums_str = ",".join(cage_num_list)
         #get row tuple where focus is (highlighted row)
         selected_proj_info = self.table.view.item(self.table.view.focus(),"values")
         
         proj_appended=[]
+        
         
         #transfer tuple values to list for appending and any necessary overwriting
         #if line has already been edited (len(tuple)=9), replace edit and success indecies
@@ -557,6 +697,7 @@ class Tails_Tab(tbs.Frame):
             for info in selected_proj_info[:9]:
                 proj_appended.append(info)
         
+        proj_appended[4] = cage_nums_str
         proj_appended.append(self.success_choice)
         proj_appended.append(self.edit_choice)
         
@@ -599,7 +740,74 @@ class Tails_Tab(tbs.Frame):
             max_row = str("I"+str(len(self.table.get_rows())).zfill(3))
             self.table.view.selection_set(max_row)
             self.table.view.focus(max_row)
-            
+    
+    def find_crispy_files(self):
+        
+        self.cage_table.unload_table_data()
+        self.cage_data=[]
+        cage_dirs = []
+        
+        self.ngs_date_error_lbl.configure(text="")
+        
+        NGS_DIR = "Z:/ResearchHome/Groups/millergrp/home/common/NGS"
+        
+        
+        ngs_run_date = self.ngs_date_picker.entry.get()
+        
+        #go to NGS date
+        try:       
+            os.chdir(os.path.join(NGS_DIR,ngs_run_date,"joined"))
+            self.ngs_date_error_lbl.configure(text="NGS run found.", bootstyle=SUCCESS)        
+            print(os.getcwd())
+        except:
+            self.ngs_date_error_lbl.configure(text="NGS run not found. Pick another date.")
+        
+        #self.crispy_status_lbl.configure(text="Searching...")
+        #get focus of tableview and get values tuples
+        selected_proj_info = self.table.view.item(self.table.view.focus(),"values"[0])
+        #parse CAGE numbers
+        cage_nums = selected_proj_info[4].split(",")
+        print(cage_nums)
+        
+        for num in cage_nums:
+            self.crispy_status_lbl.configure(text=f"Searching {num}")
+            #find all matches with CAGe# and only return directories
+            cage_dirs.append(list([name for name in glob.glob(f"{num}*") if os.path.isdir(name)]))
+
+        print(f"cage dirs: {cage_dirs}")
+
+        #Add cage_folders to the cage_table
+        
+        #self.crispy_status_lbl.configure(text="Flattening list")
+        #append empty index to list for selected spot
+
+
+        #look@ for enty.  think I have to unpack the cage_dirs into variables self.cage_dir then append cage data with cariable
+
+
+        for proj in cage_dirs:
+            #add in the empty string for the selected column 
+            dir_list = list(proj)
+            for item in dir_list:
+                cage_tup = tuple([item," "])
+            #TODO
+                print(f"dir_list{dir_list}")
+                print(f"cage_tup: {cage_tup}")
+            #and convert back to tuple since treeview items must be tuples
+                self.cage_data.append(cage_tup)
+
+        print(f"cage_data: {self.cage_data}")
+        
+        self.crispy_status_lbl.configure(text="Ready")
+        
+        self.cage_table.destroy()
+        self.cage_table.load_table_data()
+        self.cage_table = self.create_cage_table()
+        
+        
+        
+        
+        
             
 if __name__ == "__main__":
     import _emailer_gui_RUN_THIS_SCRIPT
