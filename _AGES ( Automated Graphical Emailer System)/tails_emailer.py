@@ -115,16 +115,16 @@ class Tails_Tab(tbs.Frame):
             text='Find CRISPY Programs',
             command=self.find_crispy_files,
             bootstyle = SECONDARY,
-            width = 30
+            width = 20
         )
         
         self.srm_load_btn.grid(column=0,row=1, pady=10)
-        self.store_btn.grid(column=1, row=10,pady=10,sticky=W)
+        self.store_btn.grid(column=1, row=11,pady=10,sticky=W)
         self.prev_btn.grid(column=0, row=12,pady=10,padx=5)
         self.next_btn.grid(column=2, row=12,pady=10,padx=5)
-        self.gen_emails_btn.grid(column=0, row=14, pady=60)
-        self.clear_btn.grid(column=2, row=14,pady=60, sticky=N+S+E+W, padx = 10)
-        self.find_crispy_btn.grid(column=3, row=5, pady=10, sticky=W)
+        self.gen_emails_btn.grid(column=0, row=13, pady=60)
+        self.clear_btn.grid(column=2, row=13,pady=60, sticky=N+S+E+W, padx = 10)
+        self.find_crispy_btn.grid(column=5, row=4, pady=10,padx=10, sticky=W)
         
     def create_labels(self):    
         self.title_lbl = tbs.Label(
@@ -198,18 +198,112 @@ class Tails_Tab(tbs.Frame):
             bootstyle = INFO
         )
         
+        self.success_num_lbl = tbs.Label(
+            master = self.button_container,
+            text="Num. Succeeded",
+            font=(10),
+            bootstyle = SUCCESS
+        )
+        
+        self.submitted_num_lbl = tbs.Label(
+            master = self.button_container,
+            text="Num. Submitted:",
+            font=(8),
+            bootstyle = SUCCESS
+        )
+        
+        self.edit_size_lbl = tbs.Label(
+            master = self.button_container,
+            text="Size of Edit:",
+            font=(8),
+            bootstyle = SUCCESS
+        )
+        
+        self.injection_lbl = tbs.Label(
+            master = self.button_container,
+            text="TCU vs NEL:",
+            font=(10),
+            bootstyle = SUCCESS
+        ) 
+        
         
         self.title_lbl.grid(column=1,row=0, columnspan=3, padx=20, sticky=W+E+N+S)
         self.excel_lbl.grid(column=1,row=1, pady=10, sticky=W)
+        
         self.proj_lbl.grid(column = 0,row=3, sticky=E)
         self.active_proj_lbl.grid(column=1,row=3, columnspan=3, sticky=W+E+N+S)
-        self.success_lbl.grid(column=0,row=4, pady=10)
-        self.edit_lbl.grid(column=0, row=5, pady=10)
-        self.cage_num_lbl.grid(column=0,row=6, pady=10)
-        self.ngs_date_lbl.grid(column=0, row=7, pady=10)
-        self.ngs_date_error_lbl.grid(column=2, row=7, pady=10)
-        self.crispy_status_lbl.grid(column=3, row=4)
-    
+        
+        self.success_lbl.grid(column=0,row=5, pady=10)
+        self.edit_lbl.grid(column=0, row=7, pady=10)
+        self.cage_num_lbl.grid(column=0,row=8, pady=10)
+        self.ngs_date_lbl.grid(column=0, row=9, pady=10)
+        self.ngs_date_error_lbl.grid(column=2, row=9)
+        self.crispy_status_lbl.grid(column=5, row=3)
+        self.injection_lbl.grid(column=0, row=10, pady=10)
+        self.success_num_lbl.grid(column=2,row=4,sticky=S)
+        self.edit_size_lbl.grid(column=2,row=6,sticky=S)
+        self.submitted_num_lbl.grid(column=3,row=4,sticky=S)
+        
+        
+        
+    def create_comboxes(self):
+        
+        outcomes = [' ','Yes','No']
+        edits = [' ','KO','KI','CKO','Del','ssODN','PM','Data']
+        injection = [' ', 'TCU', 'NEL']
+        
+        self.success_box = tbs.Combobox(
+            master = self.button_container,
+            bootstyle = "info",
+            value = outcomes,
+        )
+        
+        self.edits_box = tbs.Combobox(
+            master = self.button_container,
+            bootstyle = "info",
+            value = edits,
+        )
+        
+        self.cage_box = tbs.Entry(
+            master = self.button_container,
+            bootstyle = "info",
+            width=25    
+        )
+            
+        self.success_num_box = tbs.Entry(
+            master = self.button_container,
+            bootstyle = "info",
+            width=25    
+        )
+
+        self.submitted_num_box = tbs.Entry(
+            master = self.button_container,
+            bootstyle = "info",
+            width=25    
+        )
+        
+        
+        self.edit_size_box = tbs.Entry(
+            master = self.button_container,
+            bootstyle = "info",
+            width=25    
+        )
+
+        self.injection_box = tbs.Combobox(
+            master = self.button_container,
+            bootstyle = "info",
+            value = injection,
+        )
+        
+        
+        self.success_box.grid(column=1,row=5, sticky=W+E)
+        self.edits_box.grid(column=1, row=7, sticky=W+E)
+        self.cage_box.grid(column=1, row=8, sticky=W+E)
+        self.success_num_box.grid(column=2, row=5)
+        self.submitted_num_box.grid(column=3, row=5)
+        self.edit_size_box.grid(column=2, row=7)
+        self.injection_box.grid(column=1, row=10)
+            
     def create_table(self):
         columns = [
             {"text":"SRM Order#"},
@@ -265,38 +359,10 @@ class Tails_Tab(tbs.Frame):
         #self.table.view.selection_set(0)
         self.cage_table.view.bind()
         self.cage_table.view.bind("<<TreeviewOpen>>", self.cage_table_clicked)
-        self.cage_table.grid(column=6,row=4,columnspan=4, rowspan=3)
+        self.cage_table.grid(column=6,row=3, rowspan=3)
         
         return self.cage_table
 
-    def create_comboxes(self):
-        
-        outcomes = [' ','Yes','No']
-        edits = [' ','KO','KI','CKO','Del','ssODN','PM','Data']
-        
-        self.success_box = tbs.Combobox(
-            master = self.button_container,
-            bootstyle = "info",
-            value = outcomes,
-        )
-        
-        self.edits_box = tbs.Combobox(
-            master = self.button_container,
-            bootstyle = "info",
-            value = edits,
-        )
-        
-        self.cage_box = tbs.Entry(
-            master = self.button_container,
-            bootstyle = "info",
-            width=25
-            
-        )
-
-        self.success_box.grid(column=1,row=4, sticky=W+E)
-        self.edits_box.grid(column=1, row=5, sticky=W+E)
-        self.cage_box.grid(column=1, row=6, sticky=W+E)
-        
     def create_ngs_datepicker(self):
         
         self.ngs_date_picker = tbs.DateEntry(
@@ -305,11 +371,8 @@ class Tails_Tab(tbs.Frame):
 
         )
 
-        self.ngs_date_picker.grid(column=1, row=7)
+        self.ngs_date_picker.grid(column=1, row=9)
   
-  
-  
-        
     def load_srm(self):
         self.table.unload_table_data()
         self.data=[]
@@ -351,7 +414,6 @@ class Tails_Tab(tbs.Frame):
         self.table.destroy()
         self.table.load_table_data()
         self.table = self.create_table()    
-
 
     def tableview_clicked(self,event):
         
@@ -762,7 +824,7 @@ class Tails_Tab(tbs.Frame):
         except:
             self.ngs_date_error_lbl.configure(text="NGS run not found. Pick another date.")
         
-        #self.crispy_status_lbl.configure(text="Searching...")
+        self.crispy_status_lbl.configure(text="Searching...")
         #get focus of tableview and get values tuples
         selected_proj_info = self.table.view.item(self.table.view.focus(),"values"[0])
         #parse CAGE numbers
@@ -778,7 +840,7 @@ class Tails_Tab(tbs.Frame):
 
         #Add cage_folders to the cage_table
         
-        #self.crispy_status_lbl.configure(text="Flattening list")
+        self.crispy_status_lbl.configure(text="Flattening list")
         #append empty index to list for selected spot
 
 
@@ -798,7 +860,7 @@ class Tails_Tab(tbs.Frame):
 
         print(f"cage_data: {self.cage_data}")
         
-        self.crispy_status_lbl.configure(text="Ready")
+        self.crispy_status_lbl.configure(text="Project Folders Found")
         
         self.cage_table.destroy()
         self.cage_table.load_table_data()
