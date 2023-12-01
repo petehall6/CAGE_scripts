@@ -38,12 +38,16 @@ class Tails_Tab(tbs.Frame):
         self.cell_line = tbs.StringVar(value="")
         self.project_objective = tbs.StringVar(value="")
         self.gene = tbs.StringVar(value="")
-        self.line_lead = tbs.StringVar(value="")
         self.success_choice = tbs.StringVar(value="")
+        self.success_num = tbs.StringVar(value="")
+        self.submitted_num = tbs.StringVar(value="")
         self.edit_choice = tbs.StringVar(value="")
+        self.edit_size =tbs.StringVar(value="")
+        self.injection_core = tbs.StringVar(value="")
         self.cage_nums = tbs.StringVar(value="")
         self.cage_dir = tbs.StringVar(value="")
         self.dir_selected = tbs.StringVar(value="")
+        self.selected_programs = tbs.StringVar(value="")
     
         
         self.data = []
@@ -88,7 +92,7 @@ class Tails_Tab(tbs.Frame):
         
         self.store_btn = tbs.Button(
             master = self.button_container,
-            text = 'Store',
+            text = 'Update',
             command =self.store_clicked,
             bootstyle = SUCCESS,
             width = 25
@@ -118,14 +122,23 @@ class Tails_Tab(tbs.Frame):
             width = 20
         )
         
+        self.confirm_crispy_btn = tbs.Button(
+            master = self.button_container,
+            text="Confirm CRISPY Programs",
+            command = self.confirm_crispy_click,
+            bootstyle = SUCCESS,
+            width = 25
+        )
+        
         self.srm_load_btn.grid(column=0,row=1, pady=10)
         self.store_btn.grid(column=1, row=11,pady=10,sticky=W)
         self.prev_btn.grid(column=0, row=12,pady=10,padx=5)
         self.next_btn.grid(column=2, row=12,pady=10,padx=5)
         self.gen_emails_btn.grid(column=0, row=13, pady=60)
         self.clear_btn.grid(column=2, row=13,pady=60, sticky=N+S+E+W, padx = 10)
-        self.find_crispy_btn.grid(column=5, row=4, pady=10,padx=10, sticky=W)
-        
+        self.find_crispy_btn.grid(column=6, row=6, pady=10,padx=10, sticky=W)
+        self.confirm_crispy_btn.grid(column=6, row=6, pady=10, padx=10, sticky=E)
+    
     def create_labels(self):    
         self.title_lbl = tbs.Label(
             master = self.header_container,
@@ -238,13 +251,11 @@ class Tails_Tab(tbs.Frame):
         self.cage_num_lbl.grid(column=0,row=8, pady=10)
         self.ngs_date_lbl.grid(column=0, row=9, pady=10)
         self.ngs_date_error_lbl.grid(column=2, row=9)
-        self.crispy_status_lbl.grid(column=5, row=3)
+        self.crispy_status_lbl.grid(column=6, row=7,sticky=W+E)
         self.injection_lbl.grid(column=0, row=10, pady=10)
         self.success_num_lbl.grid(column=2,row=4,sticky=S)
         self.edit_size_lbl.grid(column=2,row=6,sticky=S)
         self.submitted_num_lbl.grid(column=3,row=4,sticky=S)
-        
-        
         
     def create_comboxes(self):
         
@@ -316,7 +327,12 @@ class Tails_Tab(tbs.Frame):
             {"text":'Sample Format'},
             {"text":'Sample Type'},
             {"text":'Success'},
+            {"text":'Num Success'},
+            {"text":'Num Submitted'},
             {"text":'Edit'},
+            {"text":'Edit Size'},
+            {"text":'TCU/NEL'},
+            {"text":'Selected Programs'}
         ]
 
         self.table = Tableview(
@@ -344,7 +360,6 @@ class Tails_Tab(tbs.Frame):
             {"text":'Selected'}
         ]
         
-        
         self.cage_table = Tableview(
             master = self.button_container,
             coldata=columns,
@@ -368,7 +383,6 @@ class Tails_Tab(tbs.Frame):
         self.ngs_date_picker = tbs.DateEntry(
             master = self.button_container,
             dateformat="%m%d%y",
-
         )
 
         self.ngs_date_picker.grid(column=1, row=9)
@@ -408,7 +422,7 @@ class Tails_Tab(tbs.Frame):
                             self.gene,
                             self.sample_num,
                             self.sample_format,
-                            self.sample_type
+                            self.sample_type,
             ))
         #refresh table with new data.
         self.table.destroy()
@@ -425,6 +439,7 @@ class Tails_Tab(tbs.Frame):
         srm_no = selected_proj_info[0]
         self.active_proj_lbl.configure(text=f"SRM: {srm_no}. PI: {pi}")
         
+        #how to check if project has been editied in gui
         if len(selected_proj_info) != 9:
             print("setting combo value")
             self.success_box.set(selected_proj_info[9])
@@ -456,7 +471,6 @@ class Tails_Tab(tbs.Frame):
         
         for info in selected_proj_info:
                 proj_appended.append(info)
-                
         
         proj_appended[1] = pick_update
         
@@ -719,19 +733,27 @@ class Tails_Tab(tbs.Frame):
         self.excel_lbl.config(text="")
         
         table.delete_rows()
+        self.cage_table.delete_rows()
         
         self.success_box.set("")
         self.edits_box.set(" ")
         self.cage_box.delete(0, 'end')
         
         
+        self.cage_table.unload_table_data()
+        self.table.unload_table_data()
         self.data = []
+        self.cage_data = []
 
     def store_clicked(self):
         
         #get combobox print
         self.success_choice = self.success_box.get()
         self.edit_choice = self.edits_box.get()
+        self.edit_size = self.edit_size_box.get()
+        self.success_num = self.success_num_box.get()
+        self.submitted_num = self.submitted_num_box.get()
+        self.injection_core = self.injection_box.get()
         #returns string. will need to split at comma and append CAGE where necessary
         self.cage_nums = self.cage_box.get().strip()
         
@@ -746,9 +768,7 @@ class Tails_Tab(tbs.Frame):
         #get row tuple where focus is (highlighted row)
         selected_proj_info = self.table.view.item(self.table.view.focus(),"values")
         
-        proj_appended=[]
-        
-        
+        proj_appended=[] 
         #transfer tuple values to list for appending and any necessary overwriting
         #if line has already been edited (len(tuple)=9), replace edit and success indecies
         if len(selected_proj_info) == 9:
@@ -761,7 +781,11 @@ class Tails_Tab(tbs.Frame):
         
         proj_appended[4] = cage_nums_str
         proj_appended.append(self.success_choice)
+        proj_appended.append(self.success_num)
+        proj_appended.append(self.submitted_num)
         proj_appended.append(self.edit_choice)
+        proj_appended.append(self.edit_size)
+        proj_appended.append(self.injection_core)
         
         #convert back to tuple to plug back into item()
         updated_proj_info = tuple(proj_appended)
@@ -840,37 +864,73 @@ class Tails_Tab(tbs.Frame):
 
         #Add cage_folders to the cage_table
         
-        self.crispy_status_lbl.configure(text="Flattening list")
         #append empty index to list for selected spot
 
-
-        #look@ for enty.  think I have to unpack the cage_dirs into variables self.cage_dir then append cage data with cariable
-
-
-        for proj in cage_dirs:
-            #add in the empty string for the selected column 
-            dir_list = list(proj)
-            for item in dir_list:
-                cage_tup = tuple([item," "])
-            #TODO
-                print(f"dir_list{dir_list}")
-                print(f"cage_tup: {cage_tup}")
-            #and convert back to tuple since treeview items must be tuples
-                self.cage_data.append(cage_tup)
-
-        print(f"cage_data: {self.cage_data}")
-        
-        self.crispy_status_lbl.configure(text="Project Folders Found")
-        
-        self.cage_table.destroy()
-        self.cage_table.load_table_data()
-        self.cage_table = self.create_cage_table()
-        
-        
-        
-        
-        
+        #check if sub_list is empty ie didnt return hits
+        if len(cage_dirs[0]) > 0:
+            for proj in cage_dirs:
+                #add in the empty string for the selected column 
+                dir_list = list(proj)
+                for item in dir_list:
+                    cage_tup = tuple([item," "])
+                #TODO
+                    print(f"dir_list{dir_list}")
+                    print(f"cage_tup: {cage_tup}")
+                #and convert back to tuple since treeview items must be tuples
+                    self.cage_data.append(cage_tup)
+            self.cage_table.destroy()
+            self.cage_table.load_table_data()
+            self.cage_table = self.create_cage_table()
+            self.crispy_status_lbl.configure(text="Project Folders Found")
             
+        else:
+            self.cage_table.unload_table_data()
+            self.cage_table.destroy()
+            self.create_cage_table()
+            self.crispy_status_lbl.configure(text="No matching projects found.")
+        
+    def confirm_crispy_click(self):
+        proj_appended=[]
+        selected_cage_proj_info = self.table.view.item(self.table.view.focus(),"values")
+        for info in selected_cage_proj_info:
+            proj_appended.append(info)
+        
+        print(f"Len of proj_appended: {len(proj_appended)}")
+        #get info from cage_table if rows are marked as Yes
+        cage_programs_info = self.cage_table.view.get_children()
+        found_programs=[]
+        selected_cage_program=[]
+        
+        print(f"proj_appended {proj_appended}")
+        
+        #check if programs have been added:
+        if len(proj_appended) == 15:
+            for item in cage_programs_info:
+                if self.cage_table.view.item(item)['values'][1] == 'Yes':
+                    selected_cage_program.append(self.cage_table.view.item(item)['values'][0])
+                    proj_appended.append(selected_cage_program)
+                print(f"You chose me!!: {selected_cage_program}")
+
+            #convert back to tuple to plug back into item()
+            updated_proj_info = tuple(proj_appended)
+            
+        else:
+            selected_cage_program=[]
+            proj_appended[-1] = []
+            for item in cage_programs_info:
+                if self.cage_table.view.item(item)['values'][1] == 'Yes':
+                    selected_cage_program.append(self.cage_table.view.item(item)['values'][0])
+                    proj_appended[-1] = selected_cage_program
+                print(f"You chose me!!: {selected_cage_program}")
+            
+        updated_proj_info = tuple(proj_appended)
+            
+        #text is normally blank, have to specifiy value update
+        self.table.view.item(self.table.view.focus(),text="",values=updated_proj_info)
+
+        
+        print(f"updated: {updated_proj_info}")
+        
 if __name__ == "__main__":
     import _emailer_gui_RUN_THIS_SCRIPT
     _emailer_gui_RUN_THIS_SCRIPT.app.mainloop()
