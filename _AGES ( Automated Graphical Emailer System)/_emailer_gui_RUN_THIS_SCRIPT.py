@@ -22,7 +22,7 @@ from tails_emailer import Tails_Tab
 app = tbs.Window(
     title="CAGE Emailer",
     themename = "superhero",
-    size=(1600,1200),
+    size=(1600,800),
     resizable=(True,True),
     
 )
@@ -56,7 +56,6 @@ note_tab.add(design_tab, text="gRNA Designs")
 note_tab.add(ngs_tab, text="NGS Analsysis")
 note_tab.add(tails_tab.container, text="Tails")
 note_tab.pack(pady=20)
-
 
 note_tab.select(tails_tab.container)
 app.mainloop()

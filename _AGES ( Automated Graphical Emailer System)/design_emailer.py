@@ -6,12 +6,9 @@ from emailer_functions import (open_file,
                                parse_signature
                             )
 import pandas as pd
-import numpy as np
-import shutil
 import os
 import win32com.client
 import glob
-import datetime
 
 
 class Design_Tab(tbs.Frame):
@@ -43,6 +40,7 @@ class Design_Tab(tbs.Frame):
 
     def create_buttons(self):
         
+
         self.srm_load_btn = tbs.Button(
             master = self.button_container,
             text = "Select SRM Template",
@@ -265,7 +263,7 @@ class Design_Tab(tbs.Frame):
 
                 body=f"""{greeting},
                 <br><br>
-                Great news!  Attached are the designs, off-target analysis, and our recommendations for which gRNAs to move forward 
+                Attached are the designs, off-target analysis, and our recommendations for which gRNAs to move forward 
                 with for your {gene} ({scope}).
                 <br><br>
                 Please let me know if you have any questions or if you would like to move forward with our recommendations.
@@ -289,7 +287,7 @@ class Design_Tab(tbs.Frame):
             #copies either Jon or Barnanda depending on who sent the email
             email_cc = ["Shondra Miller"]
             if initial_choice == "JK":
-                email_cc.append("Baranda Hanson")
+                email_cc.append("Baranda Hansen")
             else:
                 email_cc.append("Jon Klein")
             
@@ -317,12 +315,20 @@ class Design_Tab(tbs.Frame):
 
         def _email_writer_multi(project_df, initial_choice):
             
+            
             projects = project_df.values.tolist()
             
             #initizlie all the lsit at once
             srm_order_num, pi, requester, project_num, scope, cell_line, objective, gene, line_lead = ([] for i in range(9))
             #unpacked nested list into individual list
             srm_order_num, pi, requester, project_num, scope, cell_line, objective, gene, line_lead = map(list,zip(*projects))
+            
+            def _get_subject_line(gene, srm_order_num):
+            
+                sub_line = f"gRNA Designs for {gene}, SRM order {srm_order_num}"
+                
+                return sub_line
+            
 
             def _get_attachment(email, project_num):
                 #find powerpoint
@@ -363,7 +369,7 @@ class Design_Tab(tbs.Frame):
                 
                 body = f"""{greeting},
                 <br><br>
-                Great news! Attached are the designs, off-target analysis, 
+                Attached are the designs, off-target analysis, 
                 and our recommendations for which gRNAs to move forward with for the following projects:
                 <br><br>
                 <ul>
@@ -401,11 +407,11 @@ class Design_Tab(tbs.Frame):
              #copies either Jon or Barnanda depending on who sent the email
             email_cc = ["Shondra Miller"]
             if initial_choice == "JK":
-                email_cc.append("Baranda Hanson")
+                email_cc.append("Baranda Hansen")
             else:
                 email_cc.append("Jon Klein")
                             
-            email_sub = "Projects ready for pickup"
+            email_sub = _get_subject_line(scope,srm_order_num)
 
             email = _get_attachment(email,project_num)
 

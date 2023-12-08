@@ -167,7 +167,7 @@ class Billing_Tab(tbs.Frame):
                     self.project_objective = srm[6]
                     self.gene = srm[7]
                     self.species = srm[8]
-                    self.line_lead = srm[9].split("Lead-")[1]
+                    self.line_lead = str(srm[9].split(',')[1] + ' ' +srm[9].split(',')[0]).strip()
                     self.stem_cell = srm[10]
                     
                 self.data.append((self.srm_order,
@@ -342,11 +342,17 @@ class Billing_Tab(tbs.Frame):
             
             projects = project_df.values.tolist()
             
-            #initizlie all the lsit at once
+            #initizlie all the list at once
             srm_order_num, pi, requester, project_num, scope, cell_line, objective, gene, line_lead = ([] for i in range(9))
             #unpacked nested list into individual list
             srm_order_num, pi, requester, project_num, scope, cell_line, objective, gene, line_lead = map(list,zip(*projects))
 
+            #remove duplicates form line_lead list
+            line_lead = list(set(line_lead))
+            #if more than one project lead, set line_lead to 'XXXXXXX' so Shondra can designate
+            if len(line_lead) > 1:
+                line_lead.clear()
+                line_lead.append("XXXXXXXXX")
             
             def _get_attachment(email, project_num):
                 #find powerpoint
@@ -380,9 +386,12 @@ class Billing_Tab(tbs.Frame):
                 #print(f"The bullet_list {bullet_list}")
                     
                 return bullet_list
-
-        
-            def _body_builder(srm_order_num,greeting, scope, cell_line, objective, line_lead):
+            
+            def _body_builder_multi(srm_order_num,greeting, scope, cell_line, objective, line_lead):
+                
+                if 'XXXX' not in line_lead[0]:
+                    line_lead = line_lead[0].split(" ")
+                
                 
                 bullets = _bullet_maker(srm_order_num,gene,scope, objective, cell_line)
                 
@@ -394,8 +403,8 @@ class Billing_Tab(tbs.Frame):
                 {bullets}
                 </ul>
                 <br>
-                We have a contactless pickup system in place. Please arrange a time window with XXXXX in which someone can pick 
-                up the cells and will place your frozen vials of cells into a dry ice bucket in M4170. The dry ice bucket will 
+                We have a contactless pickup system in place. Please arrange a time window with {line_lead[0]} in which someone can pick up the cells.  
+                At the agreed upon time, {line_lead[0]} will place your frozen vials of cells into a dry ice bucket in M4170. The dry ice bucket will 
                 be straight in front as you walk in. Your live cultures will be on the bottom shelf of the "Pick-up" incubator, which is labeled accordingly.
                 <br><br>
                 As always, please let me know if you have any questions.<br>
@@ -416,25 +425,32 @@ class Billing_Tab(tbs.Frame):
             
             email_recip = list(set(recip_list))
             
+            print(f"Email receip list: {email_recip}")
+            
             if len(email_recip) > 1:
                 first_names=[]
                 for req in requester:
                     first_names.append(req.split(',')[1])
-    
+
+                first_names = list(set(first_names))
                 #insert 'and' in front of last element            
                 first_names[-1] = ' and '+first_names[-1] 
      
                 greeting = f"Hi {pi[0].split(',')[1]}, {(','.join(first_names))}"
+                
             else:
-                greeting = f"Hi {pi[0].split(',')[1]}"
+                greeting = f"Hi {pi[0].split(',')[1]},"
             
-            email_cc = line_lead
+            if 'XXXX' in line_lead:
+                email_cc =""
+            else:
+                email_cc = line_lead
                             
             email_sub = "Projects ready for pickup"
 
             email = _get_attachment(email,project_num)
 
-            body = _body_builder(srm_order_num,greeting,scope,cell_line,objective, line_lead)
+            body = _body_builder_multi(srm_order_num,greeting,scope,cell_line,objective, line_lead)
 
             email.To = ";".join(email_recip)
             email.CC = ";".join(email_cc)

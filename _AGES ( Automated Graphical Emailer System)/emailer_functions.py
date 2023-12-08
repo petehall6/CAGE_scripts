@@ -41,7 +41,7 @@ def df_from_template(template):
                      'Project Objective',
                      'Target Gene Name',
                      'Species',
-                     'Comments',
+                     'Cell Line Lead',
                      'Is this a human pluripotent stem cell (hESC or hiPSC) project?'
         ]]
        

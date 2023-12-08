@@ -29,25 +29,26 @@ class Tails_Tab(tbs.Frame):
         self.button_container = tbs.Frame(self)
         self.button_container.pack(side=BOTTOM, fill=X, expand=YES, pady=(10,10))
         
-        self.excel_name = tbs.StringVar(value="")
-        self.srm_order = tbs.StringVar(value="")
-        self.PI = tbs.StringVar(value="")
-        self.requested_by = tbs.StringVar(value="")
-        self.project_number = tbs.StringVar(value="")
-        self.project_scope = tbs.StringVar(value="")
-        self.cell_line = tbs.StringVar(value="")
-        self.project_objective = tbs.StringVar(value="")
-        self.gene = tbs.StringVar(value="")
-        self.success_choice = tbs.StringVar(value="")
-        self.success_num = tbs.StringVar(value="")
-        self.submitted_num = tbs.StringVar(value="")
-        self.edit_choice = tbs.StringVar(value="")
-        self.edit_size =tbs.StringVar(value="")
-        self.injection_core = tbs.StringVar(value="")
-        self.cage_nums = tbs.StringVar(value="")
-        self.cage_dir = tbs.StringVar(value="")
-        self.dir_selected = tbs.StringVar(value="")
-        self.selected_programs = tbs.StringVar(value="")
+        self.excel_name = tbs.StringVar(value=" ")
+        self.srm_order = tbs.StringVar(value=" ")
+        self.PI = tbs.StringVar(value=" ")
+        self.requested_by = tbs.StringVar(value=" ")
+        self.project_number = tbs.StringVar(value=" ")
+        self.project_scope = tbs.StringVar(value=" ")
+        self.cell_line = tbs.StringVar(value=" ")
+        self.project_objective = tbs.StringVar(value=" ")
+        self.gene = tbs.StringVar(value=" ")
+        self.pi_department = tbs.StringVar(value=" ")
+        self.success_choice = tbs.StringVar(value=" ")
+        self.success_num = tbs.StringVar(value=" ")
+        self.submitted_num = tbs.StringVar(value=" ")
+        self.edit_choice = tbs.StringVar(value=" ")
+        self.edit_size =tbs.StringVar(value=" ")
+        self.injection_core = tbs.StringVar(value=" ")
+        self.cage_nums = tbs.StringVar(value=" ")
+        self.cage_dir = tbs.StringVar(value=" ")
+        self.dir_selected = tbs.StringVar(value=" ")
+        self.selected_programs = tbs.StringVar(value=" ")
     
         
         self.data = []
@@ -131,11 +132,11 @@ class Tails_Tab(tbs.Frame):
         )
         
         self.srm_load_btn.grid(column=0,row=1, pady=10)
-        self.store_btn.grid(column=1, row=11,pady=10,sticky=W)
-        self.prev_btn.grid(column=0, row=12,pady=10,padx=5)
-        self.next_btn.grid(column=2, row=12,pady=10,padx=5)
-        self.gen_emails_btn.grid(column=0, row=13, pady=60)
-        self.clear_btn.grid(column=2, row=13,pady=60, sticky=N+S+E+W, padx = 10)
+        self.store_btn.grid(column=1, row=12,pady=10,sticky=W)
+        self.prev_btn.grid(column=0, row=13,pady=10,padx=5)
+        self.next_btn.grid(column=2, row=13,pady=10,padx=5)
+        self.gen_emails_btn.grid(column=0, row=14, pady=60)
+        self.clear_btn.grid(column=2, row=14,pady=60, sticky=N+S+E+W, padx = 10)
         self.find_crispy_btn.grid(column=6, row=6, pady=10,padx=10, sticky=W)
         self.confirm_crispy_btn.grid(column=6, row=6, pady=10, padx=10, sticky=E)
     
@@ -239,6 +240,13 @@ class Tails_Tab(tbs.Frame):
             bootstyle = SUCCESS
         ) 
         
+        self.pi_department_lbl = tbs.Label(
+            master = self.button_container,
+            text = "Department: ",
+            font = (10),
+            bootstyle = SUCCESS
+        )
+        
         
         self.title_lbl.grid(column=1,row=0, columnspan=3, padx=20, sticky=W+E+N+S)
         self.excel_lbl.grid(column=1,row=1, pady=10, sticky=W)
@@ -253,6 +261,7 @@ class Tails_Tab(tbs.Frame):
         self.ngs_date_error_lbl.grid(column=2, row=9)
         self.crispy_status_lbl.grid(column=6, row=7,sticky=W+E)
         self.injection_lbl.grid(column=0, row=10, pady=10)
+        self.pi_department_lbl.grid(column=0, row=11, pady=10)
         self.success_num_lbl.grid(column=2,row=4,sticky=S)
         self.edit_size_lbl.grid(column=2,row=6,sticky=S)
         self.submitted_num_lbl.grid(column=3,row=4,sticky=S)
@@ -262,6 +271,7 @@ class Tails_Tab(tbs.Frame):
         outcomes = [' ','Yes','No']
         edits = [' ','KO','KI','CKO','Del','ssODN','PM','Data']
         injection = [' ', 'TCU', 'NEL']
+        department = ['CBT', 'CMB', 'Comp Bio', 'DNB', 'Pharm Sciences', 'Struct Bio', 'Tumor Bio', 'BMT', 'Infect Dis' ]
         
         self.success_box = tbs.Combobox(
             master = self.button_container,
@@ -306,6 +316,11 @@ class Tails_Tab(tbs.Frame):
             value = injection,
         )
         
+        self.pi_department_box = tbs.Combobox(
+            master = self.button_container,
+            bootstyle = "info",
+            value = department,
+        )
         
         self.success_box.grid(column=1,row=5, sticky=W+E)
         self.edits_box.grid(column=1, row=7, sticky=W+E)
@@ -314,6 +329,7 @@ class Tails_Tab(tbs.Frame):
         self.submitted_num_box.grid(column=3, row=5)
         self.edit_size_box.grid(column=2, row=7)
         self.injection_box.grid(column=1, row=10)
+        self.pi_department_box.grid(column=1, row=11)
             
     def create_table(self):
         columns = [
@@ -326,6 +342,7 @@ class Tails_Tab(tbs.Frame):
             {"text":'Number of Sample'},
             {"text":'Sample Format'},
             {"text":'Sample Type'},
+            {"text": 'Department'}, 
             {"text":'Success'},
             {"text":'Num Success'},
             {"text":'Num Submitted'},
@@ -452,9 +469,6 @@ class Tails_Tab(tbs.Frame):
         
         program_select = self.cage_table.view.item(self.cage_table.view.focus(), "values"[0])
         
-        print(f"program_sel: {program_select}")
-        print(f"program_sel[1]: {program_select[1]}")
-        
         if program_select[1] == ' ':
             pick_update = "Yes"
         elif program_select[1] == "Yes":
@@ -483,7 +497,7 @@ class Tails_Tab(tbs.Frame):
         
         signature = parse_signature()
         
-        def _email_writer_single(project_details,initial_choice):
+        def _email_writer(project_details,initial_choice):
             
             srm_order_num, pi, requester, project_num, scope, cell_line, objective, gene, line_lead = project_details
             
@@ -541,10 +555,6 @@ class Tails_Tab(tbs.Frame):
             email_recip = list(set(recip_list))
             #copies either Jon or Barnanda depending on who sent the email
             email_cc = ["Shondra Miller"]
-            if initial_choice == "JK":
-                email_cc.append("Baranda Hanson")
-            else:
-                email_cc.append("Jon Klein")
             
             
             if len(email_recip) > 1:
@@ -568,115 +578,7 @@ class Tails_Tab(tbs.Frame):
             #Display(False) loads all emails at once and gives focus back to ttk window
             email.Display(False)
 
-        def _email_writer_multi(project_df, initial_choice):
-            
-            projects = project_df.values.tolist()
-            
-            #initizlie all the lsit at once
-            srm_order_num, pi, requester, project_num, scope, cell_line, objective, gene, line_lead = ([] for i in range(9))
-            #unpacked nested list into individual list
-            srm_order_num, pi, requester, project_num, scope, cell_line, objective, gene, line_lead = map(list,zip(*projects))
-
-            def _get_attachment(email, project_num):
-                #find powerpoint
-                
-                for proj in project_num:
-                
-                    try:
-                        path = "Z:\ResearchHome\Groups\millergrp\home\common\CORE PROJECTS/"
-                        for name in glob.glob(os.path.join(path, "*{}".format(proj))):
-                            folder = name
-                        print(f"folder: {folder}")
-                        os.chdir(folder)
-                        ppt_list = glob.glob("*.pptx")
-                        latest_ppt = folder + "/" + max(ppt_list, key=os.path.getctime)
-            
-                    except:
-                        print("couldn't find slidedeck in CORE Project folder")
-                        print(f"Project Number = {proj}")
-                        latest_ppt = None
-
-                    if latest_ppt is not None:
-                        email.Attachments.Add(latest_ppt)
-                        
-                return email
         
-            def _bullet_maker(srm_order_num, gene, scope):
-                bullet_list =""
-                for order, proj_gene, proj_scope in zip(srm_order_num,gene,scope):
-                    bullet_list += (f"<li>SRM: {order}: {proj_gene} ({proj_scope})</li>")
-                    
-                print(f"The bullet_list {bullet_list}")
-                    
-                return bullet_list
-
-            def _body_builder(srm_order_num,greeting, scope, initial_choice):
-                
-                bullets = _bullet_maker(srm_order_num,gene,scope)
-                
-                body = f"""{greeting},
-                <br><br>
-                Great news! Attached are the designs, off-target analysis, 
-                and our recommendations for which gRNAs to move forward with for the following projects:
-                <br><br>
-                <ul>
-                {bullets}
-                </ul>
-                Please let me know if you have any questions or if you would like to move forward with our recommendations.
-                <br><br>
-                Best,<br>
-                {initial_choice}
-                <br><br>
-                """
-
-                return body
-            
-            outlook = win32com.client.Dispatch("Outlook.Application")
-            email = outlook.CreateItem(0)
-            
-            #removes duplicates and rephrases the greeting to a single person
-            recip_list = requester + pi
-            
-            email_recip = list(set(recip_list))
-            
-            if len(email_recip) > 1:
-                first_names=[]
-                for req in requester:
-                    first_names.append(req.split(',')[1])
-    
-                #insert 'and' in front of last element            
-                first_names[-1] = ' and '+first_names[-1] 
-     
-                greeting = f"Hi {pi[0].split(',')[1]}, {(','.join(first_names))}"
-            else:
-                greeting = f"Hi {pi[0].split(',')[1]}"
-            
-             #copies either Jon or Barnanda depending on who sent the email
-            email_cc = ["Shondra Miller"]
-            if initial_choice == "JK":
-                email_cc.append("Baranda Hanson")
-            else:
-                email_cc.append("Jon Klein")
-                            
-            email_sub = "Projects ready for pickup"
-
-            email = _get_attachment(email,project_num)
-
-            body = _body_builder(srm_order_num,greeting,scope,initial_choice)
-
-            email.To = ";".join(email_recip)
-            email.CC = ";".join(email_cc)
-
-            email.Subject = email_sub
-
-            #find html signature file in each individual userprofile
-            
-            email.HTMLBody = body + signature
-            #Display(False) loads all emails at once and gives focus back to ttk window
-            email.Display(False)
-            
-            
-            return
         #gets only rows shown in table and access those to create the emails
         intact_rows = self.table.get_rows(visible=True)
         srm_entries=[]
@@ -716,11 +618,11 @@ class Tails_Tab(tbs.Frame):
                     _email_writer_multi(pi_specifc_df) 
             else:
                     #print(f"single project: {pi_specifc_df.iloc[0][1]}")
-                    #convert back into list and pass to writer_single
+                    #convert back into list and pass to writer
                     #kept in list form since single mode was originally written and multi project was an added on feature
                     proj_details = pi_specifc_df.values.tolist()[0]
                     
-                    _email_writer_single(proj_details)
+                    _email_writer(proj_details)
                     
         return
 
@@ -747,7 +649,8 @@ class Tails_Tab(tbs.Frame):
 
     def store_clicked(self):
         
-        #get combobox print
+        #get combobox values
+        self.pi_department = self.pi_department_box.get()
         self.success_choice = self.success_box.get()
         self.edit_choice = self.edits_box.get()
         self.edit_size = self.edit_size_box.get()
@@ -765,6 +668,7 @@ class Tails_Tab(tbs.Frame):
                 cage_num_list = list(map(lambda x: x.replace(project,"CAGE"+project), cage_num_list))
         
         cage_nums_str = ",".join(cage_num_list)
+        
         #get row tuple where focus is (highlighted row)
         selected_proj_info = self.table.view.item(self.table.view.focus(),"values")
         
@@ -808,7 +712,13 @@ class Tails_Tab(tbs.Frame):
         except:#go back to the top of the list if it overruns num of rows
             self.table.view.selection_set('I001')
             self.table.view.focus('I001')
-    
+            
+        #check tableview values and populate crispy table if there
+        
+        focused_project_files = self.table.view.item(self.table.view.focus(),"values")
+        
+        print(f"next button: {focused_project_files}")
+        
     def prvbtn_click(self):
         #get current table index, strip 'I'
         curr_index = int(self.table.view.focus()[1:])
@@ -904,7 +814,7 @@ class Tails_Tab(tbs.Frame):
         print(f"proj_appended {proj_appended}")
         
         #check if programs have been added:
-        if len(proj_appended) == 15:
+        if len(proj_appended) == 16:
             for item in cage_programs_info:
                 if self.cage_table.view.item(item)['values'][1] == 'Yes':
                     selected_cage_program.append(self.cage_table.view.item(item)['values'][0])
@@ -930,6 +840,179 @@ class Tails_Tab(tbs.Frame):
 
         
         print(f"updated: {updated_proj_info}")
+    
+    
+    def generate_emails(self):
+        
+        signature = parse_signature()
+        
+        def _email_writer(project_details):
+            
+            srm_order_num, pi, requester, project_num, scope, cell_line, objective, gene, line_lead = project_details
+            
+            def _get_subject_line(scope, gene, cell_line, objective):
+            
+                if scope.upper() == "EDITED CELL POOL":
+                    sub_line = f"{gene} {cell_line} Edited Cell Pool Complete"
+                elif scope.upper() == "CELL LINE CREATION":
+                    sub_line = f"{cell_line} {gene} {objective} Cell Line Complete"
+                elif scope.upper() == "CELL FITNESS/DEPENDENCY ASSAY":
+                    sub_line = f"CelFi Assay for {gene} in {cell_line} Cells Complete"    
+                return sub_line
+            
+            def _get_attachment(email, project_num):
+                #find powerpoint
+                try:
+                    path = "Z:\ResearchHome\Groups\millergrp\home\common\CORE PROJECTS/"
+                    for name in glob.glob(os.path.join(path, "*{}".format(project_num))):
+                        folder = name
+
+                    os.chdir(folder)
+                    ppt_list = glob.glob("*.pptx")
+                    latest_ppt = folder + "/" + max(ppt_list, key=os.path.getctime)
+        
+                except:
+                    print("couldn't find slidedeck in CORE Project folder")
+                    print("Project Number = {}".format(project_num))
+                    latest_ppt = None
+
+                if latest_ppt is not None:
+                    email.Attachments.Add(latest_ppt)
+                    
+                
+                
+                return email
+        
+            def _body_builder(greeting, scope, cell_line, objective, line_lead):
+                if scope.lower() == "edited cell pool":
+
+                    body=f"""{greeting},
+                    <br><br>
+                    Great news! Your {gene} {cell_line} edited cell pool project is complete and ready for pickup.  Please see the attached slide deck for details.
+                    <br><br>
+                    The last slide is the most informative.  We were able to get over <font color=red>XX%</font> total editing in the pool with <font color=red>~XX%</font> out of frame indels.
+                    <br><br>
+                    We have a contactless pickup system in place.  Please coordinate with {line_lead.split(" ")[0]} to determine a good time window for you to pick up these cells. 
+                    During the agreed upon time, {line_lead.split(" ")[0]} will place the frozen vials of cells in a dry ice bucket in M4170. 
+                    The bucket will be on the counter in front of you when you walk in.  The door is always unlocked.  
+                    If you would like the live cultures as well, please come in the next day or so.  
+                    Your live cultures will be on the bottom shelf of the "Pick-up" incubator, which is labeled accordingly.  Please bring dry ice for the pickup.
+                    <br><br>
+                    Don't hesitate to contact me if you have any questions.
+                    <br><br>
+                    Best,
+                    <br><br>
+                    <br><br>                
+                    """
+                    
+                elif scope.lower() == "cell fitness/dependency assay":
+                    body=f"""{greeting},
+                    <br><br>
+                    Great news! Your {gene} {cell_line} fitness assay is complete. Please see the attached slide deck for details.
+                    <br><br>
+                    We do/do not see a strong dependency for this gene in this background.
+                    <br><br>
+                    Please let me know if you have any questions.
+                    <br><br>
+                    Best,
+                    <br><br>
+                    <br><br>
+                    """
+                    
+                else: 
+                    body=f"""{greeting},
+                    <br><br>
+                    Great news! Your {cell_line} {gene} {objective} project is complete and ready for pick up.  Please see the attached slide deck for details.
+                    <br><br>
+                    We have a contactless pickup system in place.  Please coordinate with {line_lead.split(" ")[0]} to determine a good time window for you to pick up these cells. 
+                    During the agreed upon time, {line_lead.split(" ")[0]} will place the frozen vials of cells in a dry ice bucket in M4170. 
+                    The bucket will be on the counter in front of you when you walk in.  The door is always unlocked.  
+                    Your live cultures will be on the bottom shelf of the "Pick-up" incubator, which is labeled accordingly.  Please bring dry ice for the pickup.
+                    <br><br>
+                    Best,
+                    <br><br>
+                    <br><br>
+                    """
+                    
+                return body
+            
+            def _update_mice_excel():
+                
+                
+                return
+        #mail object generator
+            outlook = win32com.client.Dispatch("Outlook.Application")
+            email = outlook.CreateItem(0)
+            
+            #removes duplicates and rephrases the greeting to a single person
+            recip_list = [requester,pi]
+            email_recip = list(set(recip_list))
+            
+            if len(email_recip) > 1:
+                greeting = f"Hi {pi.split(',')[1]} and {requester.split(',')[1]}"
+            else:
+                greeting = f"Hi {pi.split(',')[1]}"
+            
+            email_cc = [line_lead]
+                            
+            email_sub = _get_subject_line(scope,gene,cell_line, objective)
+
+            email = _get_attachment(email,project_num)
+
+            body = _body_builder(greeting,scope,cell_line,objective, line_lead)
+
+            email.To = ";".join(email_recip)
+            email.CC = ";".join(email_cc).replace(".","")
+
+            email.bcc = "Shaina Porter"
+            email.Subject = email_sub
+
+            #find html signature file in each individual userprofile
+            
+            email.HTMLBody = body + signature
+            #Display(False) loads all emails at once and gives focus back to ttk window
+            email.Display(False)
+
+        #gets only rows shown in table and access those to create the emails
+        intact_rows = self.table.get_rows(visible=True)
+        srm_entries=[]
+        for row in intact_rows:
+            srm_entries.append(row.values)
+
+        #convert to df to create pi_specific sub frame
+        columns = [
+                     'SRM Order #',
+                     'PI',
+                     'Requested By',
+                     'Project Number',
+                     'Project Scope',
+                     'Cell Line of Choice',
+                     'Project Objective',
+                     'Target Gene Name',
+                     'Line Lead',
+        ]
+        
+        srm_entries_df = pd.DataFrame(srm_entries, columns=columns)
+        
+        print(srm_entries_df)
+        
+        #get a list of unique PIs in request
+        pi_list = list(set(srm_entries_df["PI"].values.tolist()))
+
+        #loop create pi specific df by loop though srm_df matching for pi name
+
+        for pi in pi_list:
+            pi_specifc_df = srm_entries_df.loc[srm_entries_df['PI'] == pi]
+
+                    #print(f"single project: {pi_specifc_df.iloc[0][1]}")
+                    #convert back into list and pass to writer
+                    #kept in list form since single mode was originally written and multi project was an added on feature
+            proj_details = pi_specifc_df.values.tolist()[0]
+            
+            _email_writer(proj_details)
+                    
+        return
+   
         
 if __name__ == "__main__":
     import _emailer_gui_RUN_THIS_SCRIPT
