@@ -7,7 +7,7 @@ from emailer_functions import (clicked,
 import os
 import win32com.client
 
-class Status_Tab(tbs.Frame):
+class Status_Tab_manual(tbs.Frame):
     def __init__(self, master_window):
         super().__init__(master_window, padding=(20,20))
         self.pack(fill=BOTH, expand=YES)
@@ -22,8 +22,6 @@ class Status_Tab(tbs.Frame):
         self.objective = tbs.StringVar(value="")
         self.weeks = tbs.StringVar(value="")
         self.status_choice = tbs.StringVar(value="")
-        
-        self.statuses = ['Confirmed Pool', 'Initial Screen', 'Delayed']
         
         self.create_labels()
         self.create_txtboxes()

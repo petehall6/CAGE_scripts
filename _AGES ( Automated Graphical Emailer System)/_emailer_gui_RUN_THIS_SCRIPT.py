@@ -13,7 +13,8 @@ import sys
 import os
 from billing_emailer import Billing_Tab
 from cell_drop_off_emailer import DropOff_Tab
-from status_emailer import Status_Tab
+from status_emailer_srm import Status_Tab_srm
+from status_emailer_manual import Status_Tab_manual
 from design_emailer import Design_Tab
 from ngs_emailer import NGS_Tab
 from tails_emailer import Tails_Tab
@@ -36,7 +37,8 @@ main_frame = tbs.Frame(note_tab)
 
 bill_tab = tbs.Frame(note_tab)
 drop_tab = tbs.Frame(note_tab)
-stats_tab = tbs.Frame(note_tab)
+stats_tab_srm = tbs.Frame(note_tab)
+stats_tab_man = tbs.Frame(note_tab)
 design_tab = tbs.Frame(note_tab)
 ngs_tab = tbs.Frame(note_tab)
 tails_tab = ScrolledFrame(note_tab)
@@ -44,18 +46,21 @@ tails_tab = ScrolledFrame(note_tab)
 #call individual emailer scripts to fill in tabs
 Billing_Tab(bill_tab)
 DropOff_Tab(drop_tab)
-Status_Tab(stats_tab)
+Status_Tab_srm(stats_tab_srm)
+Status_Tab_manual(stats_tab_man)
 Design_Tab(design_tab)
 NGS_Tab(ngs_tab)
 Tails_Tab(tails_tab)
 
 note_tab.add(bill_tab, text="Billing")
 note_tab.add(drop_tab, text="Cell Drop Off")
-note_tab.add(stats_tab, text="Status")
+note_tab.add(stats_tab_srm, text="Status: SRM")
+note_tab.add(stats_tab_man, text="Status: Manual")
 note_tab.add(design_tab, text="gRNA Designs")
 note_tab.add(ngs_tab, text="NGS Analsysis")
 note_tab.add(tails_tab.container, text="Tails")
 note_tab.pack(pady=20)
+
 
 note_tab.select(tails_tab.container)
 app.mainloop()

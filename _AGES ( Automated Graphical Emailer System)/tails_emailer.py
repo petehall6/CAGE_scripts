@@ -671,25 +671,34 @@ class Tails_Tab(tbs.Frame):
         
         #get row tuple where focus is (highlighted row)
         selected_proj_info = self.table.view.item(self.table.view.focus(),"values")
-        
-        proj_appended=[] 
+
+        proj_appended=[]
         #transfer tuple values to list for appending and any necessary overwriting
         #if line has already been edited (len(tuple)=9), replace edit and success indecies
         if len(selected_proj_info) == 9:
+            print(f"selected_info: {selected_proj_info}")
+            print("blank project")
             for info in selected_proj_info:
                 proj_appended.append(info)
+                
+            #now add the rest indecies to proj_append to assign by location?
+            proj_appended.extend(" "*7)
+            
+            
+            print(f"this is proj_appended: {proj_appended}  len: {len(proj_appended)}")
                 
         else:#only get first 9 tuple values
             for info in selected_proj_info[:9]:
                 proj_appended.append(info)
         
         proj_appended[4] = cage_nums_str
-        proj_appended.append(self.success_choice)
-        proj_appended.append(self.success_num)
-        proj_appended.append(self.submitted_num)
-        proj_appended.append(self.edit_choice)
-        proj_appended.append(self.edit_size)
-        proj_appended.append(self.injection_core)
+        proj_appended[9] = self.pi_department
+        proj_appended[10] = self.success_choice
+        proj_appended[11] = self.success_num
+        proj_appended[12] = self.submitted_num
+        proj_appended[13] = self.edit_choice
+        proj_appended[14] = self.edit_size
+        proj_appended[15] = self.injection_core
         
         #convert back to tuple to plug back into item()
         updated_proj_info = tuple(proj_appended)
