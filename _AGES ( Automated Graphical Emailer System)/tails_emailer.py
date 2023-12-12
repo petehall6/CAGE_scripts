@@ -271,7 +271,7 @@ class Tails_Tab(tbs.Frame):
         outcomes = [' ','Yes','No']
         edits = [' ','KO','KI','CKO','Del','ssODN','PM','Data']
         injection = [' ', 'TCU', 'NEL']
-        department = ['CBT', 'CMB', 'Comp Bio', 'DNB', 'Pharm Sciences', 'Struct Bio', 'Tumor Bio', 'BMT', 'Infect Dis' ]
+        department = [' ','CBT', 'CMB', 'Comp Bio', 'DNB', 'Pharm Sciences', 'Struct Bio', 'Tumor Bio', 'BMT', 'Infect Dis' ]
         
         self.success_box = tbs.Combobox(
             master = self.button_container,
@@ -458,12 +458,30 @@ class Tails_Tab(tbs.Frame):
         
         #how to check if project has been editied in gui
         if len(selected_proj_info) != 9:
-            print("setting combo value")
-            self.success_box.set(selected_proj_info[9])
-            self.edits_box.set(selected_proj_info[10])
+           # print("setting to treeview values")
+            self.success_num_box.delete(0, 'end')
+            self.submitted_num_box.delete(0, 'end')
+            self.edit_size_box.delete(0, 'end')
+            self.cage_box.delete(0, 'end')
+            
+            self.success_box.set(selected_proj_info[10])
+            self.success_num_box.insert(0, selected_proj_info[11]) 
+            self.submitted_num_box.insert(0, selected_proj_info[12])
+            self.edits_box.set(selected_proj_info[13])
+            self.edit_size_box.insert(0, selected_proj_info[14])
+            self.cage_box.insert(0, selected_proj_info[4])
+            self.injection_box.set(selected_proj_info[15])
+            self.pi_department_box.set(selected_proj_info[9])
+            
         else:
             self.success_box.set(" ")
             self.edits_box.set(" ")
+            self.injection_box.set(" ")
+            self.pi_department_box.set(" ")
+            self.success_num_box.delete(0, 'end')
+            self.submitted_num_box.delete(0, 'end')
+            self.edit_size_box.delete(0, 'end')
+            self.cage_box.delete(0, 'end')
 
     def cage_table_clicked(self,event):
         
@@ -481,8 +499,7 @@ class Tails_Tab(tbs.Frame):
         selected_proj_info = self.cage_table.view.item(self.cage_table.view.focus(),"values")
         
         proj_appended=[]
-        
-        
+    
         for info in selected_proj_info:
                 proj_appended.append(info)
         
@@ -492,139 +509,6 @@ class Tails_Tab(tbs.Frame):
         updated_proj_info = tuple(proj_appended)
         #text is normally blank, have to specifiy value update
         self.cage_table.view.item(self.cage_table.view.focus(),text="",values=updated_proj_info)
-
-    def generate_emails(self):
-        
-        signature = parse_signature()
-        
-        def _email_writer(project_details,initial_choice):
-            
-            srm_order_num, pi, requester, project_num, scope, cell_line, objective, gene, line_lead = project_details
-            
-            def _get_subject_line(gene, srm_order_num):
-            
-                sub_line = f"gRNA Designs for {gene}, SRM order {srm_order_num}"
-                
-                return sub_line
-            
-            def _get_attachment(email, project_num):
-                #find powerpoint
-                try:
-                    path = "Z:\ResearchHome\Groups\millergrp\home\common\CORE PROJECTS/"
-                    for name in glob.glob(os.path.join(path, "*{}".format(project_num))):
-                        folder = name
-
-                    os.chdir(folder)
-                    ppt_list = glob.glob("*.pptx")
-                    latest_ppt = folder + "/" + max(ppt_list, key=os.path.getctime)
-        
-                except:
-                    print("couldn't find slidedeck in CORE Project folder")
-                    print("Project Number = {}".format(project_num))
-                    latest_ppt = None
-
-                if latest_ppt is not None:
-                    email.Attachments.Add(latest_ppt)
-
-                return email
-        
-            def _body_builder(greeting, gene, scope, initial_choice):
-
-                body=f"""{greeting},
-                <br><br>
-                Great news!  Attached are the designs, off-target analysis, and our recommendations for which gRNAs to move forward 
-                with for your {gene} ({scope}).
-                <br><br>
-                Please let me know if you have any questions or if you would like to move forward with our recommendations.
-                <br><br>
-                Best,
-                <br><br>
-                {initial_choice}
-                <br><br>
-                """
-                    
-                return body
-            
-            
-        #mail object generator
-            outlook = win32com.client.Dispatch("Outlook.Application")
-            email = outlook.CreateItem(0)
-            
-            #removes duplicates and rephrases the greeting to a single person
-            recip_list = [requester,pi]
-            email_recip = list(set(recip_list))
-            #copies either Jon or Barnanda depending on who sent the email
-            email_cc = ["Shondra Miller"]
-            
-            
-            if len(email_recip) > 1:
-                greeting = f"Hi {pi.split(',')[1]} and {requester.split(',')[1]}"
-            else:
-                greeting = f"Hi {pi.split(',')[1]}"
-                            
-            email_sub = _get_subject_line(scope,srm_order_num)
-
-            email = _get_attachment(email,project_num)
-
-            body = _body_builder(greeting,gene,scope,initial_choice)
-
-            email.To = ";".join(email_recip)
-            email.CC = ";".join(email_cc).replace(".","")
-            email.Subject = email_sub
-
-            #find html signature file in each individual userprofile
-            email.HTMLBody = body + signature
-            
-            #Display(False) loads all emails at once and gives focus back to ttk window
-            email.Display(False)
-
-        
-        #gets only rows shown in table and access those to create the emails
-        intact_rows = self.table.get_rows(visible=True)
-        srm_entries=[]
-        for row in intact_rows:
-            srm_entries.append(row.values)
-
-        #convert to df to create pi_specific sub frame
-        columns = [
-                     'SRM Order #',
-                     'PI',
-                     'Requested By',
-                     'Project Number',
-                     'Project Scope',
-                     'Cell Line of Choice',
-                     'Project Objective',
-                     'Target Gene Name',
-                     'Line Lead',
-        ]
-        
-        srm_entries_df = pd.DataFrame(srm_entries, columns=columns)
-        
-        print(srm_entries_df)
-        
-        #get a list of unique PIs in request
-        pi_list = list(set(srm_entries_df["PI"].values.tolist()))
-
-        #loop create pi specific df by loop though srm_df matching for pi name
-
-        for pi in pi_list:
-            pi_specifc_df = srm_entries_df.loc[srm_entries_df['PI'] == pi]
-
-            #check for number of rows and pass to either multi or single project format
-            #multiple entries per PI
-            if pi_specifc_df.shape[0] > 1:
-                    #print(f"Multiple projects: {pi_specifc_df.iloc[0][1]}")
-                    #pass to body_builder_multi
-                    _email_writer_multi(pi_specifc_df) 
-            else:
-                    #print(f"single project: {pi_specifc_df.iloc[0][1]}")
-                    #convert back into list and pass to writer
-                    #kept in list form since single mode was originally written and multi project was an added on feature
-                    proj_details = pi_specifc_df.values.tolist()[0]
-                    
-                    _email_writer(proj_details)
-                    
-        return
 
     def clear_controls(self):
         
@@ -639,8 +523,13 @@ class Tails_Tab(tbs.Frame):
         
         self.success_box.set("")
         self.edits_box.set(" ")
-        self.cage_box.delete(0, 'end')
+        self.injection_box.set(" ")
+        self.pi_department_box.set(" ")
         
+        self.success_num_box.delete(0, 'end')
+        self.submitted_num_box.delete(0, 'end')
+        self.cage_box.delete(0, 'end')
+        self.edit_size_box.delete(0, 'end')
         
         self.cage_table.unload_table_data()
         self.table.unload_table_data()
@@ -648,6 +537,14 @@ class Tails_Tab(tbs.Frame):
         self.cage_data = []
 
     def store_clicked(self):
+        #clear values so they dont get wrongly overwritten or appended
+        self.pi_department = ''
+        self.success_choice = ''
+        self.edit_choice = ''
+        self.edit_size = ''
+        self.success_num = ''
+        self.submitted_num = ''
+        self.injection_core = ''
         
         #get combobox values
         self.pi_department = self.pi_department_box.get()
@@ -676,20 +573,15 @@ class Tails_Tab(tbs.Frame):
         #transfer tuple values to list for appending and any necessary overwriting
         #if line has already been edited (len(tuple)=9), replace edit and success indecies
         if len(selected_proj_info) == 9:
-            print(f"selected_info: {selected_proj_info}")
-            print("blank project")
             for info in selected_proj_info:
                 proj_appended.append(info)
-                
-            #now add the rest indecies to proj_append to assign by location?
-            proj_appended.extend(" "*7)
-            
-            
-            print(f"this is proj_appended: {proj_appended}  len: {len(proj_appended)}")
                 
         else:#only get first 9 tuple values
             for info in selected_proj_info[:9]:
                 proj_appended.append(info)
+            #print(f"Edited project: {proj_appended}")
+        #brings proj_appended up to 16 indicies
+        proj_appended.extend(" "*7)
         
         proj_appended[4] = cage_nums_str
         proj_appended[9] = self.pi_department
@@ -705,28 +597,26 @@ class Tails_Tab(tbs.Frame):
         #text is normally blank, have to specifiy value update
         self.table.view.item(self.table.view.focus(),text="",values=updated_proj_info)
 
+       #print(f"updated info: {updated_proj_info}")
+
     def nextbtn_click(self):
         #get current table index
         curr_index = int(self.table.view.focus()[1:])
-        print(curr_index)
         
         #add 1 and any necessary 0's to make it 00n.  
         next_index = str("I"+(str(curr_index+1).zfill(3)))
-        print(f"next index: {next_index}")
         #loop back through list
         try:
             self.table.view.selection_set(next_index)
             self.table.view.focus(next_index)
-            print(f"Moved focus: {next_index}")
         except:#go back to the top of the list if it overruns num of rows
             self.table.view.selection_set('I001')
             self.table.view.focus('I001')
             
         #check tableview values and populate crispy table if there
-        
         focused_project_files = self.table.view.item(self.table.view.focus(),"values")
         
-        print(f"next button: {focused_project_files}")
+        #print(f"focused values: {focused_project_files}")
         
     def prvbtn_click(self):
         #get current table index, strip 'I'
@@ -739,7 +629,6 @@ class Tails_Tab(tbs.Frame):
         try:
             self.table.view.selection_set(next_index)
             self.table.view.focus(next_index)
-            print(f"Moved focus: {next_index}")
         except:
             #go back to the bottom of the list and loop back
             max_row = str("I"+str(len(self.table.get_rows())).zfill(3))
@@ -753,9 +642,9 @@ class Tails_Tab(tbs.Frame):
         cage_dirs = []
         
         self.ngs_date_error_lbl.configure(text="")
+        self.crispy_status_lbl.configure(text="")
         
         NGS_DIR = "Z:/ResearchHome/Groups/millergrp/home/common/NGS"
-        
         
         ngs_run_date = self.ngs_date_picker.entry.get()
         
@@ -763,7 +652,7 @@ class Tails_Tab(tbs.Frame):
         try:       
             os.chdir(os.path.join(NGS_DIR,ngs_run_date,"joined"))
             self.ngs_date_error_lbl.configure(text="NGS run found.", bootstyle=SUCCESS)        
-            print(os.getcwd())
+           # print(os.getcwd())
         except:
             self.ngs_date_error_lbl.configure(text="NGS run not found. Pick another date.")
         
@@ -772,14 +661,14 @@ class Tails_Tab(tbs.Frame):
         selected_proj_info = self.table.view.item(self.table.view.focus(),"values"[0])
         #parse CAGE numbers
         cage_nums = selected_proj_info[4].split(",")
-        print(cage_nums)
+      #  print(cage_nums)
         
         for num in cage_nums:
             self.crispy_status_lbl.configure(text=f"Searching {num}")
             #find all matches with CAGe# and only return directories
             cage_dirs.append(list([name for name in glob.glob(f"{num}*") if os.path.isdir(name)]))
 
-        print(f"cage dirs: {cage_dirs}")
+       # print(f"cage dirs: {cage_dirs}")
 
         #Add cage_folders to the cage_table
         
@@ -793,20 +682,20 @@ class Tails_Tab(tbs.Frame):
                 for item in dir_list:
                     cage_tup = tuple([item," "])
                 #TODO
-                    print(f"dir_list{dir_list}")
-                    print(f"cage_tup: {cage_tup}")
+                   # print(f"dir_list{dir_list}")
+                  #  print(f"cage_tup: {cage_tup}")
                 #and convert back to tuple since treeview items must be tuples
                     self.cage_data.append(cage_tup)
             self.cage_table.destroy()
             self.cage_table.load_table_data()
             self.cage_table = self.create_cage_table()
-            self.crispy_status_lbl.configure(text="Project Folders Found")
+            self.crispy_status_lbl.configure(text="Project Folders Found", bootstyle='SUCCESS')
             
         else:
             self.cage_table.unload_table_data()
             self.cage_table.destroy()
             self.create_cage_table()
-            self.crispy_status_lbl.configure(text="No matching projects found.")
+            self.crispy_status_lbl.configure(text=f"No matching projects found for: {self.cage_box.get()} .", bootstyle='DANGER')
         
     def confirm_crispy_click(self):
         proj_appended=[]
@@ -814,13 +703,13 @@ class Tails_Tab(tbs.Frame):
         for info in selected_cage_proj_info:
             proj_appended.append(info)
         
-        print(f"Len of proj_appended: {len(proj_appended)}")
+       # print(f"Len of proj_appended: {len(proj_appended)}")
         #get info from cage_table if rows are marked as Yes
         cage_programs_info = self.cage_table.view.get_children()
         found_programs=[]
         selected_cage_program=[]
         
-        print(f"proj_appended {proj_appended}")
+      #  print(f"proj_appended {proj_appended}")
         
         #check if programs have been added:
         if len(proj_appended) == 16:
@@ -828,7 +717,7 @@ class Tails_Tab(tbs.Frame):
                 if self.cage_table.view.item(item)['values'][1] == 'Yes':
                     selected_cage_program.append(self.cage_table.view.item(item)['values'][0])
                     proj_appended.append(selected_cage_program)
-                print(f"You chose me!!: {selected_cage_program}")
+               # print(f"You chose me!!: {selected_cage_program}")
 
             #convert back to tuple to plug back into item()
             updated_proj_info = tuple(proj_appended)
@@ -840,18 +729,27 @@ class Tails_Tab(tbs.Frame):
                 if self.cage_table.view.item(item)['values'][1] == 'Yes':
                     selected_cage_program.append(self.cage_table.view.item(item)['values'][0])
                     proj_appended[-1] = selected_cage_program
-                print(f"You chose me!!: {selected_cage_program}")
+              #  print(f"You chose me!!: {selected_cage_program}")
             
         updated_proj_info = tuple(proj_appended)
             
         #text is normally blank, have to specifiy value update
         self.table.view.item(self.table.view.focus(),text="",values=updated_proj_info)
-
-        
-        print(f"updated: {updated_proj_info}")
+                
+     #   print(f"updated: {updated_proj_info}")
     
     
     def generate_emails(self):
+        
+        a = self.table.view.item(self.table.get_row(visible=True))
+        
+        input(f"the focused row: {a}")
+        
+        
+        
+        
+        
+        
         
         signature = parse_signature()
         
@@ -881,8 +779,8 @@ class Tails_Tab(tbs.Frame):
                     latest_ppt = folder + "/" + max(ppt_list, key=os.path.getctime)
         
                 except:
-                    print("couldn't find slidedeck in CORE Project folder")
-                    print("Project Number = {}".format(project_num))
+                  #  print("couldn't find slidedeck in CORE Project folder")
+                  #  print("Project Number = {}".format(project_num))
                     latest_ppt = None
 
                 if latest_ppt is not None:
@@ -985,40 +883,45 @@ class Tails_Tab(tbs.Frame):
         #gets only rows shown in table and access those to create the emails
         intact_rows = self.table.get_rows(visible=True)
         srm_entries=[]
+        
+        for row in intact_rows:
+            input(row)
+        
+        #self.table.view.item(self.table.view.focus(),text="",values=updated_proj_info)
+        
+        #will return row vlaues
+        print(f"intact_rows: {intact_rows[0].values}")
         for row in intact_rows:
             srm_entries.append(row.values)
 
+        input(f"self_data: {self.data}")
+        input(f"row values: {srm_entries}")
         #convert to df to create pi_specific sub frame
         columns = [
-                     'SRM Order #',
-                     'PI',
-                     'Requested By',
-                     'Project Number',
-                     'Project Scope',
-                     'Cell Line of Choice',
-                     'Project Objective',
-                     'Target Gene Name',
-                     'Line Lead',
+                    'SRM Order #',
+                    'PI',
+                    'Requested By',
+                    'Entered By',
+                    'Project Number',
+                    'Gene',
+                    'Number of Sample',
+                    'Sample Format',
+                    'Sample Type',
+                    'Department', 
+                    'Success',
+                    'Num Success',
+                    'Num Submitted',
+                    'Edit',
+                    'Edit Size',
+                    'TCU/NEL',
+                    'Selected Programs'
         ]
         
         srm_entries_df = pd.DataFrame(srm_entries, columns=columns)
         
-        print(srm_entries_df)
-        
-        #get a list of unique PIs in request
-        pi_list = list(set(srm_entries_df["PI"].values.tolist()))
+        input(srm_entries_df)
 
-        #loop create pi specific df by loop though srm_df matching for pi name
-
-        for pi in pi_list:
-            pi_specifc_df = srm_entries_df.loc[srm_entries_df['PI'] == pi]
-
-                    #print(f"single project: {pi_specifc_df.iloc[0][1]}")
-                    #convert back into list and pass to writer
-                    #kept in list form since single mode was originally written and multi project was an added on feature
-            proj_details = pi_specifc_df.values.tolist()[0]
-            
-            _email_writer(proj_details)
+        #_email_writer(proj_details)
                     
         return
    
