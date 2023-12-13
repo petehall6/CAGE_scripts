@@ -131,6 +131,14 @@ class Tails_Tab(tbs.Frame):
             width = 25
         )
         
+        self.clear_crispy_btn = tbs.Button(
+            master = self.button_container,
+            text = "Clear CRISPY files",
+            command = self.clear_crispy_click,
+            bootstyle = DANGER,
+            width = 25
+        )
+        
         self.srm_load_btn.grid(column=0,row=1, pady=10)
         self.store_btn.grid(column=1, row=12,pady=10,sticky=W)
         self.prev_btn.grid(column=0, row=13,pady=10,padx=5)
@@ -139,6 +147,7 @@ class Tails_Tab(tbs.Frame):
         self.clear_btn.grid(column=2, row=14,pady=60, sticky=N+S+E+W, padx = 10)
         self.find_crispy_btn.grid(column=6, row=6, pady=10,padx=10, sticky=W)
         self.confirm_crispy_btn.grid(column=6, row=6, pady=10, padx=10, sticky=E)
+        self.clear_crispy_btn.grid(column=6, row=8, pady=10, padx=10, sticky=E+W)
     
     def create_labels(self):    
         self.title_lbl = tbs.Label(
@@ -638,7 +647,9 @@ class Tails_Tab(tbs.Frame):
     def find_crispy_files(self):
         
         self.cage_table.unload_table_data()
-        self.cage_data=[]
+        self.cage_table.destroy()
+        self.cage_data = []
+        self.create_cage_table() 
         cage_dirs = []
         
         self.ngs_date_error_lbl.configure(text="")
@@ -668,12 +679,6 @@ class Tails_Tab(tbs.Frame):
             #find all matches with CAGe# and only return directories
             cage_dirs.append(list([name for name in glob.glob(f"{num}*") if os.path.isdir(name)]))
 
-       # print(f"cage dirs: {cage_dirs}")
-
-        #Add cage_folders to the cage_table
-        
-        #append empty index to list for selected spot
-
         #check if sub_list is empty ie didnt return hits
         if len(cage_dirs[0]) > 0:
             for proj in cage_dirs:
@@ -681,11 +686,10 @@ class Tails_Tab(tbs.Frame):
                 dir_list = list(proj)
                 for item in dir_list:
                     cage_tup = tuple([item," "])
-                #TODO
-                   # print(f"dir_list{dir_list}")
-                  #  print(f"cage_tup: {cage_tup}")
                 #and convert back to tuple since treeview items must be tuples
                     self.cage_data.append(cage_tup)
+                    
+                    
             self.cage_table.destroy()
             self.cage_table.load_table_data()
             self.cage_table = self.create_cage_table()
@@ -735,23 +739,29 @@ class Tails_Tab(tbs.Frame):
             
         #text is normally blank, have to specifiy value update
         self.table.view.item(self.table.view.focus(),text="",values=updated_proj_info)
-                
-     #   print(f"updated: {updated_proj_info}")
-    
-    
+        
+        #get index of current edit
+        curr_index = int(self.table.view.focus()[1:])-1
+        print(f"cur_index: {curr_index}")
+         #insert updated values at that index
+        self.data[curr_index] = updated_proj_info
+        
+    def clear_crispy_click(self):
+        
+        self.cage_table.unload_table_data()
+        self.cage_table.destroy()
+        self.cage_data = []
+        self.create_cage_table()      
+
     def generate_emails(self):
         
-        a = self.table.view.item(self.table.get_row(visible=True))
-        
-        input(f"the focused row: {a}")
-        
-        
-        
-        
-        
-        
-        
         signature = parse_signature()
+        self.table.unload_table_data()
+        self.table.destroy()
+        self.create_table()
+        self.table.load_table_data()
+        print(self.data)
+        
         
         def _email_writer(project_details):
             
@@ -885,17 +895,12 @@ class Tails_Tab(tbs.Frame):
         srm_entries=[]
         
         for row in intact_rows:
-            input(row)
+            print(f"Row values: {row.values}")
+            
+        input("hold")
         
         #self.table.view.item(self.table.view.focus(),text="",values=updated_proj_info)
-        
-        #will return row vlaues
-        print(f"intact_rows: {intact_rows[0].values}")
-        for row in intact_rows:
-            srm_entries.append(row.values)
 
-        input(f"self_data: {self.data}")
-        input(f"row values: {srm_entries}")
         #convert to df to create pi_specific sub frame
         columns = [
                     'SRM Order #',
