@@ -15,6 +15,8 @@ import glob
 import datetime
 from itertools import chain
 import time
+import openpyxl as opx
+from openpyxl import Workbook
 
 class Tails_Tab(tbs.Frame):
     def __init__(self, master_window):
@@ -49,13 +51,11 @@ class Tails_Tab(tbs.Frame):
         self.cage_dir = tbs.StringVar(value=" ")
         self.dir_selected = tbs.StringVar(value=" ")
         self.selected_programs = tbs.StringVar(value=" ")
-    
-        
+        self.ngs_date = tbs.StringVar(value="")
+        self.notes = tbs.StringVar(value="")
         self.data = []
         self.cage_data = []
         self.selected_projects = []
-        
-        
         
         self.create_labels()
         self.create_buttons()
@@ -256,6 +256,13 @@ class Tails_Tab(tbs.Frame):
             bootstyle = SUCCESS
         )
         
+        self.notes_lbl = tbs.Label(
+            master = self.button_container,
+            text = "Notes: ",
+            font = (10),
+            bootstyle = SUCCESS
+        )
+        
         
         self.title_lbl.grid(column=1,row=0, columnspan=3, padx=20, sticky=W+E+N+S)
         self.excel_lbl.grid(column=1,row=1, pady=10, sticky=W)
@@ -274,6 +281,7 @@ class Tails_Tab(tbs.Frame):
         self.success_num_lbl.grid(column=2,row=4,sticky=S)
         self.edit_size_lbl.grid(column=2,row=6,sticky=S)
         self.submitted_num_lbl.grid(column=3,row=4,sticky=S)
+        self.notes_lbl.grid(column=6, row=9,sticky=W)
         
     def create_comboxes(self):
         
@@ -331,14 +339,21 @@ class Tails_Tab(tbs.Frame):
             value = department,
         )
         
-        self.success_box.grid(column=1,row=5, sticky=W+E)
-        self.edits_box.grid(column=1, row=7, sticky=W+E)
-        self.cage_box.grid(column=1, row=8, sticky=W+E)
+        self.notes_box = tbs.Entry(
+            master = self.button_container,
+            bootstyle = "info",
+            width= 45,
+        )
+        
+        self.success_box.grid(column=1,row=5) 
+        self.edits_box.grid(column=1, row=7)
+        self.cage_box.grid(column=1, row=8)
         self.success_num_box.grid(column=2, row=5)
         self.submitted_num_box.grid(column=3, row=5)
         self.edit_size_box.grid(column=2, row=7)
         self.injection_box.grid(column=1, row=10)
         self.pi_department_box.grid(column=1, row=11)
+        self.notes_box.grid(column=6, row=9,sticky=E)
             
     def create_table(self):
         columns = [
@@ -358,7 +373,9 @@ class Tails_Tab(tbs.Frame):
             {"text":'Edit'},
             {"text":'Edit Size'},
             {"text":'TCU/NEL'},
-            {"text":'Selected Programs'}
+            {"text":'NGS Date'},
+            {"text":'Selected Programs'},
+            {"text":'Notes'}
         ]
 
         self.table = Tableview(
@@ -465,13 +482,14 @@ class Tails_Tab(tbs.Frame):
         srm_no = selected_proj_info[0]
         self.active_proj_lbl.configure(text=f"SRM: {srm_no}. PI: {pi}")
         
-        #how to check if project has been editied in gui
+        #entry has been updated
         if len(selected_proj_info) != 9:
            # print("setting to treeview values")
             self.success_num_box.delete(0, 'end')
             self.submitted_num_box.delete(0, 'end')
             self.edit_size_box.delete(0, 'end')
             self.cage_box.delete(0, 'end')
+            self.notes_box.delete(0, 'end')
             
             self.success_box.set(selected_proj_info[10])
             self.success_num_box.insert(0, selected_proj_info[11]) 
@@ -481,6 +499,7 @@ class Tails_Tab(tbs.Frame):
             self.cage_box.insert(0, selected_proj_info[4])
             self.injection_box.set(selected_proj_info[15])
             self.pi_department_box.set(selected_proj_info[9])
+            self.notes_box.insert(0, selected_proj_info[18])
             
         else:
             self.success_box.set(" ")
@@ -491,6 +510,7 @@ class Tails_Tab(tbs.Frame):
             self.submitted_num_box.delete(0, 'end')
             self.edit_size_box.delete(0, 'end')
             self.cage_box.delete(0, 'end')
+            self.notes_box.delete(0, 'end')
 
     def cage_table_clicked(self,event):
         
@@ -534,11 +554,13 @@ class Tails_Tab(tbs.Frame):
         self.edits_box.set(" ")
         self.injection_box.set(" ")
         self.pi_department_box.set(" ")
+        self.ngs_date_picker.selection_clear()
         
         self.success_num_box.delete(0, 'end')
         self.submitted_num_box.delete(0, 'end')
         self.cage_box.delete(0, 'end')
         self.edit_size_box.delete(0, 'end')
+        self.notes_box.delete(0, 'end')
         
         self.cage_table.unload_table_data()
         self.table.unload_table_data()
@@ -554,6 +576,7 @@ class Tails_Tab(tbs.Frame):
         self.success_num = ''
         self.submitted_num = ''
         self.injection_core = ''
+        self.notes = ''
         
         #get combobox values
         self.pi_department = self.pi_department_box.get()
@@ -563,10 +586,15 @@ class Tails_Tab(tbs.Frame):
         self.success_num = self.success_num_box.get()
         self.submitted_num = self.submitted_num_box.get()
         self.injection_core = self.injection_box.get()
+        self.notes = self.notes_box.get()
+
         #returns string. will need to split at comma and append CAGE where necessary
         self.cage_nums = self.cage_box.get().strip()
         
         cage_num_list = self.cage_nums.split(",")
+        
+        self.ngs_run_date = self.ngs_date_picker.entry.get()
+        
         
         #check if any letters are in the item and replace with corrected format
         for project in cage_num_list:
@@ -589,9 +617,13 @@ class Tails_Tab(tbs.Frame):
             for info in selected_proj_info[:9]:
                 proj_appended.append(info)
             #print(f"Edited project: {proj_appended}")
-        #brings proj_appended up to 16 indicies
-        proj_appended.extend(" "*7)
+        #brings proj_appended up to 18 indicies
         
+        
+        
+        
+        proj_appended.extend(" "*10)
+        print(f"this is the length of proj_appended: {len(proj_appended)}")
         proj_appended[4] = cage_nums_str
         proj_appended[9] = self.pi_department
         proj_appended[10] = self.success_choice
@@ -600,6 +632,8 @@ class Tails_Tab(tbs.Frame):
         proj_appended[13] = self.edit_choice
         proj_appended[14] = self.edit_size
         proj_appended[15] = self.injection_core
+        proj_appended[16] = self.ngs_run_date
+        proj_appended[18] = self.notes
         
         #convert back to tuple to plug back into item()
         updated_proj_info = tuple(proj_appended)
@@ -621,11 +655,6 @@ class Tails_Tab(tbs.Frame):
         except:#go back to the top of the list if it overruns num of rows
             self.table.view.selection_set('I001')
             self.table.view.focus('I001')
-            
-        #check tableview values and populate crispy table if there
-        focused_project_files = self.table.view.item(self.table.view.focus(),"values")
-        
-        #print(f"focused values: {focused_project_files}")
         
     def prvbtn_click(self):
         #get current table index, strip 'I'
@@ -707,33 +736,28 @@ class Tails_Tab(tbs.Frame):
         for info in selected_cage_proj_info:
             proj_appended.append(info)
         
-       # print(f"Len of proj_appended: {len(proj_appended)}")
         #get info from cage_table if rows are marked as Yes
         cage_programs_info = self.cage_table.view.get_children()
         found_programs=[]
         selected_cage_program=[]
         
-      #  print(f"proj_appended {proj_appended}")
-        
         #check if programs have been added:
-        if len(proj_appended) == 16:
+        if len(proj_appended) == 19:
             for item in cage_programs_info:
                 if self.cage_table.view.item(item)['values'][1] == 'Yes':
                     selected_cage_program.append(self.cage_table.view.item(item)['values'][0])
-                    proj_appended.append(selected_cage_program)
-               # print(f"You chose me!!: {selected_cage_program}")
+                    proj_appended[17]= selected_cage_program
 
             #convert back to tuple to plug back into item()
             updated_proj_info = tuple(proj_appended)
             
         else:
             selected_cage_program=[]
-            proj_appended[-1] = []
+            proj_appended[-2] = []
             for item in cage_programs_info:
                 if self.cage_table.view.item(item)['values'][1] == 'Yes':
                     selected_cage_program.append(self.cage_table.view.item(item)['values'][0])
-                    proj_appended[-1] = selected_cage_program
-              #  print(f"You chose me!!: {selected_cage_program}")
+                    proj_appended[17] = selected_cage_program
             
         updated_proj_info = tuple(proj_appended)
             
@@ -755,13 +779,39 @@ class Tails_Tab(tbs.Frame):
 
     def generate_emails(self):
         
-        signature = parse_signature()
-        self.table.unload_table_data()
-        self.table.destroy()
-        self.create_table()
-        self.table.load_table_data()
-        print(self.data)
-        
+        def _update_excel(pi, department, gene, edit, edit_size, injection_core, cage_number, ngs_date, success_num, submitted_num):
+            
+            #open excel file
+            animal_model_xl = "Z:\ResearchHome\Groups\millergrp\home\common\Python\_pete\_AGES ( Automated Graphical Emailer System)\Completed Animal Models (CAGE) - local.xlsx"
+            
+            
+            workbook = opx.load_workbook(animal_model_xl)
+            
+            mice_sheet = workbook.active
+            
+            
+            last_row = mice_sheet.max_row
+            last_cell= mice_sheet.cell(row=last_row-1,column=1)
+            
+            print(last_row)
+            print(last_cell.value)
+            
+            
+            
+            
+            #go to 'mice' worksheet
+            
+            #find last row
+            
+            #update pi, dept, gene, edit, size, start?, end?, initials of who completed, cage#, 
+            
+            #move to 2nd sheet
+            
+            #update ngs date, cage#, submitted_num, num_success, injection, core           
+            
+            
+            
+            return
         
         def _email_writer(project_details):
             
@@ -890,46 +940,43 @@ class Tails_Tab(tbs.Frame):
             #Display(False) loads all emails at once and gives focus back to ttk window
             email.Display(False)
 
-        #gets only rows shown in table and access those to create the emails
-        intact_rows = self.table.get_rows(visible=True)
-        srm_entries=[]
-        
-        for row in intact_rows:
-            print(f"Row values: {row.values}")
+
+        table_rows = [('2665904', 'Kanneganti, Thirumala-Devi', 'Baskaran, Yogi', 'Baskaran, Yogi', 'CAGE84', 'RIPK3-mBFP2_KI', '18', 'Well of Plate', 'Tail Snip/Toe Snip', 'CBT', 'Yes', '1', '4', 'KO', '5', 'TCU', '111423', ['CAGE84_hDGCR6L_F_R_short'], 'testing_notes')]
+
+        #table_rows = self.data
+
+        for row in table_rows:
+            proj_data = list(row)
             
-        input("hold")
+            print(proj_data)
+            #unpack proj_data
+            (srm_number,
+            pi,
+            requested_by,
+            entered_by,
+            cage_number,
+            gene,
+            sample_num,
+            sample_format,
+            sample_type,
+            department,
+            success,
+            success_num,
+            submitted_num,
+            edit,
+            edit_size,
+            injection_core,
+            ngs_date,
+            cage_programs) = proj_data
+            
+            #update excel sheet
+            _update_excel(pi, department, gene, edit, edit_size, injection_core, cage_number, ngs_date, success_num, submitted_num)
+            
+            
+            
+            
         
-        #self.table.view.item(self.table.view.focus(),text="",values=updated_proj_info)
-
-        #convert to df to create pi_specific sub frame
-        columns = [
-                    'SRM Order #',
-                    'PI',
-                    'Requested By',
-                    'Entered By',
-                    'Project Number',
-                    'Gene',
-                    'Number of Sample',
-                    'Sample Format',
-                    'Sample Type',
-                    'Department', 
-                    'Success',
-                    'Num Success',
-                    'Num Submitted',
-                    'Edit',
-                    'Edit Size',
-                    'TCU/NEL',
-                    'Selected Programs'
-        ]
-        
-        srm_entries_df = pd.DataFrame(srm_entries, columns=columns)
-        
-        input(srm_entries_df)
-
-        #_email_writer(proj_details)
-                    
         return
-   
         
 if __name__ == "__main__":
     import _emailer_gui_RUN_THIS_SCRIPT
