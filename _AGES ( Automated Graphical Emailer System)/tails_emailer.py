@@ -12,9 +12,8 @@ import re
 import os
 import win32com.client
 import glob
-import datetime
+from datetime import date
 from itertools import chain
-import time
 import openpyxl as opx
 from openpyxl import Workbook
 
@@ -778,39 +777,63 @@ class Tails_Tab(tbs.Frame):
         self.create_cage_table()      
 
     def generate_emails(self):
-        
-        def _update_excel(pi, department, gene, edit, edit_size, injection_core, cage_number, ngs_date, success_num, submitted_num):
-            
+
+        def _update_excel(pi, requested_by, department, gene, edit, edit_size, injection_core, cage_number, ngs_date, success_num, submitted_num, notes):
             #open excel file
-            animal_model_xl = "Z:\ResearchHome\Groups\millergrp\home\common\Python\_pete\_AGES ( Automated Graphical Emailer System)\Completed Animal Models (CAGE) - local.xlsx"
+
+            animal_model_xl_dir = "Z:\ResearchHome\Groups\millergrp\home\common\Python\_pete\_AGES ( Automated Graphical Emailer System)\complete_animal_models.xlsx"
+            animal_model_xl ="complete_animal_models.xlsx" 
+            
+            '''df_mice = pd.read_excel(animal_model_xl, sheet_name='mice')
+            df_success = pd.read_excel(animal_model_xl, sheet_name='success_summary')
+            print(df_mice.tail())
+            print("...............")
+            print(df_success.tail())
+            
+            input()
+            '''
+
+            '''
+            #*mice sheeet columns
+            Investigator	Department	Gene name	Project type	insert size	Start date	End date	Days to completion	Initials of who completed project	Notes	CAGE Project #	
+
+            
+            #*success_summary columns
+            CAGE Project Number	NGS Date	Total Number Submitted	Number Success	Injection Core
+
+            '''
+            workbook = opx.load_workbook(animal_model_xl_dir)
+    
+            mice_sheet = workbook["mice"]
+            success_sheet = workbook["success_summary"]
+            
+            investigators = str(pi +"," + requested_by)
+            end_date = date.today().strftime("%m/%d/%Y")
+            #convert ngs_date into a date format
+            ngs_date_formatted = "\\".join([ngs_date[:2],ngs_date[2:4],'20'+str(ngs_date[4:])])
             
             
-            workbook = opx.load_workbook(animal_model_xl)
+            #update mice sheet
+            mice_new_row = [investigators, department, gene, edit, edit_size, '', end_date, '', 'PMH', notes, cage_number, notes]
+            mice_max_row = mice_sheet.max_row
+            mice_sheet.append(mice_new_row)
             
-            mice_sheet = workbook.active
+            #update success_summary
+            success_new_row = [cage_number, ngs_date_formatted, submitted_num, success_num, injection_core]
+            success_max_row = success_sheet.max_row
+            success_sheet.append(success_new_row)
             
+            workbook.save(filename=animal_model_xl_dir)
+            workbook.close()
             
-            last_row = mice_sheet.max_row
-            last_cell= mice_sheet.cell(row=last_row-1,column=1)
+            print("excel sheet modified")
             
-            print(last_row)
-            print(last_cell.value)
-            
-            
-            
-            
-            #go to 'mice' worksheet
-            
-            #find last row
-            
-            #update pi, dept, gene, edit, size, start?, end?, initials of who completed, cage#, 
-            
-            #move to 2nd sheet
-            
-            #update ngs date, cage#, submitted_num, num_success, injection, core           
-            
-            
-            
+            '''df_mice = pd.read_excel(animal_model_xl, sheet_name='mice')
+            df_success = pd.read_excel(animal_model_xl, sheet_name='success_summary')
+            print(df_mice.tail())
+            print("...............")
+            print(df_success.tail())'''
+
             return
         
         def _email_writer(project_details):
@@ -939,16 +962,12 @@ class Tails_Tab(tbs.Frame):
             email.HTMLBody = body + signature
             #Display(False) loads all emails at once and gives focus back to ttk window
             email.Display(False)
+        
 
 
-        table_rows = [('2665904', 'Kanneganti, Thirumala-Devi', 'Baskaran, Yogi', 'Baskaran, Yogi', 'CAGE84', 'RIPK3-mBFP2_KI', '18', 'Well of Plate', 'Tail Snip/Toe Snip', 'CBT', 'Yes', '1', '4', 'KO', '5', 'TCU', '111423', ['CAGE84_hDGCR6L_F_R_short'], 'testing_notes')]
-
-        #table_rows = self.data
-
-        for row in table_rows:
+        for row in self.data:
             proj_data = list(row)
             
-            print(proj_data)
             #unpack proj_data
             (srm_number,
             pi,
@@ -967,10 +986,13 @@ class Tails_Tab(tbs.Frame):
             edit_size,
             injection_core,
             ngs_date,
-            cage_programs) = proj_data
+            cage_programs,
+            notes) = proj_data
+            
+            print(f"Project data: {proj_data}")
             
             #update excel sheet
-            _update_excel(pi, department, gene, edit, edit_size, injection_core, cage_number, ngs_date, success_num, submitted_num)
+            _update_excel(pi, requested_by, department, gene, edit, edit_size, injection_core, cage_number, ngs_date, success_num, submitted_num, notes)
             
             
             

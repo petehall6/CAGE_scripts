@@ -3,7 +3,8 @@ import sys
 import openpyxl as opx
 from openpyxl import Workbook
 import pandas as pd
-
+from datetime import date
+import datetime
 
 
 
@@ -14,41 +15,48 @@ def _update_excel(pi, requested_by, department, gene, edit, edit_size, injection
     animal_model_xl ="complete_animal_models.xlsx" 
     
     '''
+    #*mice sheeet columns
     Investigator	Department	Gene name	Project type	insert size	Start date	End date	Days to completion	Initials of who completed project	Notes	CAGE Project #	
 
-    '''
     
+    #*success_summary columns
+    CAGE Project Number	NGS Date	Total Number Submitted	Number Success	Injection Core
+
+    '''
     workbook = opx.load_workbook(animal_model_xl_dir)
     
-    mice_sheet = workbook.active
+    mice_sheet = workbook["mice"]
+    success_sheet = workbook["success_summary"]
     
     investigators = str(pi +"," + requested_by)
+    end_date = date.today()
+    #convert ngs_date into a date format
+    ngs_date_formatted = "\\".join([ngs_date[:2],ngs_date[2:4],ngs_date[4:]])
     
-    new_row = [investigators, department, gene, edit, edit_size, '', ngs_date, '', 'PMH', 'N/A', cage_number, notes]
     
-    max_row = mice_sheet.max_row
+    #update mice sheet
+    mice_new_row = [investigators, department, gene, edit, edit_size, '', end_date, '', 'PMH', notes, cage_number, notes]
+    mice_max_row = mice_sheet.max_row
+    mice_sheet.append(mice_new_row)
+    
+    #update success_summary
+    success_new_row = [cage_number, ngs_date_formatted, submitted_num, success_num, injection_core]
+    success_max_row = success_sheet.max_row
+    success_sheet.append(success_new_row)
+    
    
+    #mice_sheet.delete_rows(mice_sheet.max_row, 1)
+    #uccess_sheet.delete_rows(success_sheet.max_row, 1)
     
-    
-    mice_sheet.append(new_row)
     workbook.save(animal_model_xl)
     workbook.close()
     
-    df = pd.read_excel(animal_model_xl)
-    print(f"max-row: {max_row}")
-    print(df.tail())
-    
-    
-    #go to 'mice' worksheet
-    
-    #find last row
-    
-    #update pi, dept, gene, edit, size, start?, end?, initials of who completed, cage#, 
-    
-    #move to 2nd sheet
-    
-    #update ngs date, cage#, submitted_num, num_success, injection, core           
-    
+    df_mice = pd.read_excel(animal_model_xl, sheet_name='mice')
+    df_success = pd.read_excel(animal_model_xl, sheet_name='success_summary')
+    print(df_mice.tail())
+    print("...............")
+    print(df_success.tail())
+
     
     
     return
