@@ -844,27 +844,23 @@ class Tails_Tab(tbs.Frame):
                     
                 return sub_line
             
-            def _get_attachment(email, project_num):
-                #find powerpoint
-                try:
-                    path = "Z:\ResearchHome\Groups\millergrp\home\common\CORE PROJECTS/"
-                    for name in glob.glob(os.path.join(path, "*{}".format(project_num))):
-                        folder = name
+            def _get_attachment(email, cage_programs):
+                attachments = []
+                #find crispy files
+                for project in cage_programs:
+                    path = f"Z:\ResearchHome\Groups\millergrp\home\common\NGS\{ngs_date}\joined\{project}"
+                    os.chdir(path)
+                    found_files = os.scandir(path)
+                    #find the correct excel file and any text file
+                    for file in found_files:
+                        if "in_frame" not in file.name and file.name.endswith('.xlsx'):
+                            attachments.append(file)
+                        elif file.name.endswith('.txt'):
+                            attachments.append(file)
 
-                    os.chdir(folder)
-                    ppt_list = glob.glob("*.pptx")
-                    latest_ppt = folder + "/" + max(ppt_list, key=os.path.getctime)
-        
-                except:
-                  #  print("couldn't find slidedeck in CORE Project folder")
-                  #  print("Project Number = {}".format(project_num))
-                    latest_ppt = None
-
-                if latest_ppt is not None:
-                    email.Attachments.Add(latest_ppt)
+                for attachement in attachments:
+                    email.Attachments.Add(attachement)
                     
-                
-                
                 return email
         
             def _body_builder(pi,requested_by,sample_type,success,edit,gene,cage_number):
@@ -1071,7 +1067,7 @@ class Tails_Tab(tbs.Frame):
             
             email_cc = [line_lead]
                             
-            email_sub = _get_subject_line(scope,gene,cell_line, objective)
+            email_sub = _get_subject_line(ngs_date,gene,srm_number)
 
             email = _get_attachment(email,project_num)
 

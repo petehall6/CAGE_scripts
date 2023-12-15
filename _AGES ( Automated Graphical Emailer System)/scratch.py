@@ -1,4 +1,4 @@
-
+import os
 
 '''
 def _body_builder(pi,requested_by,sample_type,success,edit,gene,cage_number):
@@ -189,7 +189,8 @@ def _body_builder(pi,requested_by,sample_type,success,edit,gene,cage_number):
             return body
 '''
 
-def _email_writer(pi, requested_by, department, gene, edit, edit_size, injection_core, cage_number, ngs_date, success_num, submitted_num, notes, srm_number, success):
+
+def _email_writer(pi, requested_by, department, gene, edit, edit_size, injection_core, cage_number, ngs_date, cage_programs, success_num, submitted_num, notes, srm_number, success):
             
             def _get_subject_line(ngs_date,gene,srm_number):
                 
@@ -199,27 +200,23 @@ def _email_writer(pi, requested_by, department, gene, edit, edit_size, injection
                     
                 return sub_line
             
-            def _get_attachment(email, project_num):
-                #find powerpoint
-                try:
-                    path = "Z:\ResearchHome\Groups\millergrp\home\common\CORE PROJECTS/"
-                    for name in glob.glob(os.path.join(path, "*{}".format(project_num))):
-                        folder = name
+            def _get_attachment(email, cage_programs):
+                attachments = []
+                #find crispy files
+                for project in cage_programs:
+                    path = f"Z:\ResearchHome\Groups\millergrp\home\common\NGS\{ngs_date}\joined\{project}"
+                    os.chdir(path)
+                    found_files = os.scandir(path)
+                    #find the correct excel file and any text file
+                    for file in found_files:
+                        if "in_frame" not in file.name and file.name.endswith('.xlsx'):
+                            attachments.append(file)
+                        elif file.name.endswith('.txt'):
+                            attachments.append(file)
 
-                    os.chdir(folder)
-                    ppt_list = glob.glob("*.pptx")
-                    latest_ppt = folder + "/" + max(ppt_list, key=os.path.getctime)
-        
-                except:
-                  #  print("couldn't find slidedeck in CORE Project folder")
-                  #  print("Project Number = {}".format(project_num))
-                    latest_ppt = None
-
-                if latest_ppt is not None:
-                    email.Attachments.Add(latest_ppt)
+                for attachement in attachments:
+                    email.Attachments.Add(attachement)
                     
-                
-                
                 return email
         
             
@@ -242,7 +239,7 @@ def _email_writer(pi, requested_by, department, gene, edit, edit_size, injection
                             
             email_sub = _get_subject_line(scope,gene,cell_line, objective)
 
-            email = _get_attachment(email,project_num)
+            email = _get_attachment(email, cage_number)
 
             body = _body_builder(greeting,scope,cell_line,objective, line_lead)
 
