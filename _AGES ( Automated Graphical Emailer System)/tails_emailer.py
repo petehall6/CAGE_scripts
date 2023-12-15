@@ -57,59 +57,27 @@ class Tails_Tab(tbs.Frame):
         self.selected_projects = []
         
         self.create_labels()
-        self.create_buttons()
         self.create_comboxes()
         self.create_ngs_datepicker()
-
+        self.create_buttons()
+        
         self.table = self.create_table()
         self.cage_table = self.create_cage_table()
 
     def create_buttons(self):
-        
-        self.srm_load_btn = tbs.Button(
-            master = self.header_container,
-            text = "Select SRM Template",
-            command = self.load_srm,
-            bootstyle=SUCCESS,
-            width=25
-        )
-        
-        self.gen_emails_btn = tbs.Button(
-            master = self.button_container,
-            text = "Create Emails",
-            command = self.generate_emails,
-            bootstyle = PRIMARY,
-            width = 25   
-        )
-        
-        self.clear_btn = tbs.Button(
-            master = self.button_container,
-            text = "Clear Entries",
-            command = self.clear_controls,
-            bootstyle = DANGER,
-            width = 25
-        )
         
         self.store_btn = tbs.Button(
             master = self.button_container,
             text = 'Update',
             command =self.store_clicked,
             bootstyle = SUCCESS,
-            width = 25
+            
         )
         
         self.next_btn = tbs.Button(
             master = self.button_container,
             text = 'Next',
             command = self.nextbtn_click,
-            bootstyle = INFO,
-            width = 25
-        )
-        
-        self.prev_btn = tbs.Button(
-            master = self.button_container,
-            text = 'Previous',
-            command =self.prvbtn_click,
             bootstyle = INFO,
             width = 25
         )
@@ -129,7 +97,39 @@ class Tails_Tab(tbs.Frame):
             bootstyle = SUCCESS,
             width = 25
         )
+
+        self.gen_emails_btn = tbs.Button(
+            master = self.button_container,
+            text = "Create Emails",
+            command = self.generate_emails,
+            bootstyle = PRIMARY,
+            width = 25   
+        )
+
+        self.srm_load_btn = tbs.Button(
+            master = self.header_container,
+            text = "Select SRM Template",
+            command = self.load_srm,
+            bootstyle=SUCCESS,
+            
+        )
         
+        self.clear_btn = tbs.Button(
+            master = self.button_container,
+            text = "Clear Entries",
+            command = self.clear_controls,
+            bootstyle = DANGER,
+            width = 25
+        )
+
+        self.prev_btn = tbs.Button(
+            master = self.button_container,
+            text = 'Previous',
+            command =self.prvbtn_click,
+            bootstyle = INFO,
+            width = 25
+        )
+
         self.clear_crispy_btn = tbs.Button(
             master = self.button_container,
             text = "Clear CRISPY files",
@@ -139,16 +139,18 @@ class Tails_Tab(tbs.Frame):
         )
         
         self.srm_load_btn.grid(column=0,row=1, pady=10)
-        self.store_btn.grid(column=1, row=12,pady=10,sticky=W)
-        self.prev_btn.grid(column=0, row=13,pady=10,padx=5)
-        self.next_btn.grid(column=2, row=13,pady=10,padx=5)
-        self.gen_emails_btn.grid(column=0, row=14, pady=60)
-        self.clear_btn.grid(column=2, row=14,pady=60, sticky=N+S+E+W, padx = 10)
-        self.find_crispy_btn.grid(column=6, row=6, pady=10,padx=10, sticky=W)
-        self.confirm_crispy_btn.grid(column=6, row=6, pady=10, padx=10, sticky=E)
-        self.clear_crispy_btn.grid(column=6, row=8, pady=10, padx=10, sticky=E+W)
+        self.store_btn.grid(column=1, row=15,pady=10,sticky=W+E)
+        self.next_btn.grid(column=2, row=16,pady=10,padx=5)
+        self.prev_btn.grid(column=0, row=16,pady=10,padx=5)
+        self.clear_btn.grid(column=1, row=17, sticky=W+E, pady=10)
+        
+        self.find_crispy_btn.grid(column=4,row=7,pady=10,sticky=W)
+        self.confirm_crispy_btn.grid(column=4,row=7, pady=10,sticky=E)
+        self.clear_crispy_btn.grid(column=4,row=9,pady=10,sticky=W+E)
+        self.gen_emails_btn.grid(column=4,row=11,pady=10,sticky=W+E)
     
-    def create_labels(self):    
+    def create_labels(self):
+            
         self.title_lbl = tbs.Label(
             master = self.header_container,
             text = "Tails Emailer",
@@ -266,26 +268,26 @@ class Tails_Tab(tbs.Frame):
         self.title_lbl.grid(column=1,row=0, columnspan=3, padx=20, sticky=W+E+N+S)
         self.excel_lbl.grid(column=1,row=1, pady=10, sticky=W)
         
-        self.proj_lbl.grid(column = 0,row=3, sticky=E)
-        self.active_proj_lbl.grid(column=1,row=3, columnspan=3, sticky=W+E+N+S)
+        self.proj_lbl.grid(column = 0,row=2, sticky=W)
+        self.active_proj_lbl.grid(column=1,row=2, columnspan=3, sticky=W+E+N+S)
         
-        self.success_lbl.grid(column=0,row=5, pady=10)
-        self.edit_lbl.grid(column=0, row=7, pady=10)
-        self.cage_num_lbl.grid(column=0,row=8, pady=10)
-        self.ngs_date_lbl.grid(column=0, row=9, pady=10)
-        self.ngs_date_error_lbl.grid(column=2, row=9)
-        self.crispy_status_lbl.grid(column=6, row=7,sticky=W+E)
-        self.injection_lbl.grid(column=0, row=10, pady=10)
-        self.pi_department_lbl.grid(column=0, row=11, pady=10)
-        self.success_num_lbl.grid(column=2,row=4,sticky=S)
-        self.edit_size_lbl.grid(column=2,row=6,sticky=S)
-        self.submitted_num_lbl.grid(column=3,row=4,sticky=S)
-        self.notes_lbl.grid(column=6, row=9,sticky=W)
-        
+        self.success_lbl.grid(column=0,row=4,pady=10,sticky=W)
+        self.success_num_lbl.grid(column=0,row=5,pady=10,sticky=W)
+        self.submitted_num_lbl.grid(column=0,row=6,pady=10,sticky=W)
+        self.edit_lbl.grid(column=0, row=7, pady=10,sticky=W)
+        self.edit_size_lbl.grid(column=0,row=8,pady=10,sticky=W)
+        self.cage_num_lbl.grid(column=0,row=9, pady=10,sticky=W)
+        self.ngs_date_lbl.grid(column=0, row=10, pady=10,sticky=W)
+        self.ngs_date_error_lbl.grid(column=1, row=10, pady=10,sticky=E)
+        self.injection_lbl.grid(column=0, row=11, pady=10,sticky=W)
+        self.pi_department_lbl.grid(column=0, row=12, pady=10,sticky=W)
+        self.notes_lbl.grid(column=0, row=13, pady=10,sticky=W)
+        self.crispy_status_lbl.grid(column=4,row=8)
+
     def create_comboxes(self):
         
         outcomes = [' ','Yes','No']
-        edits = [' ','KO','KI','CKO','Del','ssODN','PM','Data']
+        edits = [' ','KO','KI','CKO','Del','ssODN','Pont Mutation','Data']
         injection = [' ', 'TCU', 'NEL']
         department = [' ','CBT', 'CMB', 'Comp Bio', 'DNB', 'Pharm Sciences', 'Struct Bio', 'Tumor Bio', 'BMT', 'Infect Dis' ]
         
@@ -293,49 +295,53 @@ class Tails_Tab(tbs.Frame):
             master = self.button_container,
             bootstyle = "info",
             value = outcomes,
+             
         )
         
+        self.success_num_box = tbs.Entry(
+            master = self.button_container,
+            bootstyle = "info",
+            width=22
+        )
+        
+        self.submitted_num_box = tbs.Entry(
+            master = self.button_container,
+            bootstyle = "info",
+            width=22
+        )
+                
         self.edits_box = tbs.Combobox(
             master = self.button_container,
             bootstyle = "info",
             value = edits,
+             
         )
-        
-        self.cage_box = tbs.Entry(
-            master = self.button_container,
-            bootstyle = "info",
-            width=25    
-        )
-            
-        self.success_num_box = tbs.Entry(
-            master = self.button_container,
-            bootstyle = "info",
-            width=25    
-        )
-
-        self.submitted_num_box = tbs.Entry(
-            master = self.button_container,
-            bootstyle = "info",
-            width=25    
-        )
-        
         
         self.edit_size_box = tbs.Entry(
             master = self.button_container,
             bootstyle = "info",
-            width=25    
+            width=22
+        )
+
+        self.cage_box = tbs.Entry(
+            master = self.button_container,
+            bootstyle = "info",
+            width=22
+                
         )
 
         self.injection_box = tbs.Combobox(
             master = self.button_container,
             bootstyle = "info",
             value = injection,
+             
         )
         
         self.pi_department_box = tbs.Combobox(
             master = self.button_container,
             bootstyle = "info",
             value = department,
+             
         )
         
         self.notes_box = tbs.Entry(
@@ -344,15 +350,15 @@ class Tails_Tab(tbs.Frame):
             width= 45,
         )
         
-        self.success_box.grid(column=1,row=5) 
-        self.edits_box.grid(column=1, row=7)
-        self.cage_box.grid(column=1, row=8)
-        self.success_num_box.grid(column=2, row=5)
-        self.submitted_num_box.grid(column=3, row=5)
-        self.edit_size_box.grid(column=2, row=7)
-        self.injection_box.grid(column=1, row=10)
-        self.pi_department_box.grid(column=1, row=11)
-        self.notes_box.grid(column=6, row=9,sticky=E)
+        self.success_box.grid(column=1,row=4,pady=10,sticky=W)
+        self.success_num_box.grid(column=1,row=5,pady=10,sticky=W)
+        self.submitted_num_box.grid(column=1,row=6,pady=10,sticky=W)        
+        self.edits_box.grid(column=1,row=7,pady=10,sticky=W)
+        self.edit_size_box.grid(column=1,row=8,pady=10,sticky=W)        
+        self.cage_box.grid(column=1,row=9,pady=10,sticky=W)
+        self.injection_box.grid(column=1,row=11,pady=10,sticky=W)
+        self.pi_department_box.grid(column=1,row=12,pady=10,sticky=W)
+        self.notes_box.grid(column=1,row=13,pady=10,sticky=W)
             
     def create_table(self):
         columns = [
@@ -416,7 +422,7 @@ class Tails_Tab(tbs.Frame):
         #self.table.view.selection_set(0)
         self.cage_table.view.bind()
         self.cage_table.view.bind("<<TreeviewOpen>>", self.cage_table_clicked)
-        self.cage_table.grid(column=6,row=3, rowspan=3)
+        self.cage_table.grid(column=4,row=3, rowspan=4)
         
         return self.cage_table
 
@@ -427,7 +433,7 @@ class Tails_Tab(tbs.Frame):
             dateformat="%m%d%y",
         )
 
-        self.ngs_date_picker.grid(column=1, row=9)
+        self.ngs_date_picker.grid(column=1, row=10,sticky=W)
   
     def load_srm(self):
         self.table.unload_table_data()
@@ -778,20 +784,11 @@ class Tails_Tab(tbs.Frame):
 
     def generate_emails(self):
 
-        def _update_excel(pi, requested_by, department, gene, edit, edit_size, injection_core, cage_number, ngs_date, success_num, submitted_num, notes):
+        def _update_excel(pi, requested_by, department, gene, edit, edit_size, injection_core, cage_number, ngs_date, success_num, submitted_num, notes, success):
             #open excel file
 
             animal_model_xl_dir = "Z:\ResearchHome\Groups\millergrp\home\common\Python\_pete\_AGES ( Automated Graphical Emailer System)\complete_animal_models.xlsx"
             animal_model_xl ="complete_animal_models.xlsx" 
-            
-            '''df_mice = pd.read_excel(animal_model_xl, sheet_name='mice')
-            df_success = pd.read_excel(animal_model_xl, sheet_name='success_summary')
-            print(df_mice.tail())
-            print("...............")
-            print(df_success.tail())
-            
-            input()
-            '''
 
             '''
             #*mice sheeet columns
@@ -800,8 +797,9 @@ class Tails_Tab(tbs.Frame):
             
             #*success_summary columns
             CAGE Project Number	NGS Date	Total Number Submitted	Number Success	Injection Core
-
             '''
+            
+            
             workbook = opx.load_workbook(animal_model_xl_dir)
     
             mice_sheet = workbook["mice"]
@@ -814,7 +812,7 @@ class Tails_Tab(tbs.Frame):
             
             
             #update mice sheet
-            mice_new_row = [investigators, department, gene, edit, edit_size, '', end_date, '', 'PMH', notes, cage_number, notes]
+            mice_new_row = [investigators, department, gene, edit, edit_size, '', end_date, '', injection_core, notes, cage_number, notes]
             mice_max_row = mice_sheet.max_row
             mice_sheet.append(mice_new_row)
             
@@ -836,9 +834,7 @@ class Tails_Tab(tbs.Frame):
 
             return
         
-        def _email_writer(project_details):
-            
-            srm_order_num, pi, requester, project_num, scope, cell_line, objective, gene, line_lead = project_details
+        def _email_writer(pi, requested_by, department, gene, edit, edit_size, injection_core, cage_number, ngs_date, success_num, submitted_num, notes, srm_number, success):
             
             def _get_subject_line(scope, gene, cell_line, objective):
             
@@ -873,8 +869,8 @@ class Tails_Tab(tbs.Frame):
                 
                 return email
         
-            def _body_builder(greeting, scope, cell_line, objective, line_lead):
-                if scope.lower() == "edited cell pool":
+            def _body_builder(edit, success, greeting, scope, cell_line, objective, line_lead):
+                if edit.upper() == "CKO":
 
                     body=f"""{greeting},
                     <br><br>
@@ -926,11 +922,9 @@ class Tails_Tab(tbs.Frame):
                     
                 return body
             
-            def _update_mice_excel():
-                
-                
-                return
-        #mail object generator
+            signature = parse_signature()
+            
+            #mail object generator
             outlook = win32com.client.Dispatch("Outlook.Application")
             email = outlook.CreateItem(0)
             
@@ -963,8 +957,13 @@ class Tails_Tab(tbs.Frame):
             #Display(False) loads all emails at once and gives focus back to ttk window
             email.Display(False)
         
-
-
+        #sorts out any rows removed from  table view
+        for row in self.data:
+            if len(row) != 19:
+                print(row)
+                index = self.data.index(row)
+                self.data.pop(index)
+        
         for row in self.data:
             proj_data = list(row)
             
@@ -992,11 +991,9 @@ class Tails_Tab(tbs.Frame):
             print(f"Project data: {proj_data}")
             
             #update excel sheet
-            _update_excel(pi, requested_by, department, gene, edit, edit_size, injection_core, cage_number, ngs_date, success_num, submitted_num, notes)
-            
-            
-            
-            
+            _update_excel(pi, requested_by, department, gene, edit, edit_size, injection_core, cage_number, ngs_date, success, success_num, submitted_num, notes)
+            _email_writer(pi, requested_by, department, gene, edit, edit_size, injection_core, cage_number, ngs_date, success, success_num, submitted_num, notes)
+        
         
         return
         

@@ -358,11 +358,8 @@ def text_fxn(
                 )
             elif edit == "KI":
                 text = (
-                    ", <br> Attached is the NGS data for your "
-                    + gene
-                    + " "
-                    + edit
-                    + " project. Unfortunately, none of the animals contain both the 5' and 3' junctions between your desired integration and your target site. The CAGE number for this site is "
+                    ", <br> Attached is the NGS data for your "+ gene+ edit+ " project. 
+                    +"Unfortunately, none of the animals contain both the 5' and 3' junctions between your desired integration and your target site. The CAGE number for this site is "
                     + proj_no
                     + ". I've also attached the data for the WT site."
                 )
@@ -457,6 +454,13 @@ def send_project(NGS_df):
     f_name = PI.split(", ")[1]
     l_name = PI.split(", ")[0]
     f_name_req = requester.split(", ")[1]
+    
+    
+    
+    
+    
+    
+    
     # this step automatically adds some extra recipients for projects that are known to include more than one person
     if requester == "Dillard Stroud, Miriam E":
         requester = "Dillard Stroud, Miriam E; Ansari, Shariq"
@@ -484,6 +488,12 @@ def send_project(NGS_df):
         PI = "Thomas, Paul; Sisti, Resha; Van De Velde, Lee Ann"
     elif PI == "Yu, Jiyang":
         PI = "Yu, Jiyang; Yang, Xu"
+        
+        
+        
+        
+        
+        
     # this block begins the update mice function and adds the genotyping advice if the submission is from Hartmut or Valerie and it was successful.
     if enter == "Berns, Hartmut" or enter == "Covington, Arthur":
         recipient1 = PI
