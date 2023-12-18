@@ -202,9 +202,14 @@ def _email_writer(pi, requested_by, department, gene, edit, edit_size, injection
             
             def _get_attachment(email, cage_programs):
                 attachments = []
+                geno_advice = "Z:\\ResearchHome\\Groups\\millergrp\\home\\common\\Protocols and SOPs\\NGS\\Tails\\CAGE Genotyping Advice.pdf"
+                
+                if success.upper() == 'YES' and injection_core.upper() != 'END USER':
+                    attachments.append(geno_advice)
+                
                 #find crispy files
                 for project in cage_programs:
-                    path = f"Z:\ResearchHome\Groups\millergrp\home\common\NGS\{ngs_date}\joined\{project}"
+                    path = os.path.join(r"Z:\ResearchHome\Groups\millergrp\home\common\NGS\{ngs_date}\joined\{project}",ngs_date,project)
                     os.chdir(path)
                     found_files = os.scandir(path)
                     #find the correct excel file and any text file

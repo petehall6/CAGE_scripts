@@ -245,7 +245,7 @@ class Tails_Tab(tbs.Frame):
         
         self.injection_lbl = tbs.Label(
             master = self.button_container,
-            text="TCU vs NEL:",
+            text="Injection By:",
             font=(10),
             bootstyle = SUCCESS
         ) 
@@ -288,7 +288,7 @@ class Tails_Tab(tbs.Frame):
         
         outcomes = [' ','Yes','No']
         edits = [' ','KO','KI','CKO','Del','ssODN','Pont Mutation','Data']
-        injection = [' ', 'TCU', 'NEL']
+        injection = [' ', 'END USER', 'TCU', 'NEL']
         department = [' ','CBT', 'CMB', 'Comp Bio', 'DNB', 'Pharm Sciences', 'Struct Bio', 'Tumor Bio', 'BMT', 'Infect Dis' ]
         
         self.success_box = tbs.Combobox(
@@ -844,18 +844,23 @@ class Tails_Tab(tbs.Frame):
                     
                 return sub_line
             
-            def _get_attachment(email, cage_programs):
+            def _get_attachment(email, cage_programs,success,injection_core):
                 attachments = []
+                geno_advice = r"Z:/ResearchHome/Groups/millergrp/home/common/Protocols and SOPs/NGS/tails/CAGE Genotyping Advice.pdf"
+                
+                if success.upper() == 'YES' and injection_core.upper() != 'END USER':
+                    attachments.append(geno_advice)
+                
                 #find crispy files
                 for project in cage_programs:
-                    path = f"Z:\ResearchHome\Groups\millergrp\home\common\NGS\{ngs_date}\joined\{project}"
+                    path = os.path.join(r"Z:/ResearchHome/Groups/millergrp/home/common/NGS",ngs_date,"joined",project)
                     os.chdir(path)
-                    found_files = os.scandir(path)
+                    found_files = glob.glob(path)
                     #find the correct excel file and any text file
                     for file in found_files:
-                        if "in_frame" not in file.name and file.name.endswith('.xlsx'):
+                        if "in_frame" not in file and file.endswith('.xlsx'):
                             attachments.append(file)
-                        elif file.name.endswith('.txt'):
+                        elif file.endswith('.txt'):
                             attachments.append(file)
 
                 for attachement in attachments:
@@ -1050,6 +1055,60 @@ class Tails_Tab(tbs.Frame):
                                 """
                     return body
             
+            def _get_recip_list(success, pi, requested_by):
+                
+                if pi != 'Downing, James':
+                    recip_list=[pi,requested_by]
+                else:
+                    recip_list=[requested_by]
+                
+                if pi == 'Kanneganti, Thirumala-Devi':
+                    recip_list.append('malireddi.subbarao@stjude.org')
+                    recip_list.append('Baskaran, Yogi')
+                    recip_list.append('Chadchan, Sangappa')
+                    recip_list.append('Sharma, Bhesh')
+                elif pi == 'Geiger, Terrence L':
+                    recip_list.append('Alli, Rajshekhar')
+                elif pi == "Klco, Jeffery":
+                    recip_list.append('Westover, Tamara')
+                elif pi == "Kundu, Mondira":
+                    recip_list.append('Li-Harms, Xiujie')
+                elif pi == "Schuetz, John":
+                    recip_list.append('Wang, Yao')
+                elif pi =='Crispino, John':
+                    recip_list.append('Hall, Trent')
+                elif pi == 'Downing, James':
+                    recip_list.append('Parganas, Evan')
+                elif pi == 'Hatley, Mark':
+                    recip_list.append('Garcia, Matthew')
+                elif pi =='Chi, Hongbo':
+                    recip_list.append('Rankin, Sherri')
+                elif pi =='Thomas, Paul':
+                    recip_list.append('Sisti, Resha')
+                    recip_list.append('Van De Velde, Lee Ann')
+                elif pi == 'Yu, Jiyang':
+                    recip_list.append('Yang, Xu')
+                
+                return list(set(recip_list))
+            
+            def _get_cc_list(injection_core, success, requested_by):
+
+                cc_list = ["Shondra Miller"]
+                
+                if success.upper() == 'YES':
+                    if injection_core == 'TCU':
+                        cc_list.append('jack.sublett@stjude.org')
+                        cc_list.append('ling.li@stjude.org')    
+                    elif injection_core == 'NEL':
+                        cc_list.append('valerie.stewart@stjude.org')
+                
+                if requested_by == "Dillard Stroud, Miriam E":
+                    cc_list.append('Ansari, Shariq')
+                if requested_by =="Zhang, Tina":
+                    cc_list.append('Dillard Stroud, Miriam E')
+
+                return cc_list
+            
             signature = parse_signature()
             
             #mail object generator
@@ -1057,23 +1116,24 @@ class Tails_Tab(tbs.Frame):
             email = outlook.CreateItem(0)
             
             #removes duplicates and rephrases the greeting to a single person
-            recip_list = [requester,pi]
-            email_recip = list(set(recip_list))
+            recip_list = _get_recip_list(success,pi,requested_by)
             
-            if len(email_recip) > 1:
-                greeting = f"Hi {pi.split(',')[1]} and {requester.split(',')[1]}"
+            if len(recip_list) > 1:
+                greeting = f"Hi {pi.split(',')[1]} and {requested_by.split(',')[1]}"
             else:
                 greeting = f"Hi {pi.split(',')[1]}"
             
-            email_cc = [line_lead]
+            #TODO
+
+            email_cc = _get_cc_list(injection_core,success,requested_by)
                             
             email_sub = _get_subject_line(ngs_date,gene,srm_number)
 
-            email = _get_attachment(email,project_num)
+            email = _get_attachment(email,cage_programs, success,injection_core)
 
-            body = _body_builder(greeting,scope,cell_line,objective, line_lead)
+            body = _body_builder(pi,requested_by,sample_type,success,edit,gene,cage_number)
 
-            email.To = ";".join(email_recip)
+            email.To = ";".join(recip_list )
             email.CC = ";".join(email_cc).replace(".","")
 
             email.bcc = "Shaina Porter"
@@ -1120,7 +1180,7 @@ class Tails_Tab(tbs.Frame):
             
             #update excel sheet
             _update_excel(pi, requested_by, department, gene, edit, edit_size, injection_core, cage_number, ngs_date, success, success_num, submitted_num, notes)
-            _email_writer(pi, requested_by, department, gene, edit, edit_size, injection_core, cage_number, ngs_date, success, success_num, submitted_num, notes)
+            _email_writer(pi, requested_by, department, gene, edit, edit_size, injection_core, cage_number, ngs_date, success, success_num, submitted_num, notes, success)
         
         
         return

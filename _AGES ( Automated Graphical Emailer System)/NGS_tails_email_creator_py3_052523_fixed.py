@@ -344,7 +344,8 @@ def text_fxn(
                     + edit
                     + " project. Unfortunately, none of these animals contain the desired loxP sites. The CAGE numbers for these sites are "
                     + proj_no
-                    + " 5' and 3'.<br> I have also included the data for large deletions between the two guide sites. These animals could be used to generate a germline KO if bred to homozygosity and viable."
+                    + " 5' and 3'.<br> I have also included the data for large deletions between the two guide sites." 
+                    "These animals could be used to generate a germline KO if bred to homozygosity and viable."
                 )
             elif edit == "KO":
                 text = (
@@ -466,8 +467,20 @@ def send_project(NGS_df):
         requester = "Dillard Stroud, Miriam E; Ansari, Shariq"
     if requester == "Zhang, Tina":
         requester = "Dillard Stroud, Miriam E; Zhang, Tina"
+        
+        
+        
+        
+        
+        
     if PI == "Kanneganti, Thirumala-Devi":
         PI = "Kanneganti, Thirumala-Devi; malireddi.subbarao@stjude.org; Nadella, Vinod; Baskaran, Yogi; Chadchan, Sangappa; Sharma, Bhesh; "
+        
+        
+        
+        
+        
+        
     elif PI == "Geiger, Terrence L":
         PI = "Geiger, Terrence L; Alli, Rajshekhar"
     elif PI == "Klco, Jeffery":
