@@ -787,8 +787,11 @@ class Tails_Tab(tbs.Frame):
         def _update_excel(pi, requested_by, department, gene, edit, edit_size, injection_core, cage_number, ngs_date, success_num, submitted_num, notes, success):
             #open excel file
 
-            animal_model_xl_dir = "Z:\ResearchHome\Groups\millergrp\home\common\Python\_pete\_AGES ( Automated Graphical Emailer System)\complete_animal_models.xlsx"
-            animal_model_xl ="complete_animal_models.xlsx" 
+            user_name = os.environ.get('USERNAME')
+            
+            
+            animal_model_xl_dir = os.path.join(os.path.expanduser("~"),"St. Jude Children's Research Hospital\Team-CAGE - General","Completed Animal Models (CAGE).xlsx")
+            
 
             '''
             #*mice sheeet columns
@@ -812,7 +815,7 @@ class Tails_Tab(tbs.Frame):
             
             
             #update mice sheet
-            mice_new_row = [investigators, department, gene, edit, edit_size, '', end_date, '', injection_core, notes, cage_number, notes]
+            mice_new_row = [investigators, department, gene, edit, edit_size, '', end_date, '', injection_core, notes, cage_number]
             mice_max_row = mice_sheet.max_row
             mice_sheet.append(mice_new_row)
             
@@ -825,16 +828,10 @@ class Tails_Tab(tbs.Frame):
             workbook.close()
             
             print("excel sheet modified")
-            
-            '''df_mice = pd.read_excel(animal_model_xl, sheet_name='mice')
-            df_success = pd.read_excel(animal_model_xl, sheet_name='success_summary')
-            print(df_mice.tail())
-            print("...............")
-            print(df_success.tail())'''
 
             return
         
-        def _email_writer(pi, requested_by, department, gene, edit, edit_size, injection_core, cage_number, ngs_date, success_num, submitted_num, notes, srm_number, success):
+        def _email_writer(pi, requested_by, department, gene, edit, edit_size, injection_core, cage_number, ngs_date, success, success_num, submitted_num, notes, srm_number):
             
             def _get_subject_line(ngs_date,gene,srm_number):
                 
@@ -844,7 +841,7 @@ class Tails_Tab(tbs.Frame):
                     
                 return sub_line
             
-            def _get_attachment(email, cage_programs,success,injection_core):
+            def _get_attachment(email, cage_programs,success,injection_core,ngs_date):
                 attachments = []
                 geno_advice = r"Z:/ResearchHome/Groups/millergrp/home/common/Protocols and SOPs/NGS/tails/CAGE Genotyping Advice.pdf"
                 
@@ -853,9 +850,10 @@ class Tails_Tab(tbs.Frame):
                 
                 #find crispy files
                 for project in cage_programs:
-                    path = os.path.join(r"Z:/ResearchHome/Groups/millergrp/home/common/NGS",ngs_date,"joined",project)
+                    path = os.path.join(r"Z:/ResearchHome/Groups/millergrp/home/common/NGS",ngs_date,"joined",project,)
                     os.chdir(path)
-                    found_files = glob.glob(path)
+                    found_files = glob.glob(path+"\\*")
+                    print(found_files)
                     #find the correct excel file and any text file
                     for file in found_files:
                         if "in_frame" not in file and file.endswith('.xlsx'):
@@ -1063,7 +1061,7 @@ class Tails_Tab(tbs.Frame):
                     recip_list=[requested_by]
                 
                 if pi == 'Kanneganti, Thirumala-Devi':
-                    recip_list.append('malireddi.subbarao@stjude.org')
+                    recip_list.append('Malireddi, MRK')
                     recip_list.append('Baskaran, Yogi')
                     recip_list.append('Chadchan, Sangappa')
                     recip_list.append('Sharma, Bhesh')
@@ -1097,10 +1095,10 @@ class Tails_Tab(tbs.Frame):
                 
                 if success.upper() == 'YES':
                     if injection_core == 'TCU':
-                        cc_list.append('jack.sublett@stjude.org')
-                        cc_list.append('ling.li@stjude.org')    
+                        cc_list.append('Sublett, Jack')
+                        cc_list.append('Li, Ling')    
                     elif injection_core == 'NEL':
-                        cc_list.append('valerie.stewart@stjude.org')
+                        cc_list.append('Stewart, Valerie')
                 
                 if requested_by == "Dillard Stroud, Miriam E":
                     cc_list.append('Ansari, Shariq')
@@ -1129,14 +1127,13 @@ class Tails_Tab(tbs.Frame):
                             
             email_sub = _get_subject_line(ngs_date,gene,srm_number)
 
-            email = _get_attachment(email,cage_programs, success,injection_core)
+            email = _get_attachment(email, cage_programs,success,injection_core,ngs_date)
 
             body = _body_builder(pi,requested_by,sample_type,success,edit,gene,cage_number)
 
             email.To = ";".join(recip_list )
             email.CC = ";".join(email_cc).replace(".","")
-
-            email.bcc = "Shaina Porter"
+            
             email.Subject = email_sub
 
             #find html signature file in each individual userprofile
@@ -1179,8 +1176,8 @@ class Tails_Tab(tbs.Frame):
             print(f"Project data: {proj_data}")
             
             #update excel sheet
-            _update_excel(pi, requested_by, department, gene, edit, edit_size, injection_core, cage_number, ngs_date, success, success_num, submitted_num, notes)
-            _email_writer(pi, requested_by, department, gene, edit, edit_size, injection_core, cage_number, ngs_date, success, success_num, submitted_num, notes, success)
+            _update_excel(pi, requested_by, department, gene, edit, edit_size, injection_core, cage_number, ngs_date, success_num, submitted_num, notes, success)
+            _email_writer(pi, requested_by, department, gene, edit, edit_size, injection_core, cage_number, ngs_date, success, success_num, submitted_num, notes, srm_number) 
         
         
         return
