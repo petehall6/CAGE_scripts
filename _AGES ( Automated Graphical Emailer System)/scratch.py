@@ -1,6 +1,5 @@
-import os
-import glob
+a = [1,'Hall, Pete',2]
 
+designer = str(a[1].split(',')[1] + ' ' +a[1].split(',')[0]).strip()
 
-a = glob.glob("Z:/ResearchHome/Groups/millergrp/home/common/NGS\\111423\\joined\\CAGE84_hDGCR6L_F_R_short\\*")
-print(a)
+print(designer)

@@ -147,18 +147,18 @@ class Status_Tab_manual(tbs.Frame):
             value = "Initial Screen",
         )
         
-        self.delay_radiobtn = tbs.Radiobutton(
+        self.delay_screen_radiobtn = tbs.Radiobutton(
             master = self.label_container,
             bootstyle = "info",
             variable = self.status_choice,
-            text = "Delayed",
-            value = "Delayed",
+            text = "Delayed Initial Screen",
+            value = "Delayed Initial Screen",
         )
         
         
         self.pool_radiobtn.grid(column=2,row=1,sticky=W)
         self.screen_radiobtn.grid(column=2,row=2,sticky=W)
-        self.delay_radiobtn.grid(column=2,row=3,sticky=W)
+        self.delay_screen_radiobtn.grid(column=2,row=3,sticky=W)
         
     def create_buttons(self):
 

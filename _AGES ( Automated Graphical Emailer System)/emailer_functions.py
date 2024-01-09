@@ -108,38 +108,38 @@ def radio_select(self):
     return radio_var
 
 def parse_signature():
-    sig_path = os.path.join((os.environ['USERPROFILE']), 'AppData\Roaming\Microsoft\Signatures')
     
-    print(sig_path)
-    
-    os.chdir(sig_path)
-    
-    
-    for file in os.listdir(sig_path):
-        #if multiple .htm signatures it will just overwrite.  Will need to fix on individual basis
-        if file.endswith(".htm"):
-            sig_htm = file
-            
-    
-    if sig_htm is not None:
-        print(f"Signature found {sig_htm}")
+    try:
+        sig_path = os.path.join((os.environ['USERPROFILE']), 'AppData\Roaming\Microsoft\Signatures')
+        
+        print(sig_path)
+        
+        os.chdir(sig_path)
+        
+        for file in os.listdir(sig_path):
+            #if multiple .htm signatures it will just overwrite.  Will need to fix on individual basis
+            if file.endswith(".htm"):
+                sig_htm = file
+                
+        if sig_htm is not None:
+            print(f"Signature found {sig_htm}")
 
-        with codecs.open(sig_htm, "r", encoding='utf-8',
-                         errors='ignore') as f:
-            html = f.read()
-        f.close()
-        #match everything between and including the two body tags
-        body_pattern = "(?:<style)(.|\n)*?<\/html>"
+            with codecs.open(sig_htm, "r", encoding='utf-8',
+                            errors='ignore') as f:
+                html = f.read()
+            f.close()
+            #match everything between and including the two body tags
+            body_pattern = "(?:<style)(.|\n)*?<\/html>"
 
-        #returns match object.  matched text is accessed by .group() because reasons?  Strip newline to condense signature
-        text = re.search(body_pattern, html)
+            #returns match object.  matched text is accessed by .group() because reasons?  Strip newline to condense signature
+            text = re.search(body_pattern, html)
 
-        sig = text.group()
-    else:
-        print("No signature found. I will still work.")
-        sig =""
-    
-
+            sig = text.group()
+        else:
+            sig = " "
+    except:
+        print("No signature found.  I will still work though.")
+        sig = " "
     return sig
     
 

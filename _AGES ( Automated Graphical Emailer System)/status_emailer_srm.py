@@ -66,7 +66,7 @@ class Status_Tab_srm(tbs.Frame):
         
         
         self.title_lbl.grid(column=1,row=0, columnspan=3, padx=20, sticky=W+E+N+S)
-        self.excel_lbl.grid(column=1,row=1, pady=10)
+        self.excel_lbl.grid(column=1,row=1, pady=10, columnspan=2)
         self.weeks_lbl.grid(column=0, row=3, pady=10, sticky=W)
 
     def create_srm_load_btn(self):
@@ -99,17 +99,26 @@ class Status_Tab_srm(tbs.Frame):
             value = "Initial Screen",
         )
         
-        self.delay_radiobtn = tbs.Radiobutton(
+        self.delay_screen_radiobtn = tbs.Radiobutton(
             master = self.button_container,
             bootstyle = "info",
             variable = self.status_choice,
-            text = "Delayed",
-            value = "Delayed",
+            text = "Delayed Initial Screen",
+            value = "Delayed Initial Screen",
+        )
+        
+        self.delay_clone_radiobtn = tbs.Radiobutton(
+            master = self.button_container,
+            bootstyle = "info",
+            variable = self.status_choice,
+            text = "Delayed Clone Hand-off",
+            value = "Delayed Clone Hand-off",
         )
         
         self.pool_radiobtn.grid(column=0,row=2,sticky=W, pady=10)
-        self.screen_radiobtn.grid(column=1,row=2,sticky=W, pady=10)
-        self.delay_radiobtn.grid(column=2,row=2,sticky=W, pady=10)
+        self.screen_radiobtn.grid(column=1,row=2,sticky=W+E, pady=10)
+        self.delay_screen_radiobtn.grid(column=2,row=2,sticky=W, pady=10)
+        self.delay_clone_radiobtn.grid(column=3,row=2,sticky=E, pady=10, padx=10)
 
     def create_gen_emails_btn(self):
 
@@ -186,6 +195,7 @@ class Status_Tab_srm(tbs.Frame):
         self.excel_name = tbs.StringVar(value="")
         self.excel_lbl.config(text="")
         
+        self.weeks_box.delete(0, 'end')
         table.delete_rows()
         
         self.data = []
@@ -262,9 +272,10 @@ class Status_Tab_srm(tbs.Frame):
 
     def generate_emails(self):
         
+        #make a way to loop through each project in the srm if multiple lines detected
+        
         entries = [self.pi, self.requested_by, self.status_choice.get(), self.weeks.get(), self.gene, self.cell_line, self.project_objective]
 
-        
         pi, requested_by, status, weeks, gene, cell_line, objective = entries
         
         signature = parse_signature()
@@ -275,6 +286,7 @@ class Status_Tab_srm(tbs.Frame):
             return sub_line
 
         def _body_builder(greeting, status, weeks, cell_line, objective):
+
             if status.upper() == "CONFIRMED POOL":
                 body=f"""{greeting},
                 <br><br>
@@ -295,8 +307,8 @@ class Status_Tab_srm(tbs.Frame):
                 Please let me know if you have any questions.
                 <br><br>
                 """
-                
-            elif status.upper() == "DELAYED": 
+
+            elif status.upper() == "DELAYED INITIAL SCREEN": 
                 body=f"""{greeting},
                 <br><br>
                 I wanted to provide you with an update on your {cell_line} {gene} {objective} project. Unfortunately, we were unable to identify any correctly 
@@ -306,6 +318,16 @@ class Status_Tab_srm(tbs.Frame):
                 <br><br>
                 """
                 
+            elif status.upper() == "DELAYED CLONE HAND-OFF": 
+                body=f"""{greeting},
+                <br><br>
+                I wanted to provide you with an update on your {cell_line} {gene} {objective} project.  The clones are growing slower than expected, 
+                which has resulted in a delayed timeline for project completion.  We will email you when they are expanded, fully QC’d,
+                and ready for pick up. Based on their current rate of growth, I would expect them to be ready in {weeks} weeks.  
+                Please let me know if you have any questions.
+                <br><br>
+                """
+
             return body
         
         #mail generator
@@ -324,8 +346,6 @@ class Status_Tab_srm(tbs.Frame):
         email_cc = "Miller, Shondra"
                         
         email_sub = _get_subject_line(gene,cell_line, objective)
-
-        #email = _get_attachment(email,project_num)
 
         body = _body_builder(greeting, status, weeks, cell_line, objective)
 
