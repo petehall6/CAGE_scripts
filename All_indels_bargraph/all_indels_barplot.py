@@ -15,48 +15,49 @@ Changelog: 101723 - removed quick patch from 101623
 Changelog: 102023 - Default setting is to run guide activity plot and names bars after guides
                   - Added a try/except loop that will handle insertion length error and change
                     the bar names to the 'Sample' column from the tmp df.
+Changelog: 111023 - Added tags to file names to better distribute work flow
+                  - Running celfi's will also generate an out of frame graph
+Changelog: 012224 - Added try/except loop to catch graphs that fail so downstream graphs are not effected. Line: 97
+                    
+
 
 '''
 
 
 
 '''
-PMH 8/23
+PMH 11/23
 
-Version: 20231020
+Version: 2.0_20231110
+
 This scripts is to replace the orange bar plots with stacked all indel bar plots.
 
 1) You will first need to run the all_indels version of your results summary.
 
-If you are running it for guide activity/orange bar plot
+****If you are running it for guide activity/orange bar plot
 
-2) Arrange your samples with WT on top next followed by each guide as they are listed in the summary columns going from left to right.
+    add activity BP to the end of the file name
+    This program uses this to name the samples after the guides and format the graphs correctly
 
-Name                    Sample              Total   g1  g2  g3
-Miller-Plate*Whatever   WT
-                        g1
-                        g2
-                        g3
+    CAGE1234 all_indels activity BP.csv
 
-You can name them whatever you want to make it easier but the program will just label the graphs as WT,g1,g2, etc..
-Be sure to get rid of any extra samples that will not need to be charted.  The program will just look for a WT and pool for each guide.
+****If you are running an editied cell pool or celfi
 
+    Arrange your samples with WT on top next followed by each guide try to keep the names short so they dont aren't crazy long in the image
+    Name                    Sample              Total   g1
+    Miller-Plate*Whatever   WT
+                            KO pool BT16
+                            dKO Pool BT16/Sirt
 
+    add pool  or celfi BP to the end of the file name
+    This program uses this to name the samples after the 'Sample' column in the csv and format the graphs correctly
 
-If you are running it for edited pools/visualize all indels
+    CAGE1234 all_indels pool BP.csv
+    CAGE1234 all_indels celfi BP.csv
 
-2) Arrange your samples with WT on top next followed by each guide try to keep the names short so they dont aren't crazy long in the image
-Name                    Sample              Total   g1
-Miller-Plate*Whatever   WT
-                        KO pool BT16
-                        dKO Pool BT16/Sirt
+2)The graphs will be generated and labled as whatever the csv name is so again, make sure they have unique names
 
-
-
-3)Add BP to the end of the all_indels_summary.  You can move it to the barplots_to_be_run folder but the program copies everything there automatically.
-  be sure to give each csv a unique name.
-4)Follow the prompts.  If you forget to arrange your result summaries before starting the script, there is a forced paused that will prompt you to check your summary csv's
-5)The graphs will be generated and labled as whatever the csv name is so again, make sure they have unique names
+3)Completed graphs will be placed in the Barplots_to_be_run folder at the top of the joined folder
 '''
 
 pd.options.mode.chained_assignment = None
@@ -71,7 +72,7 @@ def find_csv():
     print("Locating files. Please stand by.")
     #will return all the csvs with BP in the name located in the NGS folder and copy to barplot folder
     csv_list = (glob.glob("**/*BP.csv",recursive=True))
-    
+
     if len(csv_list) >0:
         for csv in csv_list:
             print(csv)
@@ -85,8 +86,6 @@ def find_csv():
         print("\n\nNo CSV's found. Make sure to 'BP' to end of file name.\n\n")
         sys.exit()
 
-#TODO check multiple inputs and returns
-#will this work with multiple csvs?
 def get_indels():
     
     os.chdir(plot_dir)
@@ -95,41 +94,110 @@ def get_indels():
     print(f"graphing: {result_csv}")
 
     for csv in result_csv:
-        print(csv)
+        try: 
+        
+            OoF_stand_alone = False    
+            graph_title = csv
+            tmp = pd.read_csv(csv)
+            print(tmp)
+        
+            #activity's have multiple guides. Sorts through all columns and uses regex to find 'g' + any number
+            sample_columns =  [column for column in tmp.columns if re.match(r'g\d*',column)]
+            #insert WT into guide_columns[0].
+            sample_columns.insert(0,'WT')
+            indel_df = tmp[['Out-of-frame','In-frame','0bp']]
             
-        graph_title = csv
-        tmp = pd.read_csv(csv)
-        print(tmp)
-        #remove uncessary columns
-        #need to grab guide columns for bar naming purposes.  Sorts through all columns and uses regex to find 'g' + any number
-        sample_columns =  [column for column in tmp.columns if re.match(r'g\d*',column)]
-        #insert WT into guide_columns[0].
-        sample_columns.insert(0,'WT')
-        
-        indel_df = tmp[['Out-of-frame','In-frame','0bp']]
-        
-        #If running for guide activity, the number of guides and samples (not inluding WT) should be 1:1
-        #If they are not it will raise an exception
-        #If samples and guides are mismatched I'm assuming that they want to plot an edited pool
-        #Takes exception, resets the sample names, takes name from the 'Sample' column instead of the guide columns and reinserts
-        
-        try:
-            indel_df.insert(0,'Sample',sample_columns)
-            tilt = False
+            #If running for guide activity, the number of guides and samples (not inluding WT) should be 1:1
+            #If they are not it will raise an exception
+            #If samples and guides are mismatched I'm assuming that they want to plot an edited pool
+            #Takes exception, resets the sample names, takes name from the 'Sample' column instead of the guide columns and reinserts
+            
+            if "activity" in csv:
+                    indel_df.insert(0,'Sample',sample_columns)
+                    tilt = False
+                    
+            #celfi and pools will use sample names
+            else:
+                sample_columns.clear()
+                sample_columns = tmp['Sample'].tolist()
+                indel_df.insert(0,'Sample',sample_columns)
+                tilt = True
+                
+            if "celfi" in csv:
+                OoF_stand_alone = True
+                
+            
+            print(indel_df)
+            
+            graph_indels(indel_df,graph_title, tilt, OoF_stand_alone)
+            os.remove(csv)
         except:
-            sample_columns.clear()
-            sample_columns = tmp['Sample'].tolist()
-            indel_df.insert(0,'Sample',sample_columns)
-            tilt = True
-            
-        
-        print(indel_df)
-        
-        graph_indels(indel_df,graph_title, tilt)
-        
-
-def graph_indels(df,title,tilt):
+            failed_list = []
+            failed_list.append(csv)
+            print(f"The following files did not graph: {failed_list}")
+            for csv in failed_list:
+                os.remove(csv)
+                         
+def graph_indels(df,title,tilt, OoF_stand_alone):
     
+    def graph_oof():
+        df.drop(columns=["0bp","In-frame"], inplace=True)
+        print(f"Dropped columns: {df}")
+        graph_image_name = title.replace(".csv","")
+        
+        chart_title = f"gRNA Validation via NGS"
+        
+        ax = df.plot.bar(
+            stacked=True,
+            color={"Out-of-frame":"#c10f3a"}
+        )
+        
+        #sets how far below top of element label is placed
+        y_offset = -1
+        x_offset = 0
+        #label each segement
+        for bar in ax.patches:
+            if bar.get_height() >= 3:
+                ax.text(
+                #align middle
+                bar.get_x() + bar.get_width() / 2 + x_offset,
+                #set label above or below top of element
+                bar.get_y() + bar.get_height() / 2 + y_offset,
+                #fix rounding 
+                np.rint(bar.get_height()).astype(int),
+                #horizontal alignement
+                ha='center',
+                color='white',
+                weight='bold',
+                size=8
+        )   
+                
+        ax.spines['top'].set_visible(False)
+        ax.spines['right'].set_visible(False)
+        
+        #rotate xticks
+        plt.title(label=chart_title,ha='center')
+        plt.ylabel(f"% editing")
+        if tilt == True:
+            plt.xticks(rotation=25, rotation_mode='anchor',ha='right')
+        else:
+            plt.xticks(rotation=0, rotation_mode='anchor',ha='center')
+        ax.xaxis.labelpad = 10
+        
+        
+        #set legend to outside of plot area and set order to Oof,If,0bp
+        
+        plt.legend(bbox_to_anchor=(1.4,0.5), loc='center right', borderaxespad=0)
+        ax.plot()
+        ax.set_ylim([0,100])
+        plt.margins()
+        plt.tight_layout()
+        plt.savefig(f"{plot_dir}\\{graph_image_name}_OoF_barplot.png")
+        
+        return
+
+
+    #*first pass
     df.set_index('Sample',inplace=True)
     
     graph_image_name = title.replace(".csv","")
@@ -168,7 +236,7 @@ def graph_indels(df,title,tilt):
     plt.title(label=chart_title,ha='center')
     plt.ylabel(f"% editing")
     if tilt == True:
-        plt.xticks(rotation=15, rotation_mode='anchor',ha='right')
+        plt.xticks(rotation=25, rotation_mode='anchor',ha='right')
     else:
         plt.xticks(rotation=0, rotation_mode='anchor',ha='center')
     ax.xaxis.labelpad = 10
@@ -183,10 +251,12 @@ def graph_indels(df,title,tilt):
     plt.tight_layout()
     plt.savefig(f"{plot_dir}\\{graph_image_name}_barplot.png")
     
+    if OoF_stand_alone == True:
+        graph_oof()
+    
+    
     print("All graphs have been generated.")
     #plt.show()
-    
-
 
 
 find_csv()
