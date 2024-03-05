@@ -19,14 +19,25 @@ from design_emailer import Design_Tab
 from ngs_emailer import NGS_Tab
 from tails_emailer import Tails_Tab
 
+user = os.environ.get('USERNAME')
+print(user)
 
-app = tbs.Window(
-    title="CAGE Emailer",
-    themename = "superhero",
-    size=(1600,800),
-    resizable=(True,True),
-    
-)
+if user == 'phall3':
+    app = tbs.Window(
+        title="CAGE Emailer",
+        themename = "vapor",
+        size=(1600,800),
+        resizable=(True,True),
+        
+    )
+else: 
+    app = tbs.Window(
+        title="CAGE Emailer",
+        themename = "superhero",
+        size=(1600,800),
+        resizable=(True,True),
+        
+    )
 
 colors = app.style.colors
 note_tab = tbs.Notebook(master=app,

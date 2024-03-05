@@ -1,0 +1,6 @@
+{'GENBANK_LENGTH_EXTENSION': '5000',
+ 'customer': 'PMH',
+ 'experiment': 'TEST1',
+ 'gene': 'PETEGENE',
+ 'project_objective': 'KO',
+ 'species': 'MEATPOPCICLE'}
