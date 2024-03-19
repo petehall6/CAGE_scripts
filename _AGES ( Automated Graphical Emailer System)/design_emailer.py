@@ -39,8 +39,6 @@ class Design_Tab(tbs.Frame):
         self.table = self.create_table()
 
     def create_buttons(self):
-        
-
         self.srm_load_btn = tbs.Button(
             master = self.button_container,
             text = "Select SRM Template",
@@ -70,7 +68,6 @@ class Design_Tab(tbs.Frame):
         self.clear_btn.grid(column=0, row=4,pady=60)
         
     def create_radiobtns(self):
-    
         self.jk_radiobtn = tbs.Radiobutton(
         master = self.button_container,
         bootstyle = "info",
@@ -91,22 +88,18 @@ class Design_Tab(tbs.Frame):
         self.bh_radiobtn.grid(column=3,row=2,sticky=W)
         
     def create_labels(self):
-    
         self.title_lbl = tbs.Label(
             master = self.button_container,
             text = "Designs Emailer",
             font = ('Sans',25,'bold'),
             bootstyle = WARNING,
         )
-        
-        
         self.excel_lbl = tbs.Label(
             master = self.button_container, 
             text="SRM Template", 
             font=(10), 
             bootstyle = SUCCESS
         )
-        
         self.title_lbl.grid(column=1,row=0, columnspan=3, padx=20, sticky=W+E+N+S)
         self.excel_lbl.grid(column=1,row=1, pady=10)
     
@@ -141,7 +134,6 @@ class Design_Tab(tbs.Frame):
         return table
 
     def clear_controls(self):
-        
         table = self.table
         
         #clear label and loaded template
@@ -224,7 +216,6 @@ class Design_Tab(tbs.Frame):
         self.table = self.create_table()    
 
     def generate_emails(self):
-        
         signature = parse_signature()
         initial_choice = self.initial_choice.get()
         
@@ -329,7 +320,6 @@ class Design_Tab(tbs.Frame):
                 
                 return sub_line
             
-
             def _get_attachment(email, project_num):
                 #find powerpoint
                 
@@ -367,7 +357,9 @@ class Design_Tab(tbs.Frame):
                 
                 bullets = _bullet_maker(srm_order_num,gene,scope)
                 
-                body = f"""{greeting},
+                body = f"""
+                <font face="Calibri, Calibri, monospace">
+                {greeting},
                 <br><br>
                 Attached are the designs, off-target analysis, 
                 and our recommendations for which gRNAs to move forward with for the following projects:
@@ -380,6 +372,7 @@ class Design_Tab(tbs.Frame):
                 Best,<br>
                 {initial_choice}
                 <br><br>
+                </font>
                 """
 
                 return body
@@ -396,15 +389,16 @@ class Design_Tab(tbs.Frame):
                 first_names=[]
                 for req in requester:
                     first_names.append(req.split(',')[1])
+                list(set(first_names))
     
                 #insert 'and' in front of last element            
-                first_names[-1] = ' and '+first_names[-1] 
-     
+                first_names[-1] = ' and '+ first_names[-1] 
+
                 greeting = f"Hi {pi[0].split(',')[1]}, {(','.join(first_names))}"
             else:
                 greeting = f"Hi {pi[0].split(',')[1]}"
             
-             #copies either Jon or Barnanda depending on who sent the email
+            #copies either Jon or Barnanda depending on who sent the email
             email_cc = ["Shondra Miller"]
             if initial_choice == "JK":
                 email_cc.append("Baranda Hansen")
@@ -423,7 +417,6 @@ class Design_Tab(tbs.Frame):
             email.Subject = email_sub
 
             #find html signature file in each individual userprofile
-            
             email.HTMLBody = body + signature
             #Display(False) loads all emails at once and gives focus back to ttk window
             email.Display(False)

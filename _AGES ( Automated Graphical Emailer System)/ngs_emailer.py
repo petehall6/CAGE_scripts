@@ -240,7 +240,9 @@ class NGS_Tab(tbs.Frame):
             
             if scope.lower() == "edited cell pool":
 
-                body=f"""Hi {pi} and {requester},
+                body=f"""
+                <font face="Calibri, Calibri, monospace">
+                Hi {pi} and {requester},
                 <br><br>
                 Great news! Your {gene} {cell_line} edited cell pool project is complete and ready for pickup.  Please see the attached slide deck for details.
                 <br><br>
@@ -257,11 +259,14 @@ class NGS_Tab(tbs.Frame):
                 Best,
                 <br><br>
                 SM
-                <br><br>                
+                <br><br> 
+                </font>               
                 """
                 
             elif scope.lower() == "cell fitness/dependency assay":
-                body=f"""Hi {pi} and {requester},
+                body=f"""
+                <font face="Calibri, Calibri, monospace">
+                Hi {pi} and {requester},
                 <br><br>
                 Great news! Your {gene} {cell_line} fitness assay is complete. Please see the attached slide deck for details.
                 <br><br>
@@ -273,10 +278,13 @@ class NGS_Tab(tbs.Frame):
                 <br><br>
                 SM
                 <br><br>
+                </font>
                 """
                 
             else: 
-                body=f"""Hi {pi} and {requester},
+                body=f"""
+                <font face="Calibri, Calibri, monospace">
+                Hi {pi} and {requester},
                 <br><br>
                 Great news! Your {cell_line} {gene} {objective} project is complete and ready for pick up.  Please see the attached slide deck for details.
                 <br><br>
@@ -291,6 +299,7 @@ class NGS_Tab(tbs.Frame):
                 <br><br>
                 SM
                 <br><br>
+                </font>
                 """
                 
             return body

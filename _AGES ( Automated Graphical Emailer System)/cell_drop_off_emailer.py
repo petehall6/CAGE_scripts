@@ -234,7 +234,9 @@ class DropOff_Tab(tbs.Frame):
         def _body_builder(requester,pi,scope,cell_line,objective,line_lead,stem_cell,greeting):
 
             if scope.upper() == "CELL LINE CREATION" and species.upper()  == "HUMAN" and stem_cell.upper() == "NO":
-                body=f"""{greeting},
+                body=f"""
+                <font face="Calibri, Calibri, monospace">
+                {greeting},
                 <br><br>
                 We are ready to intake the {cell_line} cells for your {gene} {objective} projects.
                 <br><br>
@@ -256,11 +258,14 @@ class DropOff_Tab(tbs.Frame):
                 Thanks,
                 <br><br>
                 Shaina
-                <br><br>               
+                <br><br>
+                </font>               
                 """
                 
             elif scope.upper() == "CELL LINE CREATION" and species.upper() == "MOUSE" and stem_cell.upper() == "NO":
-                body=f"""{greeting},
+                body=f"""
+                <font face="Calibri, Calibri, monospace">
+                {greeting},
                 <br><br>
                 We are ready to intake the {cell_line} cells for your {gene} {objective} projects.
                 <br><br>
@@ -282,10 +287,13 @@ class DropOff_Tab(tbs.Frame):
                 <br><br>
                 Shaina
                 <br><br>
+                </font>
                 """
                 
             elif stem_cell.upper() == "YES": 
-                body=f"""{greeting},
+                body=f"""
+                <font face="Calibri, Calibri, monospace">
+                {greeting},
                 <br><br>                
                 We are ready to intake the {cell_line} cells for your {gene} {objective} project.
                 <br><br> 
@@ -307,6 +315,7 @@ class DropOff_Tab(tbs.Frame):
                 <br><br>
                 Shaina
                 <br><br>
+                </font>
                 """
             
             return body

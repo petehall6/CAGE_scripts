@@ -254,7 +254,9 @@ class Billing_Tab(tbs.Frame):
             def _body_builder(greeting, scope, cell_line, objective, line_lead):
                 if scope.lower() == "edited cell pool":
 
-                    body=f"""{greeting},
+                    body=f"""
+                    <font face="Calibri, Calibri, monospace">
+                    {greeting},
                     <br><br>
                     Great news! Your {gene} {cell_line} edited cell pool project is complete and ready for pickup.  Please see the attached slide deck for details.
                     <br><br>
@@ -270,11 +272,14 @@ class Billing_Tab(tbs.Frame):
                     <br><br>
                     Best,
                     <br><br>
-                    <br><br>                
+                    <br><br>
+                    </font>                
                     """
                     
                 elif scope.lower() == "cell fitness/dependency assay":
-                    body=f"""{greeting},
+                    body=f"""
+                    <font face="Calibri, Calibri, monospace">
+                    {greeting},
                     <br><br>
                     Great news! Your {gene} {cell_line} fitness assay is complete. Please see the attached slide deck for details.
                     <br><br>
@@ -285,10 +290,13 @@ class Billing_Tab(tbs.Frame):
                     Best,
                     <br><br>
                     <br><br>
+                    </font>
                     """
                     
                 else: 
-                    body=f"""{greeting},
+                    body=f"""
+                    <font face="Calibri, Calibri, monospace">
+                    {greeting},
                     <br><br>
                     Great news! Your {cell_line} {gene} {objective} project is complete and ready for pick up.  Please see the attached slide deck for details.
                     <br><br>
@@ -300,6 +308,8 @@ class Billing_Tab(tbs.Frame):
                     Best,
                     <br><br>
                     <br><br>
+                    </font>
+                    
                     """
                     
                 return body
@@ -381,9 +391,12 @@ class Billing_Tab(tbs.Frame):
             def _bullet_maker(srm_order_num, gene, scope, objective, cell_line):
                 bullet_list =""
                 for order, proj_gene, proj_scope, proj_obj,cells in zip(srm_order_num,gene,scope, objective, cell_line):
-                    bullet_list += (f"<li>SRM: {order}- {cells} {proj_gene} {proj_obj.replace('Gene','')} {proj_scope} </li>")
+                    print(f"order {order}, proj_gene: {proj_gene}, proj_scope: {proj_scope}, proj_obj: {proj_obj}, cells: {cells}")
+                    
+                    
+                    bullet_list += (f"<li>SRM: {order}- {cells} {proj_gene} {str(proj_obj).replace('Gene','').replace('nan','')} {proj_scope} </li>")
                 
-                #print(f"The bullet_list {bullet_list}")
+                print(f"The bullet_list {bullet_list}")
                     
                 return bullet_list
             
@@ -395,7 +408,9 @@ class Billing_Tab(tbs.Frame):
                 
                 bullets = _bullet_maker(srm_order_num,gene,scope, objective, cell_line)
                 
-                body = f"""{greeting},
+                body = f"""
+                <font face="Calibri, Calibri, monospace">
+                {greeting},
                 <br><br>
                 Great news! The following projects are ready for pickup.  Please see the attached slide decks for details:
                 <br><br>
@@ -412,6 +427,7 @@ class Billing_Tab(tbs.Frame):
                 Best,<br>
                 SM
                 <br><br>
+                </font>
 
                 """
 

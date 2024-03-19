@@ -64,7 +64,6 @@ class Status_Tab_srm(tbs.Frame):
             bootstyle = 'Success'
         )
         
-        
         self.title_lbl.grid(column=1,row=0, columnspan=3, padx=20, sticky=W+E+N+S)
         self.excel_lbl.grid(column=1,row=1, pady=10, columnspan=2)
         self.weeks_lbl.grid(column=0, row=3, pady=10, sticky=W)
@@ -279,6 +278,7 @@ class Status_Tab_srm(tbs.Frame):
         pi, requested_by, status, weeks, gene, cell_line, objective = entries
         
         signature = parse_signature()
+        
         def _get_subject_line(gene, cell_line, objective):
         
             sub_line = f"{gene} {objective} {cell_line} status update"
@@ -288,44 +288,55 @@ class Status_Tab_srm(tbs.Frame):
         def _body_builder(greeting, status, weeks, cell_line, objective):
 
             if status.upper() == "CONFIRMED POOL":
-                body=f"""{greeting},
+                body=f"""
+                <font face="Calibri, Calibri, monospace">
+                {greeting},
                 <br><br>
                 Great News! We have successfully confirmed the desired edit in the cell pool for your {cell_line} {gene} {objective} project.  
                 We have already sorted for single cells into 96-well plates and will update you when we have screened 
                 the plates and identified correctly edited clones. Each modification and cell line is a custom project, 
                 and the time will differ widely for each project depending on several factors. Based on the details of your 
-                specific project, we estimate that we will have identified clones in about {weeks} weeks. 
+                specific project, we estimate that we will have identified clones in about 12 weeks. 
                 If you have any questions or concerns, please don't hesitate to reach out.
                 <br><br>
+                </font>
                 """
                 
             elif status.upper() == "INITIAL SCREEN":
-                body=f"""{greeting},
+                body=f"""
+                <font face="Calibri, Calibri, monospace">
+                {greeting},
                 <br><br>
                 Great News! We have successfully identified clones with the desired modification for your {cell_line} {gene} {objective} project. 
-                If everything goes as planned, we expect to hand off these clones to you in {weeks} weeks. 
+                If everything goes as planned, we expect to hand off these clones to you in 4 weeks. 
                 Please let me know if you have any questions.
                 <br><br>
+                </font>
                 """
 
             elif status.upper() == "DELAYED INITIAL SCREEN": 
-                body=f"""{greeting},
+                body=f"""
+                <font face="Calibri, Calibri, monospace">
+                {greeting},
                 <br><br>
                 I wanted to provide you with an update on your {cell_line} {gene} {objective} project. Unfortunately, we were unable to identify any correctly 
                 edited clones during the initial screen.  We are reviewing our data and reevaluating the editing strategy now.  
                 We are still working hard to obtain the desired edited clone(s), but there is going to be a delay in the timeline 
                 as we restart the process.  Please let me know if you have any questions.
                 <br><br>
+                </font>
                 """
                 
             elif status.upper() == "DELAYED CLONE HAND-OFF": 
-                body=f"""{greeting},
+                body=f"""
+                <font face="Calibri, Calibri, monospace">{greeting},
                 <br><br>
                 I wanted to provide you with an update on your {cell_line} {gene} {objective} project.  The clones are growing slower than expected, 
                 which has resulted in a delayed timeline for project completion.  We will email you when they are expanded, fully QC’d,
                 and ready for pick up. Based on their current rate of growth, I would expect them to be ready in {weeks} weeks.  
                 Please let me know if you have any questions.
                 <br><br>
+                </font>
                 """
 
             return body
@@ -351,17 +362,17 @@ class Status_Tab_srm(tbs.Frame):
 
         email.To = ";".join(email_recip)
         email.CC = email_cc
+        if status == "Initial Screen" or status == "Delayed Clone Hand-off":
+            email.BCC = "Porter, Shaina"
 
         email.Subject = email_sub
 
         #find html signature file in each individual userprofile
-        
         email.HTMLBody = body + signature
         #Display(False) loads all emails at once and gives focus back to ttk window
         email.Display(False)
 
         return
-        
 
 if __name__ == "__main__":
     import _emailer_gui_RUN_THIS_SCRIPT

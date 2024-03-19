@@ -1,5 +1,6 @@
 from tkinter import filedialog
 from tkinter import ttk
+import ttkbootstrap as tbs
 import os
 import pandas as pd
 import numpy as np
@@ -85,10 +86,12 @@ def df_from_tails_template(template):
                   'Number of Tube Samples/Plates',
                   'Sample Format',
                   'Sample Type',
+                  'Specify Sample Type',
                   'SRM Order #',
                   'SRM Sample #',
                   'Requested By',
                   'Consolidation Plate?',
+                  'Number of Consolidation Plates',
                   'User Comments',
                   'Lab Comments'
                   ]]
@@ -135,13 +138,40 @@ def parse_signature():
             text = re.search(body_pattern, html)
 
             sig = text.group()
+            
+            open_tag = '<font face="Calibri, Calibri, monospace">'
+            close_tag = '</font>'
+            
+            sig = open_tag+sig+close_tag
+            
+            
         else:
             sig = " "
     except:
-        print("No signature found.  I will still work though.")
+        print("No signature found.  I will still work though...hopefully")
         sig = " "
     return sig
-    
+
+#joke
+def window_size():
+    user = os.environ.get('USERNAME')
+    if user == 'jklein1':
+        app = tbs.Window(
+            title="CAGE Emailer",
+            themename = "vapor",
+            size=(1600,800),
+            resizable=(True,True),
+        )
+
+    else: 
+        app = tbs.Window(
+            title="CAGE Emailer",
+            themename = "superhero",
+            size=(1600,800),
+            resizable=(True,True),
+        )
+    print(user)
+    return app
 
 if __name__ == "__main__":
   

@@ -1,0 +1,31 @@
+# Copy over files for Indel visualization
+cp -u $CAGE_Z_COMMON/Python/CAGE_Programs/NGS_analysis/NGS_Bar_Plot_Summary/NGS_summary_bar_plot_v2*.py $joined_dir/
+
+# Copy over files for all_indels_barplot to replace the previous orange bar plot program
+cp -u $CAGE_Z_COMMON/Python/CAGE_Programs/all_indels_barplot/all_indels_barplot.py $joined_dir/
+
+
+# Prep python files by changing replacing spaces w/ _, changing paths where
+#   appropriate, and adding all of the files to program_list.
+bsub -o $joined_dir/logs/prep.log -P CAGE -R "rusage[mem=300]" -J prep -w 'ended("job_*")' -K bash $CAGE_CLUSTER_COMMON/local/run_python/prep_python_files.sh $joined_dir
+
+# Remove unused files.
+bsub -o $joined_dir/logs/rm_all.log -P Patrick -R "rusage[mem=300]" -J rm_all -w 'ended("prep")' rm $joined_dir/*.unassembled* && rm $joined_dir/*discarded*
+
+# Runs submit_python.sh, which is just running the python scripts from the
+#   appropriate directory. Waits until all have been submitted before continuing
+echo 'Submit programs for running'
+bsub -o $joined_dir/logs/run_all.log -J run_all -P CAGE -R "rusage[mem=300]" -K bash $CAGE_CLUSTER_COMMON/local/run_python/run_all_batch.sh $joined_dir
+
+# Copy files over to Z drive
+bsub -o $joined_dir/logs/z-cp.log -P CAGE -J copy_wait_all -w 'ended("run_job_*")' -R "rusage[mem=300]" -K "cp -a -u -f -R $joined_dir/ $CAGE_NGS_dir/"
+mkdir $CAGE_NGS_dir/joined/Barplots_to_be_run
+
+# Send final email to everybody
+echo 'sending email to everyone'
+#bsub -o $joined_dir/logs/email_wait.log -P CAGE -J email_wait -w 'ended("copy_wait_all")' -R "rusage[mem=300]" mail -s "NGS from "$2" has finished running" $EMAIL_LIST < $CAGE_CLUSTER_COMMON/local/run_python/finished_email.txt
+
+# Test-Run: Send final email to only you
+bsub -P CAGE -J testrun_done -w 'ended("copy_wait_all")' -R "rusage[mem=300]" mail -s "NGS test run from "$2" has finished running" peter.hall@stjude.org
+
+echo 'ended'
