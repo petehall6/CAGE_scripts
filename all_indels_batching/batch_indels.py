@@ -5,33 +5,19 @@ import shutil
 inputCSV = "input.csv"
 ngs_dir = r'Z:\ResearchHome\Groups\millergrp\home\common\NGS'
 holding_dir = os.path.join(os.getcwd(),'holding')
-
-
 all_indel_list=[]
 
-
-def get_ones_place(plate_list):
-    for plate in plate_list:
-
-        ones = plate[-1]
-            
-    return ones
-    
-
-
-def get_projects():
+def find_and_run_projects():
 
     clear_holding_dir()
     
-    project_list=[]   
-    
-    #TODO attach joined_dir and new python script for batching across multiple NGS folders
+    target_list=[]   
     
     #get input from csv
     input_df = pd.read_csv(inputCSV)
 
+    #puts columns into list so that I can containerize the data eaiser
     input_projects = input_df.values.tolist()
-    #print(project_list)
 
     for proj in input_projects:
         
@@ -46,11 +32,14 @@ def get_projects():
         
         target = [cage_proj,plate_num]
         
-        project_list.append(target)
-    return project_list,joined_dir
+        target_list.append(target)
+        
+        rewrite_target_py(target_list,joined_dir)
+        #empties the target_list after every rewrite
+        #again this is for containerization
+        target_list.pop(0)
 
 def rewrite_target_py(project_list,joined_dir):
-    
     
     test_list_open = False
     os.chdir(holding_dir)
@@ -60,24 +49,20 @@ def rewrite_target_py(project_list,joined_dir):
     the_Seq_end=""
     fastq_files=""
     test_list=""
+
     
     for project in project_list:
         
         script, plate_num = project
-        
         fastq_files,multi_range = plate_range(plate_num)
         
-        #TODO
-        
+        #reads in the old file and parses out the seq, seq_start, seq_end and corrects the NGS_one_main directory if need be.  
         with open(script+'.py',"r+",encoding='utf-8') as f:
             code = f.readlines()
         f.close()
         
         for line in code:
             line = line.strip()
-
-            #Find seq, seq_start, seq_end, test
-            #find the plate num, redo directory, and change to clone check main
 
             if line.startswith('the_Seq '):
                 the_Seq = line
@@ -87,7 +72,8 @@ def rewrite_target_py(project_list,joined_dir):
 
             elif line.startswith('the_Seq_end'):
                 the_Seq_end = line
-                
+            
+            #if multiple guides are present in the original code, this keeps the brackets open while it fills in the list
             elif line.startswith('test_list'):
                 test_list_open = True
                 test_list = line
@@ -98,11 +84,9 @@ def rewrite_target_py(project_list,joined_dir):
             elif line.startswith("]"):
                 test_list = test_list + line
                 test_list_open = False
-
+            #template for just one plate/range
             single_template=f'''
-#TODO make multi_range template
-
-
+            
 import os,sys,inspect
 import argparse
 
@@ -125,7 +109,7 @@ if __name__ =='__main__':		# use this if you want to include modules from a subf
         main()
     '''
     
-    
+            #template for the multi_range clone check main
             multi_template=f'''
 #TODO make multi_range template
 
@@ -164,39 +148,40 @@ if __name__ =='__main__':		# use this if you want to include modules from a subf
                     f.write(line)
             f.close()
         
-            all_indel_list.append(new_py)
-            
         else:
             with open(new_py,'w') as f:
                 for line in multi_template:
                     f.write(line)
             f.close()
-            
-            all_indel_list.append(new_py)
-            
-    print(f"All indel_list: {all_indel_list}")
-    for indel_script in all_indel_list:
-        run_updated_scripts(indel_script,joined_dir=joined_dir)
 
-
-
+        run_updated_scripts(new_py, joined_dir)
+        
 def run_updated_scripts(indel_script,joined_dir):
+    
     os.chdir(holding_dir)
     shutil.copy(indel_script,joined_dir)
     
     os.chdir(joined_dir)
+    
+    print(f"\n\nRunning: {indel_script}\n\n")
+    
     os.system(f'python {indel_script}')
     
-    return
-
 def clear_holding_dir():
-        
     trash_files = os.scandir(holding_dir)
     for file in trash_files:
         os.remove(file)    
+
+def get_ones_place(plate_list):
+    #helper function for plate_range
     
+    for plate in plate_list:
+
+        ones = plate[-1]
+            
+    return ones
+
 def plate_range(plate_num):
-    
     
     #read in and sanitize plate numbers
     plates = list(str(plate_num).strip().replace(" ","").split(","))
@@ -286,7 +271,7 @@ def plate_range(plate_num):
             print("Run multi_range")
             multi_range = True
             glob_range=[]
-              
+
             for plate in plates:
                 glob_range.append(f"Miller-Plate{plate}*.fastq")
 
@@ -303,11 +288,9 @@ def plate_range(plate_num):
         
     
     return updated_fastq_files, multi_range
-#parse project details from csv
 
-project_list,joined_dir = get_projects()
-
-
-rewrite_target_py(project_list,joined_dir)
-
-#TODO how to check for multiple plates and create a plate range to run 
+def main():
+    find_and_run_projects()
+    clear_holding_dir()
+    
+main()
