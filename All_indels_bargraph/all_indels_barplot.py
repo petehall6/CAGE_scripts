@@ -18,6 +18,7 @@ Changelog: 102023 - Default setting is to run guide activity plot and names bars
 Changelog: 111023 - Added tags to file names to better distribute work flow
                   - Running celfi's will also generate an out of frame graph
 Changelog: 012224 - Added try/except loop to catch graphs that fail so downstream graphs are not effected. Line: 97
+Changelog: 030624 - added main namespace for importing 
                     
 
 
@@ -28,7 +29,7 @@ Changelog: 012224 - Added try/except loop to catch graphs that fail so downstrea
 '''
 PMH 11/23
 
-Version: 2.0_20231110
+Version: 2.0_20240306
 
 This scripts is to replace the orange bar plots with stacked all indel bar plots.
 
@@ -60,15 +61,19 @@ This scripts is to replace the orange bar plots with stacked all indel bar plots
 3)Completed graphs will be placed in the Barplots_to_be_run folder at the top of the joined folder
 '''
 
+#This will find any and all files in the NGS folder that have BP at the end of the file.  Even if they are in the original folder
+
 pd.options.mode.chained_assignment = None
 plot_dir = os.path.join(os.path.dirname(__file__) + "/Barplots_to_be_run/").replace("\\","/")
 
 
+def main():
+    find_csv()
+    get_indels()
 
-#This will find any and all files in the NGS folder that have BP at the end of the file.  Even if they are in the original folder
 def find_csv():
     
-    print(os.getcwd())
+    #print(os.getcwd())
     print("Locating files. Please stand by.")
     #will return all the csvs with BP in the name located in the NGS folder and copy to barplot folder
     csv_list = (glob.glob("**/*BP.csv",recursive=True))
@@ -92,7 +97,7 @@ def get_indels():
     result_csv = glob.glob('*.csv')
     
     print(f"graphing: {result_csv}")
-
+    failed_list = []
     for csv in result_csv:
         try: 
         
@@ -127,22 +132,21 @@ def get_indels():
                 OoF_stand_alone = True
                 
             
-            print(indel_df)
+            #print(indel_df)
             
-            graph_indels(indel_df,graph_title, tilt, OoF_stand_alone)
+            graph_indels(indel_df,graph_title, tilt, OoF_stand_alone, failed_list)
             os.remove(csv)
         except:
-            failed_list = []
             failed_list.append(csv)
-            print(f"The following files did not graph: {failed_list}")
+            #print(f"The following files did not graph: {failed_list}")
             for csv in failed_list:
                 os.remove(csv)
                          
-def graph_indels(df,title,tilt, OoF_stand_alone):
+def graph_indels(df,title,tilt, OoF_stand_alone, failed_list):
     
     def graph_oof():
         df.drop(columns=["0bp","In-frame"], inplace=True)
-        print(f"Dropped columns: {df}")
+        #print(f"Dropped columns: {df}")
         graph_image_name = title.replace(".csv","")
         
         chart_title = f"gRNA Validation via NGS"
@@ -255,15 +259,11 @@ def graph_indels(df,title,tilt, OoF_stand_alone):
         graph_oof()
     
     
-    print("All graphs have been generated.")
+    print("\n\nGraphing complete.")
+    
+    print(f"The following projects failed to grpahs. Double check formating. For activity plots, the number of guides must equal the number of samples (not including WT). {failed_list}\n\n")
     #plt.show()
 
+if __name__ == "__main__":
 
-find_csv()
-#input("Ensure all csv's are formatted properly and press enter to continue.")
-get_indels()
-
-
-
-
-
+    main()
