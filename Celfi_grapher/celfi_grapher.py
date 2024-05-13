@@ -110,8 +110,13 @@ def graph_scores():
                                title="Dependency Scores",
                                ylim=(0, float(y_max)+0.2),
                                color='#008ccf' #dark red #8d0034, stjude red #d11947, green #c4d82e, aqua #7ad0e4, dark aqua #17818F
-                               
                             )
+    
+    #remove plot top and left frame border
+    #set y label to max @ 1.0
+    #add error bars?
+    #change color?
+    #minor ticks in background
 
     plt.show()
 
