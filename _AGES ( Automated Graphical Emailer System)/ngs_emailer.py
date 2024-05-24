@@ -2,8 +2,7 @@ import ttkbootstrap as tbs
 from ttkbootstrap.constants import *
 from ttkbootstrap.tableview import Tableview
 from emailer_functions import (open_file,
-                               df_from_template,
-                               clicked,
+                               df_from_ngs_template,
                                parse_signature
                             )
 import pandas as pd
@@ -27,11 +26,10 @@ class NGS_Tab(tbs.Frame):
         self.PI = tbs.StringVar(value="")
         self.requested_by = tbs.StringVar(value="")
         self.project_number = tbs.StringVar(value="")
-        self.project_scope = tbs.StringVar(value="")
-        self.cell_line = tbs.StringVar(value="")
-        self.project_objective = tbs.StringVar(value="")
         self.gene = tbs.StringVar(value="")
-        self.line_lead = tbs.StringVar(value="")
+        self.user_comments = tbs.StringVar(value="")
+        self.ngs_date = tbs.StringVar(value="")
+
         
         
         self.data = []
@@ -39,14 +37,12 @@ class NGS_Tab(tbs.Frame):
         self.create_labels()
         
         self.create_srm_load_btn()
+        self.create_ngs_date_field()
         self.create_gen_emails_btn()
         self.create_clear_btn()
         
         self.table = self.create_table()
 
-        #TODO FIX the table selection here.  table.view == ttk.Treeview
-        #self.table.view.selection
-        #self.table.view.bind("<<TreeviewSelect>>", clicked(self.table.view.yview()))
     def create_labels(self):
     
         self.title_lbl = tbs.Label(
@@ -64,10 +60,27 @@ class NGS_Tab(tbs.Frame):
             bootstyle = SUCCESS,
         )
         
+        self.ngs_lbl = tbs.Label(
+            master = self.button_container, 
+            text="NGS Date:", 
+            font=(10), 
+            bootstyle = SUCCESS,
+        )
+        
         self.title_lbl.grid(column=1,row=0, columnspan=3, padx=20, sticky=W+E+N+S)
         self.excel_lbl.grid(column=1,row=1, pady=10)
+        self.ngs_lbl.grid(column=0, row=2)
     
-
+    def create_ngs_date_field(self):
+        
+        self.ngs_date_box = tbs.Entry(
+        master = self.button_container,
+        bootstyle = "info",
+        width=22
+        )
+            
+        self.ngs_date_box.grid(column=1, row=2)
+        
     def create_srm_load_btn(self):
         
         self.srm_load_btn = tbs.Button(
@@ -91,7 +104,7 @@ class NGS_Tab(tbs.Frame):
             width = 25   
         )
         
-        self.gen_emails_btn.grid(column=0, row=2, pady=10)
+        self.gen_emails_btn.grid(column=0, row=3, pady=10)
 
     def create_clear_btn(self):
 
@@ -110,14 +123,11 @@ class NGS_Tab(tbs.Frame):
     def create_table(self):
         columns = [
             {"text":"SRM Order#"},
-            {"text":'PI'},
             {"text":'Requested By'},
+            #{"text":'PI'}, waiting on RIS to add to excel export
             {"text":'Project Number'},
-            {"text":'Project Scope'},
-            {"text":'Cell Line of Choice'},
-            {"text":'Project Objective'},
-            {"text":'Target Gene Name'},
-            {"text":'Cell Line Lead'}
+            {"text": "Gene"},
+            {"text":'User Comments'},
         ]
 
         table = Tableview(
@@ -159,7 +169,7 @@ class NGS_Tab(tbs.Frame):
         #convert to dataframe
         
         #this returns a list of lists.  Will need to figure out how to unpack that for however long the list is
-        srm_list = df_from_template(template)
+        srm_list = df_from_ngs_template(template)
         
         #append table to bottom of frame
         #loop through index
@@ -168,26 +178,19 @@ class NGS_Tab(tbs.Frame):
         for srm in srm_list:
             for entry in srm:
                 self.srm_order = srm[0]
-                self.PI = srm[1]
+               # self.PI = srm[1], change indices
+                self.project_number = srm[1]
                 self.requested_by = srm[2]
-                self.project_number = srm[3]
-                self.project_scope = srm[4]
-                self.cell_line = srm[5]
-                self.project_objective = srm[6]
-                self.gene = srm[7]
-                self.species = srm[8]
-                self.line_lead = srm[9].split("Lead-")[1]
-                self.stem_cell = srm[10]
+                self.gene = srm[3]
+                self.user_comments = srm[4]
+
                 
             self.data.append((self.srm_order,
-                              self.PI,
+                              #self.PI,
                               self.requested_by,
                               self.project_number,
-                              self.project_scope,
-                              self.cell_line,
-                              self.project_objective,
                               self.gene,
-                              self.line_lead
+                              self.user_comments,
             ))
             
         #refresh table with new data.
@@ -197,23 +200,26 @@ class NGS_Tab(tbs.Frame):
 
     def generate_emails(self):
         
+        def _get_ngs_date(self):
+            
+            ngs_date = self.ngs_date_box.get()
+            
+            print(f"NGS Date: {ngs_date}")
+            return ngs_date
+            
+        
         def _get_subject_line(scope, gene, cell_line, objective):
             
-            if scope.upper() == "EDITED CELL POOL":
-                sub_line = f"{gene} {cell_line} Edited Cell Pool Complete"
-            elif scope.upper() == "CELL LINE CREATION":
-                sub_line = f"{cell_line} {gene} {objective} Cell Line Complete"
-            elif scope.upper() == "CELL FITNESS/DEPENDENCY ASSAY":
-                sub_line = f"CelFi Assay for {gene} in {cell_line} Cells Complete"
+            sub_line = "subject"
                     
             return sub_line
         
         #pass email object, cage num
-        def _get_attachment(email, project_num):
+        def _get_attachment(email, srm_order_num):
             #find powerpoint
             try:
-                path = "Z:\ResearchHome\Groups\millergrp\home\common\CORE PROJECTS/"
-                for name in glob.glob(os.path.join(path, "*{}".format(project_num))):
+                ngs_dir = "Z:\ResearchHome\Groups\millergrp\home\common\\NGS"
+                for name in glob.glob(os.path.join(ngs_dir, "*{}".format(srm_order_num))):
                     folder = name
 
                 os.chdir(folder)
@@ -237,70 +243,16 @@ class NGS_Tab(tbs.Frame):
             pi = pi.split(", ")[1]
             requester = requester.split(", ")[1]
             
-            
-            if scope.lower() == "edited cell pool":
-
-                body=f"""
-                <font face="Calibri, Calibri, monospace">
-                Hi {pi} and {requester},
-                <br><br>
-                Great news! Your {gene} {cell_line} edited cell pool project is complete and ready for pickup.  Please see the attached slide deck for details.
-                <br><br>
-                The last slide is the most informative.  We were able to get over <font color=red>XX%</font> total editing in the pool with <font color=red>~XX%</font> out of frame indels.
-                <br><br>
-                We have a contactless pickup system in place right now.  Please coordinate with {line_lead.split(" ")[0]} to let them know a good time window for you to pick up these cells. 
-                During the agreed upon time, {line_lead.split(" ")[0]} will place the frozen vials of cells in a dry ice bucket in M4170. 
-                The bucket will be on the counter in front of you when you walk in.  The door is always unlocked.  
-                If you would like the live cultures as well, please come in the next day or so.  
-                The live cultures will be in the incubator to the right as you walk in (top incubator, bottom shelf).  Please bring dry ice for the pickup.
-                <br><br>
-                Don't hesitate to contact me if you have any questions.
-                <br><br>
-                Best,
-                <br><br>
-                SM
-                <br><br> 
-                </font>               
-                """
-                
-            elif scope.lower() == "cell fitness/dependency assay":
-                body=f"""
-                <font face="Calibri, Calibri, monospace">
-                Hi {pi} and {requester},
-                <br><br>
-                Great news! Your {gene} {cell_line} fitness assay is complete. Please see the attached slide deck for details.
-                <br><br>
-                We <font color=red>do/do</font> not see a strong dependency for this gene in this background.
-                <br><br>
-                Please let me know if you have any questions.
-                <br><br>
-                Best,
-                <br><br>
-                SM
-                <br><br>
-                </font>
-                """
-                
-            else: 
-                body=f"""
-                <font face="Calibri, Calibri, monospace">
-                Hi {pi} and {requester},
-                <br><br>
-                Great news! Your {cell_line} {gene} {objective} project is complete and ready for pick up.  Please see the attached slide deck for details.
-                <br><br>
-                We currently have a contactless pickup system in place.  Please arrange a time window with {line_lead.split(" ")[0]} in which someone can pick up the cells.  
-                At the agreed upon time, {line_lead.split(" ")[0]} will place your frozen vials of cells into a dry ice bucket in M4170.  
-                The dry ice bucket will be on the counter in front of you as you walk in.  
-                Your live cultures will be in the first incubator to the right (top incubator, bottom shelf) and labeled accordingly. Please also bring dry ice for the pickup.
-                <br><br>
-                As always, please let me know if you have any questions.
-                <br><br>
-                Best,
-                <br><br>
-                SM
-                <br><br>
-                </font>
-                """
+            body=f"""
+            <font face="Calibri, Calibri, monospace">
+            Hi {pi} and {requester},
+            <br><br>
+            Great news! Your {gene} {cell_line} NGS data is attached.
+            <br><br>
+            Best,
+            <br><br>
+            </font>               
+            """
                 
             return body
         
@@ -313,20 +265,20 @@ class NGS_Tab(tbs.Frame):
                 
         '''
         'SRM Order #',0
-        'PI',1
+        'PI',1 #052024-Waiting on RIS to add PI column.  all other indicies -= 1
         'Requested By',2
         'Project Number',3
-        'Project Scope',4
-        'Cell Line of Choice',5
-        'Project Objective',6
-        'Target Gene Name' 7
+        'Gene', 4
+        'User Comments',5
         '''    
         sig = parse_signature()
+        
+        ngs_date = _get_ngs_date(self)
+
         #self data is a list of list.  loop through each entry to access each field
         for entry in srm_entries:
             
-  
-            srm_order_num, pi, requester, project_num, scope, cell_line, objective, gene, line_lead = entry
+            srm_order_num, requester, project_num, user_comment, gene = entry
             
             #mail object generator
             outlook = win32com.client.Dispatch("Outlook.Application")
@@ -334,16 +286,15 @@ class NGS_Tab(tbs.Frame):
             email_recip = [requester]
             email_cc = [pi,line_lead]
             
-            email_sub = _get_subject_line(scope,gene,cell_line, objective)
+            email_sub = _get_subject_line(scope,gene,pi, )
 
-            email = _get_attachment(email,project_num)
+            email = _get_attachment(email,srm_order_num)
 
             body = _body_builder(requester,pi,scope,cell_line,objective, line_lead)
 
-            email.To = ";".join(email_recip)
-            email.CC = ";".join(email_cc).replace(".","")
+            email.To = ";".join(email_recip) #Requester
+            email.CC = ";".join(email_cc).replace(".","") #shondra and PI
 
-            email.bcc = "Shaina Porter"
             email.Subject = email_sub
 
             #find html signature file in each individual userprofile
@@ -355,5 +306,5 @@ class NGS_Tab(tbs.Frame):
 
 
 if __name__ == "__main__":
-    import emailer_gui
-    emailer_gui.app.mainloop()
+    import _emailer_gui_RUN_THIS_SCRIPT
+    _emailer_gui_RUN_THIS_SCRIPT.app.mainloop()

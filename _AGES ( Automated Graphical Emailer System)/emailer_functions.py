@@ -101,6 +101,26 @@ def df_from_tails_template(template):
     
     return results
 
+def df_from_ngs_template(template):
+       info = pd.read_excel(template)
+       
+       tmp = pd.DataFrame(info)
+
+       srm_df = tmp[['SRM Order #',
+                     'CAGE Project #',
+                     #'PI',
+                     'Requested By',
+                     'Gene Name/Gene ID',
+                     'User Comments'
+
+        ]]
+       
+       results = srm_df.to_numpy().tolist()
+       #print(results)
+       return results
+
+
+
 def clicked(a):
     print("clicked") 
 
