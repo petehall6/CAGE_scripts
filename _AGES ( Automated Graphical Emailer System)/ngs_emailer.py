@@ -5,13 +5,9 @@ from emailer_functions import (open_file,
                                df_from_ngs_template,
                                parse_signature
                             )
-import pandas as pd
-import numpy as np
-import shutil
 import os
 import win32com.client
 import glob
-import datetime
 
 
 class NGS_Tab(tbs.Frame):
@@ -79,7 +75,7 @@ class NGS_Tab(tbs.Frame):
         width=22
         )
             
-        self.ngs_date_box.grid(column=1, row=2)
+        self.ngs_date_box.grid(column=1, row=2, sticky='w')
         
     def create_srm_load_btn(self):
         
@@ -93,7 +89,6 @@ class NGS_Tab(tbs.Frame):
         
         self.srm_load_btn.grid(column=0,row=1, pady=10)
         
-
     def create_gen_emails_btn(self):
 
         self.gen_emails_btn = tbs.Button(
@@ -124,7 +119,7 @@ class NGS_Tab(tbs.Frame):
         columns = [
             {"text":"SRM Order#"},
             {"text":'Requested By'},
-            #{"text":'PI'}, waiting on RIS to add to excel export
+            {"text":'PI'},
             {"text":'Project Number'},
             {"text": "Gene"},
             {"text":'User Comments'},
@@ -178,16 +173,16 @@ class NGS_Tab(tbs.Frame):
         for srm in srm_list:
             for entry in srm:
                 self.srm_order = srm[0]
-               # self.PI = srm[1], change indices
-                self.project_number = srm[1]
-                self.requested_by = srm[2]
-                self.gene = srm[3]
-                self.user_comments = srm[4]
+                self.requested_by = srm[1]
+                self.PI = srm[2]
+                self.project_number = srm[3]
+                self.gene = srm[4]
+                self.user_comments = srm[5]
 
                 
             self.data.append((self.srm_order,
-                              #self.PI,
                               self.requested_by,
+                              self.PI,
                               self.project_number,
                               self.gene,
                               self.user_comments,
@@ -207,49 +202,68 @@ class NGS_Tab(tbs.Frame):
             print(f"NGS Date: {ngs_date}")
             return ngs_date
             
-        
-        def _get_subject_line(scope, gene, cell_line, objective):
+        def _get_subject_line(ngs_date, gene, srm_number):
             
-            sub_line = "subject"
+            sub_line = f"NGS {ngs_date} {gene} SRM Order# {srm_number}"
                     
             return sub_line
         
         #pass email object, cage num
-        def _get_attachment(email, srm_order_num):
-            #find powerpoint
+        def _get_attachment(email, srm_number, ngs_date):
+             
+            found_file = False
+            attachment_list=[]
             try:
-                ngs_dir = "Z:\ResearchHome\Groups\millergrp\home\common\\NGS"
-                for name in glob.glob(os.path.join(ngs_dir, "*{}".format(srm_order_num))):
-                    folder = name
+                ngs_dir = f"Z:\ResearchHome\Groups\millergrp\home\common\\NGS\{ngs_date}\joined"
 
-                os.chdir(folder)
-                ppt_list = glob.glob("*.pptx")
-                latest_ppt = folder + "/" + max(ppt_list, key=os.path.getctime)
-    
+                print(os.getcwd())
+
+                #*Change to for loop.  Currently just finds the first index of glob.glob list
+                srm_excel = os.path.realpath(glob.glob(ngs_dir+f"/**/*{srm_number}*",recursive=True)[0])
+                
+                srm_dir = os.path.dirname(srm_excel)
+                
+                srm_dir_text = glob.glob(srm_dir+"/*.txt")[0]
+                
+                print(srm_excel)
+                print(srm_dir_text)
+                
+                found_file = True
+                print("before append")
+                attachment_list.append(srm_excel)
+                attachment_list.append(srm_dir_text)
+                print("after append")
+
             except:
-                print("couldn't find slidedeck in CORE Project folder")
-                print("Project Number = {}".format(project_num))
-                latest_ppt = None
+                print("couldn't find excel file or text file.  Check SRM#'s")
+                found_files = False
 
-            if latest_ppt is not None:
-                email.Attachments.Add(latest_ppt)
+            if found_file == True:
+                for file in attachment_list:
+                    email.Attachments.Add(file)
                 
             
             
             return email
+                
         
-        def _body_builder(requester, pi, scope, cell_line, objective, line_lead):
+        def _body_builder(requested_by, gene, project_num):
             
-            pi = pi.split(", ")[1]
-            requester = requester.split(", ")[1]
+            #pi = pi.split(", ")[1]
+            requested_by = requested_by.split(", ")[1]
             
             body=f"""
             <font face="Calibri, Calibri, monospace">
-            Hi {pi} and {requester},
+            Hi {requested_by},
             <br><br>
-            Great news! Your {gene} {cell_line} NGS data is attached.
+            Attached is the NGS data for your {gene} project.  The CAGE number for this site is {project_num}.
             <br><br>
-            Best,
+            The attached .xlsx file(s) include a summary of your data, and the .txt file(s) contain the sequencing reads, as well as details about how the summary sheet was generated. 
+            We highly encourage investigators to align their sequencing reads to their gene of interest to verify their results. 
+            For more information about our data analysis process and how to interpret the results, check out our video: CRIS.PY Tutorial
+            Please let us know if you have any questions.
+            <br>
+            Thanks
             <br><br>
             </font>               
             """
@@ -278,19 +292,19 @@ class NGS_Tab(tbs.Frame):
         #self data is a list of list.  loop through each entry to access each field
         for entry in srm_entries:
             
-            srm_order_num, requester, project_num, user_comment, gene = entry
+            srm_number, requested_by, pi, project_num, gene, user_comment = entry
             
             #mail object generator
             outlook = win32com.client.Dispatch("Outlook.Application")
             email = outlook.CreateItem(0)
-            email_recip = [requester]
-            email_cc = [pi,line_lead]
+            email_recip = [requested_by]
+            email_cc = [pi]
             
-            email_sub = _get_subject_line(scope,gene,pi, )
+            email_sub = _get_subject_line(ngs_date, gene, srm_number)
 
-            email = _get_attachment(email,srm_order_num)
+            email = _get_attachment(email,srm_number, ngs_date)
 
-            body = _body_builder(requester,pi,scope,cell_line,objective, line_lead)
+            body = _body_builder(requested_by, gene, project_num)
 
             email.To = ";".join(email_recip) #Requester
             email.CC = ";".join(email_cc).replace(".","") #shondra and PI
