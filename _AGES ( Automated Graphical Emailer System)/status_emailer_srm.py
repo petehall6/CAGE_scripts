@@ -154,7 +154,7 @@ class Status_Tab_srm(tbs.Frame):
         self.srm_label = tbs.Entry(
             
         )
-        self.weeks_box.grid(column=1, row=3)
+        self.weeks_box.grid(column=1, row=3, sticky='w')
         
     def create_table(self):
         columns = [

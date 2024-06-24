@@ -1162,8 +1162,11 @@ class Tails_Tab(tbs.Frame):
                 elif pi =='Thomas, Paul':
                     recip_list.append('Sisti, Resha')
                     recip_list.append('Van De Velde, Lee Ann')
+                elif pi =='Torres, Victor':
+                    recip_list.append('Chandrasekaran, Ravishankar')
                 elif pi == 'Yu, Jiyang':
                     recip_list.append('Yang, Xu')
+
                 
                 return list(set(recip_list))
             
@@ -1225,8 +1228,8 @@ class Tails_Tab(tbs.Frame):
             print("Debug Active.")
 
             srm_number="123456"
-            pi="Hall, Pete"
-            requested_by="Hall, Pete" 
+            pi="Torres, Victor"
+            requested_by="Chandrasekaran, Ravishankar" 
             entered_by="Hall, Pete"
             cage_number="CAGE2904"
             gene="PMH"

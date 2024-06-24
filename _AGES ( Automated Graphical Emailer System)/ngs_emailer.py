@@ -210,7 +210,7 @@ class NGS_Tab(tbs.Frame):
         
         #pass email object, cage num
         def _get_attachment(email, srm_number, ngs_date):
-             
+                        
             found_file = False
             attachment_list=[]
             try:
@@ -219,20 +219,27 @@ class NGS_Tab(tbs.Frame):
                 print(os.getcwd())
 
                 #*Change to for loop.  Currently just finds the first index of glob.glob list
-                srm_excel = os.path.realpath(glob.glob(ngs_dir+f"/**/*{srm_number}*",recursive=True)[0])
                 
-                srm_dir = os.path.dirname(srm_excel)
+                #gets all excel files that match the SRM number
+                srm_excel_list = glob.glob(ngs_dir+f"/**/*{srm_number}**",recursive=True)
+                srm_dir_text_list = []
                 
-                srm_dir_text = glob.glob(srm_dir+"/*.txt")[0]
-                
-                print(srm_excel)
-                print(srm_dir_text)
+                #gets dir names of each excel file and finds the 1 result text file in the dir
+                for excel in srm_excel_list:
+                    dir_path = os.path.dirname(excel)
+                    
+                    srm_dir_text_list.append(glob.glob(dir_path+"/*.txt")[0])
+
                 
                 found_file = True
-                print("before append")
-                attachment_list.append(srm_excel)
-                attachment_list.append(srm_dir_text)
-                print("after append")
+                
+                #individually attach each file to the attachment list to keep the list flat
+                for file in srm_excel_list:
+                    attachment_list.append(file)
+                for file in srm_dir_text_list:
+                    attachment_list.append(file)
+                    
+                attachment_list.sort()
 
             except:
                 print("couldn't find excel file or text file.  Check SRM#'s")
@@ -242,7 +249,6 @@ class NGS_Tab(tbs.Frame):
                 for file in attachment_list:
                     email.Attachments.Add(file)
                 
-            
             
             return email
                 
@@ -298,7 +304,7 @@ class NGS_Tab(tbs.Frame):
             outlook = win32com.client.Dispatch("Outlook.Application")
             email = outlook.CreateItem(0)
             email_recip = [requested_by]
-            email_cc = [pi]
+            email_cc = [pi,"Miller, Shondra"]
             
             email_sub = _get_subject_line(ngs_date, gene, srm_number)
 
