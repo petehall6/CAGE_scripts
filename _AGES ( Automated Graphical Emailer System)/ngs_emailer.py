@@ -1,6 +1,7 @@
 import ttkbootstrap as tbs
 from ttkbootstrap.constants import *
 from ttkbootstrap.tableview import Tableview
+from ttkbootstrap.dialogs import Messagebox
 from emailer_functions import (open_file,
                                df_from_ngs_template,
                                parse_signature
@@ -195,13 +196,19 @@ class NGS_Tab(tbs.Frame):
 
     def generate_emails(self):
         
+        def _error_box(self):
+            
+            self.ngs_date_box.delete(0,END)
+            Messagebox.show_warning("Did not find any files. Check SRM's and NGS Date", "I'm sorry Jon.", alert=True)
+
+
         def _get_ngs_date(self):
             
             ngs_date = self.ngs_date_box.get()
             
             print(f"NGS Date: {ngs_date}")
             return ngs_date
-            
+             
         def _get_subject_line(ngs_date, gene, srm_number):
             
             sub_line = f"NGS {ngs_date} {gene} SRM Order# {srm_number}"
@@ -211,48 +218,45 @@ class NGS_Tab(tbs.Frame):
         #pass email object, cage num
         def _get_attachment(email, srm_number, ngs_date):
                         
-            found_file = False
             attachment_list=[]
-            try:
-                ngs_dir = f"Z:\ResearchHome\Groups\millergrp\home\common\\NGS\{ngs_date}\joined"
+            
+            ngs_dir = f"Z:\ResearchHome\Groups\millergrp\home\common\\NGS\{ngs_date}\joined"
 
-                print(os.getcwd())
-
-                #*Change to for loop.  Currently just finds the first index of glob.glob list
+            #gets all excel files that match the SRM number
+            srm_excel_list = glob.glob(ngs_dir+f"/**/*{srm_number}**",recursive=True)
+            srm_dir_text_list = []
+            
+            #gets dir names of each excel file and finds the 1 result text file in the dir
+            for excel in srm_excel_list:
+                dir_path = os.path.dirname(excel)
                 
-                #gets all excel files that match the SRM number
-                srm_excel_list = glob.glob(ngs_dir+f"/**/*{srm_number}**",recursive=True)
-                srm_dir_text_list = []
-                
-                #gets dir names of each excel file and finds the 1 result text file in the dir
-                for excel in srm_excel_list:
-                    dir_path = os.path.dirname(excel)
-                    
+                #have to choose index of glob.glob.  If no .txt, exception is thrown.  Happens in case of base editing.
+                try:
                     srm_dir_text_list.append(glob.glob(dir_path+"/*.txt")[0])
+                except:
+                    print(f"No text file found in folder: {dir_path}")
+                    None
 
-                
-                found_file = True
-                
-                #individually attach each file to the attachment list to keep the list flat
+            #can have analysis files but no text files
+            if len(srm_excel_list) and len(srm_dir_text_list) != 0:
+            #individually attach each file to the attachment list to keep the list flat           
                 for file in srm_excel_list:
                     attachment_list.append(file)
                 for file in srm_dir_text_list:
                     attachment_list.append(file)
                     
                 attachment_list.sort()
-
-            except:
-                print("couldn't find excel file or text file.  Check SRM#'s")
-                found_files = False
-
-            if found_file == True:
+                
                 for file in attachment_list:
                     email.Attachments.Add(file)
                 
+                return email
             
-            return email
-                
-        
+            #no excel or text file found. 
+            else:
+                _error_box(self)
+                return None
+
         def _body_builder(requested_by, gene, project_num):
             
             #pi = pi.split(", ")[1]

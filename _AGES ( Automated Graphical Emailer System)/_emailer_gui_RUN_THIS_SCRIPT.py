@@ -20,14 +20,13 @@ from tails_emailer import Tails_Tab
 import emailer_functions
 
 
-
 app = tbs.Window(
             title="CAGE Emailer",
             themename = "superhero",
             size=(1600,800),
             resizable=(True,True),
         )
-
+app.iconbitmap('misc/cage_icon.ico')
 colors = app.style.colors
 note_tab = tbs.Notebook(master=app,
                         height=1100)
