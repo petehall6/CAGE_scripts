@@ -1,12 +1,12 @@
 import pandas as pd
 import matplotlib.pyplot as plt
+from matplotlib.ticker import AutoMinorLocator
 import os
 import shutil
 import glob
-import re
-from datetime import datetime
+
+
 import xlwings as xw
-import numpy as np
 import textwrap
 
 inputCSV = "input.csv"
@@ -14,6 +14,9 @@ ngs_dir = r'Z:\ResearchHome\Groups\millergrp\home\common\NGS'
 script_dir = os.getcwd()
 plt.rcParams["savefig.directory"] = (os.path.join(os.environ["USERPROFILE"], "Desktop"))
 holding_dir = os.path.join(os.getcwd(),'holding')
+compiled_excel = "compiled_data.xlsx"
+
+project_title=""
 
 def find_csv():
     #clear holding_dir
@@ -93,12 +96,8 @@ def compile_to_excel():
             
             ws2.range('A2').options(index=False,header=False).value = time_point_df
             
-            #updated_excel = f"updated_{current_time}.xlsx'"
-            
-            updated_excel = "updated.xlsx"
-            
             #close and save as updated_form
-            wb.save(updated_excel)
+            wb.save(compiled_excel)
             wb.close()
             app.quit()
             
@@ -147,15 +146,13 @@ def compile_to_excel():
 
 def get_scores():
     
-    print("\nChoose comparison groups in the updated.xlsx.\n")
+    print("\nChoose comparison groups in the compiled_data.xlsx.\n")
+    #TODO uncomment
     #input("\n\nPress Enter to continue\n\n")
     
-    
-    #Read in updated excel, drop rows without a comparison selected and reset index for readability
-    updated_excel = "updated.xlsx"
+    #Read in compiled excel, drop rows without a comparison selected and reset index for readability
     columns = ['CAGE#', 'Gene', 'Out-of-frame', 'Comparison_Group']
-    
-    score_df = pd.read_excel(updated_excel, usecols=columns)
+    score_df = pd.read_excel(compiled_excel, usecols=columns)
     score_df = score_df.dropna(axis=0, how='any')
     
     score_df.reset_index(drop=True,inplace=True)
@@ -170,16 +167,27 @@ def get_scores():
     final_df.rename(columns={"Out-of-frame":"final_oof"},inplace=True)    
     combo_df = init_df.merge(final_df,on=["CAGE#","Gene"])
     
-    combo_df.insert(4,"Fitness_Score",(combo_df["final_oof"] / combo_df["init_oof"]).round(2))
+    combo_df.insert(4,"fitness_score",(combo_df["final_oof"] / combo_df["init_oof"]).round(2))
     combo_df.drop(columns=["init_oof","final_oof"],inplace=True)
     
     combo_df.index = combo_df.index + 1
     
-    print(combo_df.head(20))
+    combo_df.sort_values(by=['fitness_score'],inplace=True)
+    
+    combo_df.to_excel("fitness_scores.xlsx")
     
     graph_scores(combo_df)
 
 def graph_scores(combo_df):
+    
+    def _rotate_labels(plot):
+        labels = []
+        for label in plot.get_xticklabels():
+            text = label.get_text()
+            labels.append(text)
+            fa_plot.xaxis.set_tick_params(which='major', pad=2)
+        plot.xaxis.set_tick_params(which='both', pad=0)
+        plot.set_xticklabels(labels, rotation=45, size=10.0, ha='right', rotation_mode='anchor')
     
     def _wrap_labels(plot, width, break_long_words=True):
         
@@ -188,11 +196,11 @@ def graph_scores(combo_df):
             text = label.get_text()
             labels.append(textwrap.fill(text, width=width,
                         break_long_words=break_long_words))
-        plot.set_xticklabels(labels, rotation=0, size=25.0)
+        plot.set_xticklabels(labels, rotation=45, size=10.0, ha='right')
     
     def _find_max_y(fa_score_df):
         
-        y_max = fa_score_df['Fitness_Score'].max()
+        y_max = fa_score_df['fitness_score'].max()
         
         y_buffer = 1.05
         
@@ -200,7 +208,7 @@ def graph_scores(combo_df):
         
         return y_upper_bound
     
-    fa_score_df = combo_df[['Gene','Fitness_Score']]
+    fa_score_df = combo_df[['Gene','fitness_score']]
     
     y_limit= _find_max_y(fa_score_df)
     
@@ -213,16 +221,12 @@ def graph_scores(combo_df):
         bar_width = 0.3
     else:
         bar_width = 0.5
-    
     fa_plot = fa_score_df.plot.bar(
                      x="Gene",
-                     xlabel = "Gene",
-                     y='Fitness_Score',
-                     ylabel = 'Fitness Score',
+                     y='fitness_score',
                      rot=0,
                      legend=False,
-                     title=f"FA Scores. Can change later",
-                     ylim=(0, y_limit), 
+                     #ylim=(0, y_limit), 
                      color='#008ccf',
                      align = 'center',
                      label = 'yes',
@@ -251,21 +255,25 @@ def graph_scores(combo_df):
     fa_plot.spines['top'].set_visible(False)
     fa_plot.spines['right'].set_visible(False)
     
-    
     #draw grid and set behind the bars
-    fa_plot.grid(axis='y', zorder=0)
-    _wrap_labels(fa_plot,width=5)
-    fa_plot.yaxis.tick_left()
-    fa_plot.yaxis.set_label_position("left")
+    fa_plot.grid(axis='y', which='both', zorder=3)
+    fa_plot.yaxis.set_minor_locator(AutoMinorLocator(2))
+    #fa_plot.minorticks_on()
     
     
+    
+    #_wrap_labels(fa_plot,width=5)
+    _rotate_labels(fa_plot)
+
+    #more y axis minor ticks
+    
+    plt.xlabel("Gene",fontsize=15, weight='bold',labelpad=10)
+    plt.ylabel("Fitness Score",fontsize=15, weight='bold',labelpad=10)
+    plt.title(f"Fitness Scores {project_title}", fontsize=20, weight='bold', pad=10)
     plt.autoscale()
     plt.show()
     
     
-
-
-
 
 def main():
     #find_csv()
@@ -274,4 +282,4 @@ def main():
 
 main()
 
-print("Done")
+print("Graphing Complete.")
