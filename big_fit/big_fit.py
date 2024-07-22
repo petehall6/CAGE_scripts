@@ -29,44 +29,43 @@ def find_csv():
     
     clear_holding_dir()
     #get input from csv
-    input_df = pd.read_csv(inputCSV)
+    input_df = pd.read_csv(inputCSV,dtype=object)
 
     input_df = input_df.astype(str)
-    
-   #input(input_df.head())
     
     #puts columns into list to containerize the data eaiser
     input_projects = input_df.values.tolist()
     
-    print("Scanning for csv")
+    print("\nScanning for csv\n")
     
     for target_proj in input_projects:
         
         cage_proj, ngs_date = target_proj
-        
+        cage_proj = str(cage_proj).strip()
         #appends 0 in from of months Jan->Sept
         if len(ngs_date) < 6:
-            ngs_date = '0' + str(ngs_date)
+            ngs_date = str('0' + str(ngs_date))
         
         
         joined_dir = os.path.join(ngs_dir,ngs_date,'joined').replace("\\\\","\\")
         os.chdir(joined_dir)
-        
+
+        #print(joined_dir)
+        #print(cage_proj)
         #search joined folder for all_indel
-        for file in glob.glob(f"{cage_proj}**all_inde*\*all_indel*.csv",recursive=True):
+        for file in glob.glob(f"{joined_dir}/{cage_proj}*/*all_indel*.csv",recursive=True):
+            #print(file)
             if cage_proj in file:
                 shutil.copy(file, holding_dir)
     
-    print("CSV files copied over.")
+    print("\nCSV files copied over.\n")
 
 def compile_to_excel():
-    print("Compiling data into Excel.")
+    print("\nCompiling data into Excel.\n")
     
     def _format_excel(compiled_df):
                     
             os.chdir(script_dir)
-            current_time = datetime.strftime(datetime.today(),"%m%d%Y_%H%M")
-            
             
             #compiled_df.reset_index(drop=True, inplace=True)
             
@@ -121,7 +120,7 @@ def compile_to_excel():
         #copy only the columns needed and append to list to concat into compiled_df later
         tmp_df = pd.read_csv(csv)
         
-        print(csv.name)
+        #print(csv.name)
         
         
         tmp_df = tmp_df[tmp_columns]
@@ -133,7 +132,9 @@ def compile_to_excel():
         tmp_df.insert(2,"Gene",gene,True)
         
         tmp_df_list.append(tmp_df)
-        
+    
+    #input(tmp_df_list)
+    
     #compile all csv df's and reset index, save as excel
     compiled_df = pd.concat(tmp_df_list,ignore_index=True)
     compiled_df.index = compiled_df.index +1
@@ -148,7 +149,7 @@ def get_scores():
     
     print("\nChoose comparison groups in the compiled_data.xlsx.\n")
     #TODO uncomment
-    #input("\n\nPress Enter to continue\n\n")
+    input("\n\nPress Enter to continue\n\n")
     
     #Read in compiled excel, drop rows without a comparison selected and reset index for readability
     columns = ['CAGE#', 'Gene', 'Out-of-frame', 'Comparison_Group']
@@ -273,11 +274,10 @@ def graph_scores(combo_df):
     plt.autoscale()
     plt.show()
     
-    
 
 def main():
-    #find_csv()
-    #compile_to_excel()
+    find_csv()
+    compile_to_excel()
     get_scores()
 
 main()
