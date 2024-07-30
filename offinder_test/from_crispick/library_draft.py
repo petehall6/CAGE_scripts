@@ -9,14 +9,15 @@ import pandas as pd
 #*End product is passed to library_draft.py to choose how many guides are needed.
 
 
-inputFile = "sgrna-designs-shilpa.txt"
-sortedFileName = "128-sorted-shilpa.xlsx" #make sure file is xlsx. 
+inputFile = "lib142-sgrna-designs.txt"
+sortedFileName = "142_sorted.xlsx" #make sure file is xlsx. 
 casType = '9'
 customType = None
 species = 'h' #128 is human
-guideQuota = 5
-outputLibraryName = "lib128_draft_shilpa.xlsx"
+guideQuota = 6
+outputLibraryName = "142_draft.xlsx"
 
+positive_controls = ['RPA3','PCNA','DBR1','PLK1','RPL3','KIF11','EEF2','POLR2B','POLR2A','GAPDH','PSMB1']
 
 
 def get_pam(cas_type):
@@ -69,7 +70,7 @@ def offinder():
 
     input_guides = 'columns_combined_for_offinder.txt'
     
-    offinder_call = f'bsub -P Cas_offinder -notify done -q rhel8_gpu_short -gpu "num=1/host" -R a100 -M 8000 -o run_summary.txt -J cas_offinder "hostname & cas-offinder {input_guides} G CasOffinder_Results.txt"'
+    offinder_call = f'bsub -P Cas_offinder -notify done -q rhel8_gpu_short -gpu "num=1/host" -R a100 -M 10000 -o run_summary.txt -J cas_offinder "hostname & cas-offinder {input_guides} G CasOffinder_Results.txt"'
                     
     Long_sout = subprocess.run([offinder_call], shell=True, stdout=subprocess.PIPE).stdout.decode('utf-8')    
     jid_Long9 = re.split("<|>", Long_sout)[1]
@@ -105,9 +106,9 @@ def create_ota_table():
     count_df.columns = ['Long_0','Long_1','Long_2','Long_3']
     
     #counts across the series of positional mismatches and renames them Long_0 etc
-    count_df['Long_1']=count_df['Long_1']+count_df['Long_0']
-    count_df['Long_2']=count_df['Long_2']+count_df['Long_1']+count_df['Long_0']
-    count_df['Long_3']=count_df['Long_3']+count_df['Long_2']+count_df['Long_1']+count_df['Long_0']
+    count_df['Long_3'] = count_df.iloc[:,0:4].sum(axis=1)
+    count_df['Long_2'] = count_df.iloc[:,0:3].sum(axis=1)
+    count_df['Long_1'] = count_df.iloc[:,0:2].sum(axis=1)
     
     #reset index to get rid of any multi-index shannigans from above step and merge with gene names
     #gets rid of duplicatese.  count_df will not have any NTC's.  
@@ -135,7 +136,6 @@ def create_ota_table():
     sorted_df = (sorted_df.pipe(add_guide_numbers))
     
     print(sorted_df.head())
-    print(sorted_df.shape)  
     
     sorted_df.to_excel(sortedFileName,index=False)
     
@@ -161,9 +161,15 @@ def get_non_target_control():
 
 def add_guide_numbers(sorted_df):
     input_df = sorted_df
-
+    pos_count = 0
     input_df['gene'] = input_df['Name']
     gene_list = input_df['Name'].values.tolist()
+
+    #append positive control tag to positive controls based on name
+    for gene in gene_list:
+        if gene in positive_controls:
+            gene_list[gene_list.index(gene)] = str(gene + "_pos")
+    
 
     #print(gene_list)
     guide_name_list = []
@@ -200,9 +206,7 @@ def add_guide_numbers(sorted_df):
     #lib_df.to_excel(sortedFileName,header=True,index=False)
 
 def library_drafter(sortedFileName, guideQuota, ntc_df):
-    
-
-  
+      
     #read in xlsx as df
     sorted_df = pd.read_excel(sortedFileName)
     
@@ -216,7 +220,7 @@ def library_drafter(sortedFileName, guideQuota, ntc_df):
     for row in sorted_df.itertuples():
         cur_gene=row[2]
         
-        if prev_gene == cur_gene and cur_gene != "NTC" and guide_count < guideQuota:#adding until quote filled
+        if prev_gene == cur_gene and cur_gene != "NTC" and guide_count < guideQuota:#adding until quota filled
             picked_list.append((row[1],row[2],row[3],row[4],row[5],row[6],row[7]))
             prev_gene = cur_gene
             guide_count +=1
@@ -243,19 +247,23 @@ def library_drafter(sortedFileName, guideQuota, ntc_df):
     picked_df.sort_values(by=['Name'],inplace=True)
     #Creates a series from Name column (gene.g#).  Creates lambda that splits the seires @ '.g', takes the #side and converts that series as int.
     #s stays a series until the very end when its cast as in with astype.  Have to treat the entire thing as a series
-    ntc_df.sort_values(by=['Name'],inplace=True, key=lambda s: (s.str.rsplit('.g',expand=True)[1]).astype(int))
-    
+    try:
+        ntc_df.sort_values(by=['Name'],inplace=True, key=lambda s: (s.str.rsplit('.g',expand=True)[1]).astype(int))
+    except KeyError as key_error:
+        print(key_error)
+        print("Make sure the input list has NTC's picked.")
     #print("Library Draft: ")
     #print(picked_df.tail(20))
-    
-    
-    print("NTC list:")
-    print(ntc_df.tail(20))
 
     library_df = pd.concat([picked_df,ntc_df],ignore_index=True)
 
+    print(stars)
+    print(stars)
     print(library_df.head(20))
     print(library_df.tail(20))
+    print(stars)
+    print(f"Library Draft Complete.  Please see file {outputLibraryName}")
+    print(stars)
     
     library_df.to_excel(outputLibraryName,index=False)
     

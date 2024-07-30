@@ -9,17 +9,21 @@ import warnings
 import xlwings as xw
 import textwrap
 
-inputCSV = "input.csv"
+inputCSV = 'input.csv'
 ngs_dir = r'Z:\ResearchHome\Groups\millergrp\home\common\NGS'
 script_dir = os.getcwd()
-plt.rcParams["savefig.directory"] = (os.path.join(os.environ["USERPROFILE"], "Desktop"))
+plt.rcParams['savefig.directory'] = (os.path.join(os.environ['USERPROFILE'], 'Desktop'))
 holding_dir = os.path.join(os.getcwd(),'holding')
-compiled_excel = "compiled_data.xlsx"
+compiled_excel = 'compiled_data.xlsx'
+
+
+print(script_dir)
+print(holding_dir)
 
 #turns off openpyxl data valiadtion warning
 warnings.simplefilter(action='ignore', category=UserWarning)
 
-project_title=""
+project_title=''
 
 def find_csv():
     #clear holding_dir
@@ -39,7 +43,7 @@ def find_csv():
     #puts columns into list to containerize the data eaiser
     input_projects = input_df.values.tolist()
     
-    print("\nScanning for csv\n")
+    print('\nScanning for csv\n')
     
     for target_proj in input_projects:
         
@@ -50,21 +54,21 @@ def find_csv():
             ngs_date = str('0' + str(ngs_date))
         
         
-        joined_dir = os.path.join(ngs_dir,ngs_date,'joined').replace("\\\\","\\")
+        joined_dir = os.path.join(ngs_dir,ngs_date,'joined').replace('\\\\','\\')
         os.chdir(joined_dir)
 
         #print(joined_dir)
         #print(cage_proj)
         #search joined folder for all_indel
-        for file in glob.glob(f"{joined_dir}/{cage_proj}*/*all_indel*.csv",recursive=True):
+        for file in glob.glob(f'{joined_dir}/{cage_proj}*/*all_indel*.csv',recursive=True):
             #print(file)
             if cage_proj in file:
                 shutil.copy(file, holding_dir)
     
-    print("\nCSV files copied over.\n")
+    print('\nCSV files copied over.\n')
 
 def compile_to_excel():
-    print("\nCompiling data into Excel.\n")
+    print('\nCompiling data into Excel.\n')
     
     def _format_excel(compiled_df):
                     
@@ -107,7 +111,7 @@ def compile_to_excel():
     tmp_df_list=[]
     
     #instainate big df will add Sample Name column after comipling all csvs
-    compiled_columns = ['CAGE#','Well#','0bp','In-frame', 'Out-of-Frame','Comparison_Group']
+    compiled_columns = ['CAGE#','Well#','Gene','Guide_Name','0bp','In-frame', 'Out-of-Frame','Comparison_Group']
     compiled_df = pd.DataFrame(columns=[compiled_columns])
     
     os.chdir(holding_dir)
@@ -118,7 +122,7 @@ def compile_to_excel():
     #parse data from each csv
     for csv in csv_list:
         
-        tmp_columns = ['Name','0bp','In-frame','Out-of-frame']
+        tmp_columns = ['Name','Sample','0bp','In-frame','Out-of-frame']
         
         #copy only the columns needed and append to list to concat into compiled_df later
         tmp_df = pd.read_csv(csv)
@@ -127,16 +131,16 @@ def compile_to_excel():
         
         
         tmp_df = tmp_df[tmp_columns]
-        tmp_df.rename(columns={"Name":"Well#"},inplace=True)
+        tmp_df.rename(columns={'Name':'Well#','Sample':'Guide_Name'},inplace=True)
         
-        cage_num = csv.name.split("_")[0]
-        gene = csv.name.split("_")[1]
-        tmp_df.insert(0,"CAGE#",cage_num,True)
-        tmp_df.insert(2,"Gene",gene,True)
+        cage_num = csv.name.split('_')[0]
+        gene = csv.name.split('_')[1]
+        tmp_df.insert(0,'CAGE#',cage_num,True)
+        tmp_df.insert(2,'Gene',gene,True)
         
         tmp_df_list.append(tmp_df)
     
-    #input(tmp_df_list)
+    input(tmp_df_list)
     
     #compile all csv df's and reset index, save as excel
     compiled_df = pd.concat(tmp_df_list,ignore_index=True)
@@ -144,54 +148,57 @@ def compile_to_excel():
     #print(compiled_df.head(20))
     
 
-    #compiled_df.to_excel(f"compiled_data_{current_time}.xlsx")
+    #compiled_df.to_excel(f'compiled_data_{current_time}.xlsx')
     
     _format_excel(compiled_df)
 
 def get_scores():
     
-    print("\nChoose comparison groups in the compiled_data.xlsx.\n")
+    print('\nChoose comparison groups in the compiled_data.xlsx.\n')
     #TODO uncomment
-    input("\n\nPress Enter to continue\n\n")
+    input('\n\nPress Enter to continue\n\n')
     
     #Read in compiled excel, drop rows without a comparison selected and reset index for readability
-    columns = ['CAGE#', 'Gene', 'Out-of-frame', 'Comparison_Group']
+    columns = ['CAGE#', 'Gene', 'Guide_Name','Out-of-frame', 'Comparison_Group']
     score_df = pd.read_excel(compiled_excel, usecols=columns)
     score_df = score_df.dropna(axis=0, how='any')
     
     score_df.reset_index(drop=True,inplace=True)
     score_df.index = score_df.index + 1
     
+
     #generate fitness scores
     #break out each initial and final time point into seperate df's then merge to have 1 flat combined df.
-    init_df = score_df[["CAGE#","Gene","Out-of-frame"]][score_df["Comparison_Group"].str.contains("init")]
-    init_df.rename(columns={"Out-of-frame":"init_oof"},inplace=True) #need to have unique column for merge
+    init_df = score_df[['CAGE#','Gene','Guide_Name','Out-of-frame']][score_df['Comparison_Group'].str.contains('init')]
+    init_df.rename(columns={'Out-of-frame':'init_oof'},inplace=True) #need to have unique column for merge
 
-    final_df = score_df[["CAGE#","Gene","Out-of-frame"]][score_df["Comparison_Group"].str.contains("final")]
-    final_df.rename(columns={"Out-of-frame":"final_oof"},inplace=True)    
-    combo_df = init_df.merge(final_df,on=["CAGE#","Gene"])
+    final_df = score_df[['CAGE#','Gene','Guide_Name','Out-of-frame']][score_df['Comparison_Group'].str.contains('final')]
+    final_df.rename(columns={'Out-of-frame':'final_oof'},inplace=True)
+        
+    combo_df = init_df.merge(final_df,on=['CAGE#','Gene','Guide_Name'])
     
-    combo_df.insert(4,"fitness_score",(combo_df["final_oof"] / combo_df["init_oof"]).round(2))
-    combo_df.drop(columns=["init_oof","final_oof"],inplace=True)
+    combo_df.insert(4,'fitness_score',(combo_df['final_oof'] / combo_df['init_oof']).round(2))
+    combo_df.drop(columns=['init_oof','final_oof'],inplace=True)
     
     combo_df.index = combo_df.index + 1
     
     combo_df.sort_values(by=['fitness_score'],inplace=True)
     
-    combo_df.to_excel("fitness_scores.xlsx")
+    combo_df.to_excel('fitness_scores.xlsx')
     
     graph_scores(combo_df)
 
 def graph_scores(combo_df):
     
-    def _rotate_labels(plot):
+    def _rotate_labels(plot,width=8,break_long_words=True):
         labels = []
         for label in plot.get_xticklabels():
             text = label.get_text()
-            labels.append(text)
+            labels.append(textwrap.fill(text, width=width,
+                        break_long_words=break_long_words))
             fa_plot.xaxis.set_tick_params(which='major', pad=2)
         plot.xaxis.set_tick_params(which='both', pad=0)
-        plot.set_xticklabels(labels, rotation=45, size=10.0, ha='right', rotation_mode='anchor')
+        plot.set_xticklabels(labels, rotation=45, size=8.0, ha='right', rotation_mode='anchor')
     
     def _wrap_labels(plot, width, break_long_words=True):
         
@@ -206,17 +213,25 @@ def graph_scores(combo_df):
         
         y_max = fa_score_df['fitness_score'].max()
         
-        y_buffer = 1.05
+        if y_max > 1:
         
-        y_upper_bound = y_buffer * y_max
+            y_buffer = 1.05
+            
+            y_upper_bound = y_buffer * y_max
+        
+        else:
+            y_upper_bound = 1
         
         return y_upper_bound
     
-    fa_score_df = combo_df[['Gene','fitness_score']]
+    #concat CAGE#, Gene and Guide_Name into guide name
+    combo_df['Guide_Name'] = combo_df[['CAGE#','Gene','Guide_Name']].agg('.'.join, axis=1)
+    
+    fa_score_df = combo_df[['Guide_Name','fitness_score']]
     
     y_limit= _find_max_y(fa_score_df)
     
-    bar_num = len(fa_score_df['Gene'].to_list())
+    bar_num = len(fa_score_df['Guide_Name'].to_list())
     
     #tries to standardize the bar width.  Bar width is relative to the plot area so the more bars the smaller the width.
     #Fewer bars look weirdly wide.  Set width to 0.3 if 4 or fewer bars looks better, more than five increase
@@ -226,11 +241,11 @@ def graph_scores(combo_df):
     else:
         bar_width = 0.5
     fa_plot = fa_score_df.plot.bar(
-                     x="Gene",
+                     x='Guide_Name',
                      y='fitness_score',
                      rot=0,
                      legend=False,
-                     #ylim=(0, y_limit), 
+                     ylim=(0, y_limit), 
                      color='#008ccf',
                      align = 'center',
                      label = 'yes',
@@ -247,7 +262,7 @@ def graph_scores(combo_df):
             #set label slightly above bar
             bar.get_height() + 0.02,
             #label string, and keep 2 decimals
-            "{:.2f}".format(bar.get_height()),
+            '{:.2f}'.format(bar.get_height()),
             #horizontal alignement
             ha='center',
             color='black',
@@ -262,27 +277,23 @@ def graph_scores(combo_df):
     #draw grid and set behind the bars
     fa_plot.grid(axis='y', which='both', zorder=3)
     fa_plot.yaxis.set_minor_locator(AutoMinorLocator(2))
-    #fa_plot.minorticks_on()
-    
-    
-    
-    #_wrap_labels(fa_plot,width=5)
+
     _rotate_labels(fa_plot)
 
     #more y axis minor ticks
+    plt.xlabel('Guide',fontsize=15, weight='bold',labelpad=10)
+    plt.ylabel('Fitness Score',fontsize=15, weight='bold',labelpad=10)
+    plt.title(f'Fitness Scores {project_title}', fontsize=20, weight='bold', pad=10)
+    #plt.autoscale()
     
-    plt.xlabel("Gene",fontsize=15, weight='bold',labelpad=10)
-    plt.ylabel("Fitness Score",fontsize=15, weight='bold',labelpad=10)
-    plt.title(f"Fitness Scores {project_title}", fontsize=20, weight='bold', pad=10)
-    plt.autoscale()
     plt.show()
     
 
 def main():
-    find_csv()
-    compile_to_excel()
+    #find_csv()
+    #compile_to_excel()
     get_scores()
 
 main()
 
-print("Graphing Complete.")
+print('Graphing Complete.')

@@ -12,5 +12,5 @@ module list
 
 echo Compiling OTA scores and generating tables
 #module list
-python /research_jude/rgs01_jude/groups/millergrp/projects/CrisprDesigns/common/screens/programs/offinder_test/from_crispick/library_draft.py 5000
+python /research_jude/rgs01_jude/groups/millergrp/projects/CrisprDesigns/common/screens/programs/offinder_test/from_a_guide_list/get_ota_from_gene_list.py 5000
 
