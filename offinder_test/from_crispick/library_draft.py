@@ -9,16 +9,25 @@ import pandas as pd
 #*End product is passed to library_draft.py to choose how many guides are needed.
 
 
-inputFile = "lib142-sgrna-designs.txt"
-sortedFileName = "142_sorted.xlsx" #make sure file is xlsx. 
-casType = '9'
-customType = None
-species = 'h' #128 is human
-guideQuota = 6
-outputLibraryName = "142_draft.xlsx"
+input_file = "lib140-sgrna-designs.txt"
+
+draft_file_name = "140_draft.xlsx" #*will just be the guides to fill the quota with the best OTA scores
+sorted_file_name = "140_sorted.xlsx" #*make sure file is xlsx. Sorted will be master list of all guides and OTA scores 
+
+cas_type = '9'
+species = 'h' #h = human, m = mouse.  Can expand in future if need be.
+
+guide_quota = 5
+
+#* Don't touch these
+custom_type = None
+
+#TODO Don't forget to change this if using a short list of guides that do not include ntc's
+need_ntc = True
+
 
 positive_controls = ['RPA3','PCNA','DBR1','PLK1','RPL3','KIF11','EEF2','POLR2B','POLR2A','GAPDH','PSMB1']
-
+stars = "*"*60
 
 def get_pam(cas_type):
     
@@ -123,10 +132,14 @@ def create_ota_table():
     if species =='m':
         sorted_df['name'] = sorted_df['name'].str.capitalize()
     
-    #add in NTC's from CRISPICK file, adds NTCs to bototm of list 
-    ntc_df = get_non_target_control()
-    #sorted_df.sort_values(by=['Long_0'],ascending=True,inplace=True)    
-    sorted_df = pd.concat([sorted_df,ntc_df])
+    #add in NTC's from CRISPICK file, adds NTCs to bototm of list
+    
+    if need_ntc == True:
+        ntc_df = get_non_target_control()
+        #sorted_df.sort_values(by=['Long_0'],ascending=True,inplace=True)    
+        sorted_df = pd.concat([sorted_df,ntc_df])
+    else:
+        None
     
     #rearrange and rename columns to fit downstream (library draft) workflow
     arranged_columns = ['name','gRNA','Long_0','Long_1','Long_2','Long_3']
@@ -137,18 +150,24 @@ def create_ota_table():
     
     print(sorted_df.head())
     
-    sorted_df.to_excel(sortedFileName,index=False)
+    sorted_df.to_excel(sorted_file_name,index=False)
     
 
-    print(f"{stars}\nOTA Complete. Sorted OTA List saved as: ' {sortedFileName} '.\n{stars} ")
+    print(f"{stars}\nOTA Complete. Sorted OTA List saved as: ' {sorted_file_name} '.\n{stars} ")
     
 def get_non_target_control():
-    ntc_file = inputFile
+    ntc_file = input_file
     tmp_df = pd.read_csv(ntc_file,delimiter="\t",usecols=['Input','sgRNA Sequence'])
     
     #select all negative control sequences and rename them NTC
     ntc_df = tmp_df.loc[tmp_df['Input'] == '(NEG_CONTROL)']
     ntc_df = ntc_df.rename(columns={'Input': 'name','sgRNA Sequence': 'gRNA'})
+    
+    #append pam onto end of NTC sequence
+    ntc_df['gRNA'] = ntc_df['gRNA'].astype(str) + 'NGG'
+    
+    #ntc_df = ntc_df.loc[ntc_df['gRNA'].str.contains('NTC')]
+    
     ntc_df.reset_index(inplace=True)
     ntc_df.drop(['index'],axis=1,inplace=True)
     
@@ -203,12 +222,12 @@ def add_guide_numbers(sorted_df):
     #print(lib_df.head(10))
 
 
-    #lib_df.to_excel(sortedFileName,header=True,index=False)
+    #lib_df.to_excel(sorted_file_name,header=True,index=False)
 
-def library_drafter(sortedFileName, guideQuota, ntc_df):
+def library_drafter(sorted_file_name, guide_quota, ntc_df,output_file):
       
     #read in xlsx as df
-    sorted_df = pd.read_excel(sortedFileName)
+    sorted_df = pd.read_excel(sorted_file_name)
     
     
     picked_list=[]
@@ -220,12 +239,12 @@ def library_drafter(sortedFileName, guideQuota, ntc_df):
     for row in sorted_df.itertuples():
         cur_gene=row[2]
         
-        if prev_gene == cur_gene and cur_gene != "NTC" and guide_count < guideQuota:#adding until quota filled
+        if prev_gene == cur_gene and cur_gene != "NTC" and guide_count < guide_quota:#adding until quota filled
             picked_list.append((row[1],row[2],row[3],row[4],row[5],row[6],row[7]))
             prev_gene = cur_gene
             guide_count +=1
             
-        elif prev_gene == cur_gene and cur_gene != "NTC" and guide_count >= guideQuota: #quota hit
+        elif prev_gene == cur_gene and cur_gene != "NTC" and guide_count >= guide_quota: #quota hit
             None
             
         elif cur_gene == "NTC":#parse out NTC df
@@ -244,34 +263,36 @@ def library_drafter(sortedFileName, guideQuota, ntc_df):
     
     
 
-    picked_df.sort_values(by=['Name'],inplace=True)
+    picked_df.sort_values(by=['Name','Long_0','Long_1','Long_2','Long_3'],inplace=True)
     #Creates a series from Name column (gene.g#).  Creates lambda that splits the seires @ '.g', takes the #side and converts that series as int.
     #s stays a series until the very end when its cast as in with astype.  Have to treat the entire thing as a series
-    try:
-        ntc_df.sort_values(by=['Name'],inplace=True, key=lambda s: (s.str.rsplit('.g',expand=True)[1]).astype(int))
-    except KeyError as key_error:
-        print(key_error)
-        print("Make sure the input list has NTC's picked.")
+    if need_ntc == True:
+        try:
+            ntc_df.sort_values(by=['Name'],inplace=True, key=lambda s: (s.str.rsplit('.g',expand=True)[1]).astype(int))
+        except KeyError as key_error:
+            print(key_error)
+            print("Make sure the input list has NTC's picked.")
+    else:
+        None
     #print("Library Draft: ")
     #print(picked_df.tail(20))
 
     library_df = pd.concat([picked_df,ntc_df],ignore_index=True)
-
+    library_df.index = library_df.index + 1
+    
+    
     print(stars)
     print(stars)
     print(library_df.head(20))
     print(library_df.tail(20))
     print(stars)
-    print(f"Library Draft Complete.  Please see file {outputLibraryName}")
+    print(f"Library Draft Complete.  Please see file {output_file}")
     print(stars)
     
-    library_df.to_excel(outputLibraryName,index=False)
     
+    library_df.to_excel(output_file,index=False)
     
-
-    
-    return
-
+    return library_df.shape[0]
 
 def clean_files():
     #waits to make sure all files are done writing before going to next step
@@ -289,22 +310,23 @@ def clean_files():
         except:
             None
 
-stars = "*"*60
 
-if customType != None:
-    casType = customType
 
-pam = get_pam(casType)
+    
+if custom_type != None:
+    cas_type = custom_type
+
+pam = get_pam(cas_type)
 ntc_df = get_non_target_control()
 
-format_crispick(inputFile,pam,species)
+format_crispick(input_file,pam,species)
 
 offinder()
 
 create_ota_table()
 
-get_non_target_control()
+#get_non_target_control()
 
-library_drafter(sortedFileName, guideQuota,ntc_df)
+library_drafter(sorted_file_name, guide_quota,ntc_df,draft_file_name)
 
 clean_files()
