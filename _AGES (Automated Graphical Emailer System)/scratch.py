@@ -17,20 +17,26 @@ def _get_attachment(email, srm_number, ngs_date):
                 srm_excel_list = glob.glob(ngs_dir+f"/**/*{srm_number}**",recursive=True)
                 srm_dir_text_list = []
                 
+                input(srm_excel_list)
+                
+                
+                
                 #gets dir names of each excel file and finds the 1 result text file in the dir
                 for excel in srm_excel_list:
                     dir_path = os.path.dirname(excel)
-                    
-                    srm_dir_text_list.append(glob.glob(dir_path+"/*.txt")[0])
+                    srm_dir_text_list.append(glob.glob(dir_path+"/*.txt"))
+
+                input(srm_dir_text_list)
+                found_file = True
+                
 
                 
-                found_file = True
                 
                 #individually attach each file to the attachment list to keep the list flat
                 for file in srm_excel_list:
                     attachment_list.append(file)
-                for file in srm_dir_text_list:
-                    attachment_list.append(file)
+                #for file in srm_dir_text_list:
+                   # attachment_list.append(file)
 
             except:
                 print("couldn't find excel file or text file.  Check SRM#'s")
@@ -47,8 +53,8 @@ def _get_attachment(email, srm_number, ngs_date):
 outlook = win32com.client.Dispatch("Outlook.Application")
 
 email = outlook.CreateItem(0)
-srm_number = 826285
-ngs_date = "test_pmh"
+srm_number = 829208
+ngs_date = "061824"
 
 
 

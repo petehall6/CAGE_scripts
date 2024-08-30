@@ -224,8 +224,12 @@ class Design_Tab(tbs.Frame):
             srm_order_num, pi, requester, project_num, scope, cell_line, objective, gene, line_lead = project_details
             
             def _get_subject_line(gene, srm_order_num):
+                
+
             
                 sub_line = f"gRNA Designs for {gene}, SRM order {srm_order_num}"
+                
+
                 
                 return sub_line
             
@@ -288,7 +292,7 @@ class Design_Tab(tbs.Frame):
             else:
                 greeting = f"Hi {pi.split(',')[1]}"
                             
-            email_sub = _get_subject_line(scope,srm_order_num)
+            email_sub = _get_subject_line(gene,srm_order_num)
 
             email = _get_attachment(email,project_num)
 
@@ -314,9 +318,15 @@ class Design_Tab(tbs.Frame):
             #unpacked nested list into individual list
             srm_order_num, pi, requester, project_num, scope, cell_line, objective, gene, line_lead = map(list,zip(*projects))
             
-            def _get_subject_line(gene, srm_order_num):
+            def _get_subject_line(gene,srm_order_num):
+                
+                
+                srm_order_str = ""
+                
+                for order in srm_order_num:
+                    srm_order_str = srm_order_str + str(order) + ', '
             
-                sub_line = f"gRNA Designs for {gene}, SRM order {srm_order_num}"
+                sub_line = f"gRNA Designs for {(', '.join(gene))}, SRM orders: {srm_order_str}"
                 
                 return sub_line
             
@@ -387,14 +397,28 @@ class Design_Tab(tbs.Frame):
             
             if len(email_recip) > 1:
                 first_names=[]
+                
+                for inv in pi:
+                    first_names.append(inv.split(',')[1])
+                
                 for req in requester:
                     first_names.append(req.split(',')[1])
-                list(set(first_names))
+                first_name_list = list(set(first_names))
     
-                #insert 'and' in front of last element            
-                first_names[-1] = ' and '+ first_names[-1] 
+                #insert 'and' in front of last element
+                            
+                first_name_list[-1] = ' and '+ first_name_list[-1] 
+                
+                first_name_str =''
+                
+                for name in first_name_list:
+                    first_name_str = first_name_str + str(name)
+                    
+                
+                
+                greeting = f"Hi {first_name_str}"
 
-                greeting = f"Hi {pi[0].split(',')[1]}, {(','.join(first_names))}"
+
             else:
                 greeting = f"Hi {pi[0].split(',')[1]}"
             
@@ -405,7 +429,7 @@ class Design_Tab(tbs.Frame):
             else:
                 email_cc.append("Jon Klein")
                             
-            email_sub = _get_subject_line(scope,srm_order_num)
+            email_sub = _get_subject_line(gene,srm_order_num)
 
             email = _get_attachment(email,project_num)
 

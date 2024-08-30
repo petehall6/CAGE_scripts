@@ -107,6 +107,26 @@ def df_from_ngs_template(template):
        tmp = pd.DataFrame(info)
 
        srm_df = tmp[['SRM Order #',
+                     'SRM Sample #',
+                     'Requested By',
+                     'Principal Investigator',
+                     'CAGE Project #',
+                     'Gene Name/Gene ID',
+                     'User Comments'
+
+        ]]
+       
+       results = srm_df.to_numpy().tolist()
+       #print(results)
+       return results
+   
+def df_from_ngs_sample_num_template(template):
+       info = pd.read_excel(template)
+       
+       tmp = pd.DataFrame(info)
+
+       srm_df = tmp[['SRM Order #',
+                     
                      'Requested By',
                      'Principal Investigator',
                      'CAGE Project #',
