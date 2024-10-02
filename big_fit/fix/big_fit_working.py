@@ -6,6 +6,7 @@ import shutil
 import glob
 import warnings
 import xlwings as xw
+import textwrap
 
 inputCSV = 'input.csv'
 ngs_dir = r'Z:\ResearchHome\Groups\millergrp\home\common\NGS'
@@ -111,7 +112,7 @@ def compile_to_excel():
     tmp_df_list=[]
     
     #instainate big df will add Sample Name column after comipling all csvs
-    compiled_columns = ['CAGE#','Well#','Gene','Guide','0bp','In-frame', 'Out-of-Frame','Comparison_Group','Replicate']
+    compiled_columns = ['CAGE#','Well#','Gene','Guide_Name','0bp','In-frame', 'Out-of-Frame','Comparison_Group','Replicate']
     compiled_df = pd.DataFrame(columns=[compiled_columns])
     
     os.chdir(holding_dir)
@@ -131,7 +132,7 @@ def compile_to_excel():
         
         
         tmp_df = tmp_df[tmp_columns]
-        tmp_df.rename(columns={'Name':'Well#','Sample':'Guide'},inplace=True)
+        tmp_df.rename(columns={'Name':'Well#','Sample':'Guide_Name'},inplace=True)
         
         cage_num = csv.name.split('_')[0]
         gene = csv.name.split('_')[1]
@@ -146,7 +147,6 @@ def compile_to_excel():
     #print(compiled_df.head(20))
     
     _format_excel(compiled_df)
-    pass
 
 def get_scores():
     
@@ -157,7 +157,7 @@ def get_scores():
     input('\n\nPress Enter to continue\n\n')
     
     #Read in compiled excel, drop rows without a comparison selected and reset index for readability
-    columns = ['CAGE#', 'Gene', 'Guide','Out-of-frame', 'Comparison_Group','Replicate']
+    columns = ['CAGE#', 'Gene', 'Guide_Name','Out-of-frame', 'Comparison_Group','Replicate']
     score_df = pd.read_excel(compiled_excel, usecols=columns)
     score_df = score_df.dropna(axis=0, how='all')
 
@@ -166,7 +166,7 @@ def get_scores():
     
     
     #Stats versions
-    if not pd.isna(score_df.loc[1,'Replicate']):
+    if pd.isna(score_df.loc[1,'Replicate']) == False:
         print("Running Stats")
         replicates_found = True
         
@@ -176,16 +176,17 @@ def get_scores():
         #break out each replicate into seperate df and concat later
         
         
-        init_df = score_df[['CAGE#','Gene','Guide','Out-of-frame','Comparison_Group','Replicate']][score_df['Comparison_Group'].str.contains('init')]
+        init_df = score_df[['CAGE#','Gene','Guide_Name','Out-of-frame','Comparison_Group','Replicate']][score_df['Comparison_Group'].str.contains('init')]
         init_df.rename(columns={'Out-of-frame':'init_oof'},inplace=True) #need to have unique column for merge
         
-        final_df = score_df[['CAGE#','Gene','Guide','Out-of-frame','Comparison_Group','Replicate']][score_df['Comparison_Group'].str.contains('final')]
+        final_df = score_df[['CAGE#','Gene','Guide_Name','Out-of-frame','Comparison_Group','Replicate']][score_df['Comparison_Group'].str.contains('final')]
         final_df.rename(columns={'Out-of-frame':'final_oof'},inplace=True)
         
-        rep1_df = score_df[['CAGE#','Gene','Guide','Replicate','Out-of-frame','Comparison_Group']][score_df['Replicate'].str.contains('rep1')]
-        rep2_df = score_df[['CAGE#','Gene','Guide','Replicate','Out-of-frame','Comparison_Group']][score_df['Replicate'].str.contains('rep2')]
-        rep3_df = score_df[['CAGE#','Gene','Guide','Replicate','Out-of-frame','Comparison_Group']][score_df['Replicate'].str.contains('rep3')]
+        rep1_df = score_df[['CAGE#','Gene','Guide_Name','Replicate','Out-of-frame','Comparison_Group']][score_df['Replicate'].str.contains('rep1')]
+        rep2_df = score_df[['CAGE#','Gene','Guide_Name','Replicate','Out-of-frame','Comparison_Group']][score_df['Replicate'].str.contains('rep2')]
+        rep3_df = score_df[['CAGE#','Gene','Guide_Name','Replicate','Out-of-frame','Comparison_Group']][score_df['Replicate'].str.contains('rep3')]
 
+        
         df_list = [rep1_df, rep2_df, rep3_df]
     
         #add init/final oof columns
@@ -206,30 +207,37 @@ def get_scores():
         rep_df_list = [rep1_df, rep2_df, rep3_df]
 
         #combine rep dfs and clean up formatting
-        combo_df = pd.concat(rep_df_list).reset_index(drop=True)
+
         
-        combo_df['fitness_score'] = (combo_df['final_oof'] / combo_df['init_oof']).round(2)
-        combo_df.sort_values(by=['CAGE#','Gene','Guide','Replicate'],inplace=True)
+        combo_df = pd.concat(rep_df_list).reset_index()
+        combo_df = combo_df.drop(columns=['index'])
         
+        combo_df.insert(5,'fitness_score',(combo_df['final_oof'] / combo_df['init_oof']).round(2))
+    
         #calculate average and standard dev
         #by applying agg to the fitness_score column I get two separate columns and a single index.  if fitness_score is a agg() parameter I would get a multi_indexed df
-        graphing_results_df = combo_df.groupby(['CAGE#', 'Gene', 'Guide'])['fitness_score'].agg(['mean', 'std']).reset_index() #*will give mean and std
+        graphing_results_df = combo_df.groupby(['CAGE#','Gene','Guide_Name'])['fitness_score'].agg(['mean','std']).reset_index() #*will give mean and std...good enough to send to plt
+        
         graphing_results_df.sort_values(by=['mean'],inplace=True)
         graphing_results_df.rename(columns={'mean':'fitness_score'},inplace=True)
         
-        avg_df= combo_df.groupby('Guide')['fitness_score'].mean().reset_index()
+        
+        avg_df= combo_df.groupby('Guide_Name')['fitness_score'].mean().reset_index()
         avg_df.rename(columns={'fitness_score':'avg_fit_score'},inplace=True)
+        #avg_df.drop(columns=['Guide_Name'],inplace=True)
         
-        stdev_df= combo_df.groupby('Guide')['fitness_score'].std().reset_index()
+        stdev_df= combo_df.groupby('Guide_Name')['fitness_score'].std().reset_index()
         stdev_df.rename(columns={'fitness_score':'stdev'},inplace=True)
+        #stdev_df.drop(columns=['Guide_Name'],inplace=True)
         
-        excel_df = combo_df.merge(avg_df, on='Guide').merge(stdev_df, on='Guide')
-        excel_df.reset_index(inplace=True, drop=True)
-        excel_df.index = excel_df.index + 1
+        excel_df = pd.concat([combo_df,avg_df,stdev_df],axis=1,ignore_index=False)
+        #results.reset_index(inplace=True, drop=True)
         
-        excel_columns = ['CAGE#','Gene','Guide','Replicate','init_oof','final_oof','fitness_score','avg_fit_score','stdev']
-        excel_df = excel_df[excel_columns]
+        #print(excel_df.reset_index())
         
+        excel_df.sort_values(by=['CAGE#'],inplace=True)
+
+        print(excel_df.head(20))    
         excel_df.to_excel('fitness_scores_stats.xlsx',index=False)
     
     #Non stats version
@@ -239,13 +247,13 @@ def get_scores():
         
         #generate fitness scores
         #break out each initial and final time point into seperate df's then merge to have 1 flat combined df.
-        init_df = score_df[['CAGE#','Gene','Guide','Out-of-frame']][score_df['Comparison_Group'].str.contains('init')]
+        init_df = score_df[['CAGE#','Gene','Guide_Name','Out-of-frame']][score_df['Comparison_Group'].str.contains('init')]
         init_df.rename(columns={'Out-of-frame':'init_oof'},inplace=True) #need to have unique column for merge
 
-        final_df = score_df[['CAGE#','Gene','Guide','Out-of-frame']][score_df['Comparison_Group'].str.contains('final')]
+        final_df = score_df[['CAGE#','Gene','Guide_Name','Out-of-frame']][score_df['Comparison_Group'].str.contains('final')]
         final_df.rename(columns={'Out-of-frame':'final_oof'},inplace=True)
 
-        graphing_results_df = init_df.merge(final_df,on=['CAGE#','Gene','Guide'])
+        graphing_results_df = init_df.merge(final_df,on=['CAGE#','Gene','Guide_Name'])
         
         graphing_results_df.insert(4,'fitness_score',(graphing_results_df['final_oof'] / graphing_results_df['init_oof']).round(2))
         graphing_results_df.drop(columns=['init_oof','final_oof'],inplace=True)
@@ -265,8 +273,8 @@ def graph_scores(graphing_results_df,replicates_found):
         
         for label in plot.get_xticklabels():            
             text = label.get_text()
-            Guide = text.split('.')
-            wrapped_name = Guide[0]+'\n'+Guide[1]+"."+Guide[2]
+            guide_name = text.split('.')
+            wrapped_name = guide_name[0]+'\n'+guide_name[1]+"."+guide_name[2]
             labels.append(wrapped_name)            
             fa_plot.xaxis.set_tick_params(which='major', pad=2)
         plot.xaxis.set_tick_params(which='both', pad=0)
@@ -286,19 +294,19 @@ def graph_scores(graphing_results_df,replicates_found):
             y_upper_bound = 1
         
         return y_upper_bound
-    print("\n*******Graphing the following results*************\n")
-    print(f"{graphing_results_df}\n")
     
-    graphing_results_df['Guide'] = graphing_results_df[['CAGE#','Gene','Guide']].agg('.'.join, axis=1)
+    print(graphing_results_df.head(20))
+    
+    graphing_results_df['Guide_Name'] = graphing_results_df[['CAGE#','Gene','Guide_Name']].agg('.'.join, axis=1)
 
     try:
-        fa_score_df = graphing_results_df[['Guide','fitness_score','std']]
+        fa_score_df = graphing_results_df[['Guide_Name','fitness_score','std']]
     except:
-        fa_score_df = graphing_results_df[['Guide','fitness_score']]
+        fa_score_df = graphing_results_df[['Guide_Name','fitness_score']]
     
     y_limit= _find_max_y(fa_score_df)
     
-    bar_num = len(fa_score_df['Guide'].to_list())
+    bar_num = len(fa_score_df['Guide_Name'].to_list())
     
     
     if replicates_found == True:
@@ -313,7 +321,7 @@ def graph_scores(graphing_results_df,replicates_found):
         else:
             bar_width = 0.5
         fa_plot = fa_score_df.plot.bar(
-                        x='Guide',
+                        x='Guide_Name',
                         y='fitness_score',
                         yerr='std',
                         capsize=10,
@@ -365,7 +373,7 @@ def graph_scores(graphing_results_df,replicates_found):
         else:
             bar_width = 0.5
         fa_plot = fa_score_df.plot.bar(
-                        x='Guide',
+                        x='Guide_Name',
                         y='fitness_score',
                         rot=0,
                         legend=False,
@@ -409,13 +417,14 @@ def graph_scores(graphing_results_df,replicates_found):
     plt.xlabel('Guide',fontsize=15, weight='bold',labelpad=10)
     plt.ylabel('Fitness Score',fontsize=15, weight='bold',labelpad=10)
     plt.title(f'Fitness Scores {project_title}', fontsize=20, weight='bold', pad=10)
-
+    #plt.autoscale()
+    
     plt.show()
     
 def main():
 
-    find_csv() #comment this line out if you have already pulled your data and entered it into the compiled_data.xlsx
-    compile_to_excel() #comment this line out if you have already pulled your data and entered it into the compiled_data.xlsx
+    #find_csv() #comment this line out if you have already pulled your data and entered it into the compiled_data.xlsx
+    #compile_to_excel() #comment this line out if you have already pulled your data and entered it into the compiled_data.xlsx
     get_scores()
 
 if __name__ == "__main__":

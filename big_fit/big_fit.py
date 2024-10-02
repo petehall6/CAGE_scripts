@@ -13,17 +13,13 @@ ngs_dir = r'Z:\ResearchHome\Groups\millergrp\home\common\NGS'
 script_dir = os.getcwd()
 plt.rcParams['savefig.directory'] = (os.path.join(os.environ['USERPROFILE'], 'Desktop'))
 holding_dir = os.path.join(os.getcwd(),'holding')
-compiled_excel = 'compiled_data_stats.xlsx'
+compiled_excel = 'compiled_data.xlsx'
 
 #turns off openpyxl data valiadtion warning
 warnings.simplefilter(action='ignore', category=UserWarning)
 
 project_title=''
 
-def main():
-    #find_csv()
-    #compile_to_excel()
-    get_scores()
 
 def find_csv():
     #clear holding_dir
@@ -117,7 +113,7 @@ def compile_to_excel():
     tmp_df_list=[]
     
     #instainate big df will add Sample Name column after comipling all csvs
-    compiled_columns = ['Well#','CAGE#','Gene','Guide_Name','0bp','In-frame', 'Out-of-Frame','Comparison_Group','Replicate']
+    compiled_columns = ['CAGE#','Well#','Gene','Guide_Name','0bp','In-frame', 'Out-of-Frame','Comparison_Group','Replicate']
     compiled_df = pd.DataFrame(columns=[compiled_columns])
     
     os.chdir(holding_dir)
@@ -141,7 +137,7 @@ def compile_to_excel():
         
         cage_num = csv.name.split('_')[0]
         gene = csv.name.split('_')[1]
-        tmp_df.insert(1,'CAGE#',cage_num,True)
+        tmp_df.insert(0,'CAGE#',cage_num,True)
         tmp_df.insert(2,'Gene',gene,True)
         
         tmp_df_list.append(tmp_df)
