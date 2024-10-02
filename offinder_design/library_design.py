@@ -8,36 +8,40 @@ import argparse
 
 #*Creates a sorted list of guides, guide#s and OTA scores from a CRISPICK output file.
 #*End product is passed to library_draft.py to choose how many guides are needed.
-
+stars = "*"*60 #for pretty printing
 
 parser = argparse.ArgumentParser()
 
-parser.add_argument('-i', help='input design file', default='sgrna-designs.txt', type=str)
-parser.add_argument('-l', help='library name', default='test_lib', type=str)
-parser.add_argument('-design',help='choose crispick or guidelist to create design',default='crispick',type=str)
-parser.add_argument('-s',help='species. (h)uman or (m)ouse',default='h',type=str)
-parser.add_argument('-q',help='guide quota/the number of guides per gene',default=5, type=int)
-parser.add_argument('-cas',help='cas type choose 9 or 12',default='9',type=str)
+parser.add_argument('-i','--input', help='input design file', default='sgrna-designs.txt', type=str)
+parser.add_argument('-l','--lib', help='library name', default='test_lib', type=str)
+parser.add_argument('-d','--design', help='choose crispick or guidelist to create design',type=str)
+parser.add_argument('-s','--species', help='species. (h)uman or (m)ouse', type=str)
+parser.add_argument('-q','--quota', help='guide quota/the number of guides per gene',default=5, type=int)
+parser.add_argument('-c','--cas', help='cas type choose 9 or 12',default='9', type=str)
 parser.add_argument('-ntc',help='type -ntc false if no NTCs are present in crispick design',default=True)
-parser.add_argument('-f', help='choose function "md" merge design files, "ml" merge library drafts')
+parser.add_argument('-f', '--func',help='choose function "md" merge design files, "ml" merge library drafts')
 
 
 args = parser.parse_args()
 
+print(stars)
+for arg, value in vars(args).items():
+    print(f"{arg}: {value}")
+print(stars+"\n\n")
 
+#input("Please verify the input.  Press enter to continue or ctrl+c to exit\n\n")
 
-cas_type = args.cas
-species = args.s
-guide_quota = args.q
-input_file = args.i
-library_name = args.l
+design_type = args.design
+cas_type = str(args.cas)
+species = args.species
+guide_quota = args.quota
+input_file = args.input
+library_name = args.lib
 need_ntc = args.ntc
+aux_func = args.func
 
 draft_file_name = f"{library_name}_draft.xlsx" #*will just be the guides to fill the quota with the best OTA scores
 sorted_file_name = f"{library_name}_all_guides.xlsx" #*make sure file is xlsx. Sorted will be master list of all guides and OTA scores 
-
-stars = "*"*60 #for pretty printing
-
 
 def get_pam(cas_type):
     
@@ -82,6 +86,7 @@ def create_offinder_template(input_file, pam, species, crispick_flow):
         input_df.drop(columns=['PAM Sequence'], inplace=True)
     else:
         input_df = pd.read_csv(input_file, sep='\t')
+        print(input_df)
         input_df['Combined'] = input_df.apply(combine_columns, axis=1)
         input_df = input_df.drop(columns=['Sequence','Name'])
 
@@ -95,9 +100,8 @@ def call_offinder():
     input_guides = 'columns_combined_for_offinder.txt'
     
     #load_offinder = f'module load cas-offinder/2.4.1-rhel8'
-    offinder_call = f'bsub -P Cas_offinder -q rhel8_gpu_short -gpu "num=1/host" -R a100 -M 10000 -o offinder_summary.txt -J cas_offinder_library "hostname & cas-offinder {input_guides} G CasOffinder_Results.txt"'
-    
-       
+    offinder_call = f'bsub -P Cas_offinder -q rhel8_gpu_short -gpu "num=1/host" -R a100 -M 10000 -o offinder_summary.txt -e offinder_error_log.txt -J cas_offinder_library "hostname & cas-offinder {input_guides} G CasOffinder_Results.txt"'
+
     send_job = subprocess.run([offinder_call], shell=True, stdout=subprocess.PIPE).stdout.decode('utf-8')    
     job_id = re.split("<|>", send_job)[1]
     if job_id.isnumeric():
@@ -114,8 +118,26 @@ def create_ota_table(crispick_flow):
     
     positive_controls = ['RPA3','PCNA','DBR1','PLK1','RPL3','KIF11','EEF2','POLR2B','POLR2A','GAPDH','PSMB1']
     
-    def _guide_list_capatilization(sorted_df):
+    def _guide_list_capatilization(sorted_df, input_file):
         
+        def __guide_list_ntcs(input_file):
+            ntc_df = pd.read_csv(input_file,delimiter="\t",usecols=['Name','Sequence'])
+            ntc_df = ntc_df.loc[ntc_df['Name'].str.contains('NTC')]
+            ntc_df = ntc_df.rename(columns={'Name': 'name','Sequence': 'gRNA'})
+            ntc_df.reset_index(inplace=True)
+            ntc_df.drop(['index'],axis=1,inplace=True)
+            ntc_df[['Long_0','Long_1','Long_2','Long_3']] = pd.DataFrame([[0,0,0,0]], index=ntc_df.index)
+            
+            sorted_ntcs = sorted_df.loc[sorted_df['name'].str.contains('NTC')]
+            ntc_df = pd.concat([sorted_ntcs,ntc_df]).drop_duplicates(subset=['name']).reset_index(drop=True)
+            
+            return ntc_df
+            
+        ntc_df = __guide_list_ntcs(input_file)
+        
+        #remove NTC's from sorted_df
+        sorted_df = sorted_df.loc[sorted_df['name'].str.contains('NTC') == False]
+
         #keeps the guide number lower case while allowing for the gene name to be capitalized
         guide_number = sorted_df['name'].str.split(".",n=1,expand=True)
         sorted_df['name'] = guide_number[0]
@@ -130,6 +152,8 @@ def create_ota_table(crispick_flow):
         sorted_df['name'] = sorted_df['name'] + "." +sorted_df['guide_num']
         sorted_df = sorted_df.drop('guide_num',axis=1)
 
+        sorted_df = pd.concat([sorted_df,ntc_df]).reset_index(drop=True)
+        
         return sorted_df
 
     def _crispick_capatilization(sorted_df,need_ntc):
@@ -169,6 +193,8 @@ def create_ota_table(crispick_flow):
             ntc_df = __get_non_target_control()  
             sorted_df = pd.concat([sorted_df,ntc_df])
         else:
+            print("sorted df")
+            print(sorted_df)
             None
 
         return sorted_df
@@ -226,16 +252,24 @@ def create_ota_table(crispick_flow):
     #multi-index df that lists the positions as columns for counting across the series        
     count_df = tmp_df[['gRNA','mismatch','pos']].groupby(by=['gRNA', 'mismatch']).count().unstack()
 
-    #dropping one of the indexes for a flatter df
-    count_df.columns = count_df.columns.droplevel(1)
+
+    count_df.columns = count_df.columns.droplevel(0)
+    count_df.reset_index(0)
     count_df.fillna(0, inplace=True)
-    count_df.columns = ['Long_0','Long_1','Long_2','Long_3']
     
-    #counts across the series of positional mismatches and renames them Long_0 etc
+    #checks for missing columns and fills in the blank
+    columns_needed = set([0,1,2,3])
+    column_set = set(count_df.columns)
+    missing_cols = list(sorted(columns_needed - column_set))
+    for column in missing_cols:
+        count_df.insert(loc=column, column=column, value=[0 for i in range(count_df.shape[0])])
+    
+    count_df.columns = ['Long_0','Long_1','Long_2','Long_3']
+    #add Long_3 first so as not to change the value of Long_0,Long_1 and Long_2 before adding up to Long_3
     count_df['Long_3'] = count_df.iloc[:,0:4].sum(axis=1)
     count_df['Long_2'] = count_df.iloc[:,0:3].sum(axis=1)
     count_df['Long_1'] = count_df.iloc[:,0:2].sum(axis=1)
-    
+
     #reset index to get rid of any multi-index shannigans from above step and merge with gene names
     #gets rid of duplicatese.  count_df will not have any NTC's.  
     count_df.reset_index(inplace=True)
@@ -243,13 +277,18 @@ def create_ota_table(crispick_flow):
     #ignore index to reset it
     sorted_df = count_df[['gRNA','name','Long_0','Long_1','Long_2','Long_3']].sort_values(by=['name','Long_0','Long_1','Long_2','Long_3'],ignore_index=True)
 
+
     #crispick designs get the NTCs concated to the end and guide numbers later.  guide_list designs get the guide # split before capitlization
     #seperates the two work flows
     if crispick_flow == True:
         named_df = _crispick_capatilization(sorted_df, need_ntc)
         
     else:
-        named_df = _guide_list_capatilization(sorted_df)
+        #Offinder will not return data for NTC's that have all 0's.  Will only return hits.
+        #Need to parse all NTC's from input list and see what's missing from sorted_df
+        #Append 0's scores to NTC's that are missing from sorted_df
+
+        named_df = _guide_list_capatilization(sorted_df,input_file)
 
     #rearrange and rename columns to fit downstream (library draft) workflow
     arranged_columns = ['name','gRNA','Long_0','Long_1','Long_2','Long_3']
@@ -264,7 +303,7 @@ def create_ota_table(crispick_flow):
         
     all_guides_df = all_guides_df.astype({"Long_0":'int',"Long_1":'int',"Long_2":'int',"Long_3":'int'})
     
-    print(all_guides_df.head())
+    print(all_guides_df)
     
     all_guides_df.to_excel(sorted_file_name,index=False)
     
@@ -341,6 +380,10 @@ def library_drafter(sorted_file_name, guide_quota, draft_file_name):
     
     return library_df.shape[0]
 
+def merge_crispick_files():
+    
+    return None
+
 def clean_files():
 #waits to make sure all files are done writing before going to next step
     time.sleep(3)
@@ -363,7 +406,22 @@ def main():
     os.system("module load cas-offinder/2.4.1-rhel8")  
     pam = get_pam(cas_type)
     
-    if args.design == 'crispick':
+    if aux_func == 'md':
+        print(f'{stars}')
+        print("Merging crispick files")
+        print(f'{stars}')
+        
+        return None
+    
+    if aux_func == "ml":
+        print(f'{stars}')
+        print("Merging library files")
+        print(f'{stars}')
+        
+        return None
+        
+    
+    if design_type == 'crispick':
         
         print(f'{stars}')
         print("Generating library design from CRISPick files")
@@ -377,7 +435,7 @@ def main():
         
         return None
         
-    elif args.design =='guidelist':
+    if design_type =='guidelist':
         
         print(f'{stars}')
         print("Generating library design from a list of guides")
@@ -386,6 +444,7 @@ def main():
         create_offinder_template(input_file,pam,species,crispick_flow=False)
         call_offinder()
         create_ota_table(crispick_flow=False)
+        #Drafter not needed since we have the exact list of guides we need
         #library_drafter(sorted_file_name, guide_quota, draft_file_name)
 
     clean_files()
