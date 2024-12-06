@@ -41,9 +41,11 @@ def find_csv():
     
     print('\nScanning for csv\n')
     
+    
+    
     for target_proj in input_projects:
         
-        cage_proj, ngs_date = target_proj
+        cage_proj, ngs_date, comparison_group = target_proj
         cage_proj = str(cage_proj).strip()
         #appends 0 in from of months Jan->Sept
         if len(ngs_date) < 6:
@@ -162,32 +164,27 @@ def get_scores():
     
     print('\nChoose comparison groups in the compiled_data.xlsx.\n')
     #TODO uncomment
-    #input('\n\nPress Enter to continue\n\n')
+    input('\n\nPress Enter to continue\n\n')
     
     #Read in compiled excel, drop rows without a comparison selected and reset index for readability
     columns = ['CAGE#', 'Gene', 'Guide','Out-of-frame', 'Comparison_Group','Replicate','Graph_Group']
-    group_df = pd.read_excel(compiled_excel, usecols=columns)
-    group_df = group_df[group_df['Comparison_Group'].notna()]
-    print(group_df)
-    group_df.reset_index(drop=True,inplace=True)
-    group_df.index = group_df.index + 1
+    score_df = pd.read_excel(compiled_excel, usecols=columns)
+    score_df = score_df[score_df['Comparison_Group'].notna()]
+
+    score_df.reset_index(drop=True,inplace=True)
+    score_df.index = score_df.index + 1
     
     #need to loop through each graph_group and get the fitness scores
-    
     #get unique graph groups
-    graph_groups = group_df['Graph_Group'].unique().tolist()
+    graph_groups = score_df['Graph_Group'].unique().tolist()
     
     for group in graph_groups:
-
-
-        score_df = group_df[group_df['Graph_Group'] == group]    
-        score_df.loc[:,'Guide'] = score_df['Guide'].apply(lambda x: re.search(r'g\d*', x).group())
+        fitness_scores = pd.DataFrame()        
+        group_df = score_df[score_df['Graph_Group'] == group].copy()
+        group_df.loc[:,'Guide'] = group_df['Guide'].apply(lambda x: re.search(r'g\d*', x).group())
         
-        
-        input(f"This is the score_df:\n {score_df}")
-    
         #Stats versions
-        if not score_df['Replicate'].isnull().all():
+        if not group_df['Replicate'].isnull().all():
             print("Running Stats")
             replicates_found = True
             
@@ -197,15 +194,15 @@ def get_scores():
             #break out each replicate into seperate df and concat later
             
             
-            init_df = score_df[['CAGE#','Gene','Guide','Out-of-frame','Comparison_Group','Replicate']][score_df['Comparison_Group'].str.contains('init')]
+            init_df = group_df[['CAGE#','Gene','Guide','Out-of-frame','Comparison_Group','Replicate']][group_df['Comparison_Group'].str.contains('init')]
             init_df.rename(columns={'Out-of-frame':'init_oof'},inplace=True) #need to have unique column for merge
             
-            final_df = score_df[['CAGE#','Gene','Guide','Out-of-frame','Comparison_Group','Replicate']][score_df['Comparison_Group'].str.contains('final')]
+            final_df = group_df[['CAGE#','Gene','Guide','Out-of-frame','Comparison_Group','Replicate']][group_df['Comparison_Group'].str.contains('final')]
             final_df.rename(columns={'Out-of-frame':'final_oof'},inplace=True)
             
-            rep1_df = score_df[['CAGE#','Gene','Guide','Replicate','Out-of-frame','Comparison_Group']][score_df['Replicate'].str.contains('rep1')]
-            rep2_df = score_df[['CAGE#','Gene','Guide','Replicate','Out-of-frame','Comparison_Group']][score_df['Replicate'].str.contains('rep2')]
-            rep3_df = score_df[['CAGE#','Gene','Guide','Replicate','Out-of-frame','Comparison_Group']][score_df['Replicate'].str.contains('rep3')]
+            rep1_df = group_df[['CAGE#','Gene','Guide','Replicate','Out-of-frame','Comparison_Group']][group_df['Replicate'].str.contains('rep1')]
+            rep2_df = group_df[['CAGE#','Gene','Guide','Replicate','Out-of-frame','Comparison_Group']][group_df['Replicate'].str.contains('rep2')]
+            rep3_df = group_df[['CAGE#','Gene','Guide','Replicate','Out-of-frame','Comparison_Group']][group_df['Replicate'].str.contains('rep3')]
 
             df_list = [rep1_df, rep2_df, rep3_df]
         
@@ -251,7 +248,7 @@ def get_scores():
             excel_columns = ['CAGE#','Gene','Guide','Replicate','init_oof','final_oof','fitness_score','avg_fit_score','stdev']
             excel_df = excel_df[excel_columns]
             
-            excel_df.to_excel('fitness_scores_stats.xlsx',index=False)
+            #fitness_scores.append(excel_df)
         
         #Non stats version
         else:
@@ -260,23 +257,14 @@ def get_scores():
             
             #generate fitness scores
             #break out each initial and final time point into seperate df's then merge to have 1 flat combined df.
-            init_df = score_df[['CAGE#','Gene','Guide','Out-of-frame']][score_df['Comparison_Group'].str.contains('init')]
+            init_df = group_df[['CAGE#','Gene','Guide','Out-of-frame']][group_df['Comparison_Group'].str.contains('init')]
             init_df.rename(columns={'Out-of-frame':'init_oof'},inplace=True) #need to have unique column for merge
 
-            input(f"init_df\n{init_df}")
-
-            final_df = score_df[['CAGE#','Gene','Guide','Out-of-frame']][score_df['Comparison_Group'].str.contains('final')]
+            final_df = group_df[['CAGE#','Gene','Guide','Out-of-frame']][group_df['Comparison_Group'].str.contains('final')]
             final_df.rename(columns={'Out-of-frame':'final_oof'},inplace=True)
 
-            input(f"final_df\n{final_df}")
-            
-            
+
             graphing_results_df = init_df.merge(final_df,on=['CAGE#','Gene','Guide'])
-            
-            
-            input(f"graphing_results_df\n{graphing_results_df}")
-            
-            
             graphing_results_df.insert(4,'fitness_score',(graphing_results_df['final_oof'] / graphing_results_df['init_oof']).round(2))
             graphing_results_df.drop(columns=['init_oof','final_oof'],inplace=True)
             
@@ -285,10 +273,15 @@ def get_scores():
             graphing_results_df.sort_values(by=['fitness_score'],inplace=True)
             
             graphing_results_df.to_excel('fitness_scores.xlsx')
+        
+            comparison_df= score_df['Comparison_Group']
             
-            print(graphing_results_df)
-
+            fitness_scores = pd.concat([fitness_scores,graphing_results_df,comparison_df],axis=1)
+        
+        fitness_scores.to_excel('fitness_scores.xlsx',index=False)
         graph_scores(graphing_results_df,replicates_found)
+
+        
 
 def graph_scores(graphing_results_df,replicates_found):
         
