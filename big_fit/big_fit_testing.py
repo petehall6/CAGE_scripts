@@ -160,11 +160,35 @@ def compile_to_excel():
 
 def get_scores():
     
+    def _excel_export(excel_list,replicates_found):
+        
+        if replicates_found:
+            excel_export_df = pd.concat(excel_list)
+            
+        else:
+            tmp_df = pd.concat(excel_list)
+            
+            comparison_df = pd.DataFrame(tmp_df['Comparison_Group'])
+            
+            tmp_df.drop(columns=['Comparison_Group'],inplace=True)
+            tmp_df.dropna(inplace=True)
+            tmp_df.reset_index(inplace=True, drop=True)
+            
+
+            comparison_df['Comparison_Group'] = comparison_df['Comparison_Group'].str.replace('_init_tp','').str.replace('_final_tp','')
+            comparison_df.drop_duplicates(inplace=True)
+            comparison_df.dropna(inplace=True)
+            comparison_df.reset_index(inplace=True, drop=True)
+            
+            
+            excel_export_df = pd.concat([tmp_df,comparison_df],axis=1)
+        excel_export_df.to_excel('fitness_scores.xlsx')
+        
     replicates_found = False
     
     print('\nChoose comparison groups in the compiled_data.xlsx.\n')
     #TODO uncomment
-    input('\n\nPress Enter to continue\n\n')
+    #input('\n\nPress Enter to continue\n\n')
     
     #Read in compiled excel, drop rows without a comparison selected and reset index for readability
     columns = ['CAGE#', 'Gene', 'Guide','Out-of-frame', 'Comparison_Group','Replicate','Graph_Group']
@@ -177,6 +201,8 @@ def get_scores():
     #need to loop through each graph_group and get the fitness scores
     #get unique graph groups
     graph_groups = score_df['Graph_Group'].unique().tolist()
+    
+    excel_list = []
     
     for group in graph_groups:
         fitness_scores = pd.DataFrame()        
@@ -248,7 +274,7 @@ def get_scores():
             excel_columns = ['CAGE#','Gene','Guide','Replicate','init_oof','final_oof','fitness_score','avg_fit_score','stdev']
             excel_df = excel_df[excel_columns]
             
-            #fitness_scores.append(excel_df)
+            excel_list.append(excel_df)
         
         #Non stats version
         else:
@@ -277,11 +303,14 @@ def get_scores():
             comparison_df= score_df['Comparison_Group']
             
             fitness_scores = pd.concat([fitness_scores,graphing_results_df,comparison_df],axis=1)
+            
+            excel_list.append(fitness_scores)
         
-        fitness_scores.to_excel('fitness_scores.xlsx',index=False)
         graph_scores(graphing_results_df,replicates_found)
-
         
+     #convert excel_list to df and write to excel
+    #input(excel_list)
+    _excel_export(excel_list,replicates_found)
 
 def graph_scores(graphing_results_df,replicates_found):
         
@@ -299,7 +328,7 @@ def graph_scores(graphing_results_df,replicates_found):
     
     def _find_max_y(fa_score_df):
         
-        y_max = fa_score_df['fitness_score'].max()
+        y_max = fa_score_df['fitness_score'].max() + fa_score_df['std'].max()
         
         if y_max > 1:
         
@@ -316,10 +345,8 @@ def graph_scores(graphing_results_df,replicates_found):
     
     graphing_results_df['Guide'] = graphing_results_df[['CAGE#','Gene','Guide']].agg('.'.join, axis=1)
 
-    try:
-        fa_score_df = graphing_results_df[['Guide','fitness_score','std']]
-    except:
-        fa_score_df = graphing_results_df[['Guide','fitness_score']]
+    fa_score_df = graphing_results_df[['Guide','fitness_score','std']]
+
     
     y_limit= _find_max_y(fa_score_df)
     
@@ -439,8 +466,8 @@ def graph_scores(graphing_results_df,replicates_found):
     
 def main():
 
-    #find_csv() #comment this line out if you have already pulled your data and entered it into the compiled_data.xlsx
-    #compile_to_excel() #comment this line out if you have already pulled your data and entered it into the compiled_data.xlsx
+    find_csv() #comment this line out if you have already pulled your data and entered it into the compiled_data.xlsx
+    compile_to_excel() #comment this line out if you have already pulled your data and entered it into the compiled_data.xlsx
     get_scores()
 
 if __name__ == "__main__":
