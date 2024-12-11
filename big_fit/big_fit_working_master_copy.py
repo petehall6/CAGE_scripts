@@ -334,6 +334,7 @@ def graph_scores(graphing_results_df,replicates_found):
             y_max = fa_score_df['fitness_score'].max() + fa_score_df['std'].max()
         else:
             y_max = fa_score_df['fitness_score'].max()
+            
         if y_max > 1:
         
             y_buffer = 1.05
@@ -358,7 +359,6 @@ def graph_scores(graphing_results_df,replicates_found):
     y_limit= _find_max_y(fa_score_df)
     
     bar_num = len(fa_score_df['Guide'].to_list())
-    
     
     if replicates_found == True:
         
@@ -413,6 +413,7 @@ def graph_scores(graphing_results_df,replicates_found):
                 weight='bold',
                 size=12
             )
+            
 
     elif replicates_found == False:
                 
@@ -462,7 +463,10 @@ def graph_scores(graphing_results_df,replicates_found):
     fa_plot.yaxis.set_minor_locator(AutoMinorLocator(2))
     #fa_plot.minorticks_on()
     #_wrap_labels(fa_plot,width=5)
-    _rotate_labels(fa_plot)
+    plt.xticks(fontsize=12)
+    if bar_num > 3:
+        _rotate_labels(fa_plot)
+
 
     #more y axis minor ticks
     plt.xlabel('Guide',fontsize=15, weight='bold',labelpad=10)
