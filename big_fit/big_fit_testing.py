@@ -188,7 +188,7 @@ def get_scores():
     
     print('\nChoose comparison groups in the compiled_data.xlsx.\n')
     #TODO uncomment
-    #input('\n\nPress Enter to continue\n\n')
+    input('\n\nPress Enter to continue\n\n')
     
     #Read in compiled excel, drop rows without a comparison selected and reset index for readability
     columns = ['CAGE#', 'Gene', 'Guide','Out-of-frame', 'Comparison_Group','Replicate','Graph_Group']
