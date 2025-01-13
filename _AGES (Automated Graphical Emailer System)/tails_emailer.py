@@ -489,6 +489,7 @@ class Tails_Tab(tbs.Frame):
         self.table = self.create_table()    
 
     def tableview_clicked(self,event):
+        print('clicked')
         
         #item will return a tuple with text,values and other info.  access info
         selected_proj_info = self.table.view.item(self.table.view.focus(),"values"[0])
