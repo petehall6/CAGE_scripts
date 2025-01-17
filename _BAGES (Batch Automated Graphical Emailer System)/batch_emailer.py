@@ -127,8 +127,7 @@ class Batch_Tab(tbs.Frame):
             paginated=False,
             searchable=False,
             bootstyle=PRIMARY,
-            stripecolor=DARK,)
-        
+            stripecolor=DARK,) 
         
         self.table.view.configure(style="Custom.Treeview")
         self.table.view.bind("<ButtonRelease-1>", self.on_select)
@@ -262,15 +261,23 @@ class Batch_Tab(tbs.Frame):
         pass        
 
     def generate_emails(self):
-        def _get_subject_line(scope):
+        def _get_subject_line(template):
             
-                if scope.lower() == "animal model creation":
-                    sub_line = f"test__animal_model_creation__test"
-                    
-                elif scope.lower() == "grna and donor with validation":
-                    sub_line = f"test__grna_and_donor_w_val__test"
+            grna_list = ['gRNA with validation', 'gRNA and donor - gRNA validation',  'Animal model - gRNA GEMM', 'Animal model - gRNA NEL']
+            
+            donor_list = ['gRNA and donor - donor validation', 'Animal model - AAV GEMM', 'Animal model - cKO GEMM', 'Animal model - donor NEL']
+            
+            if template in donor_list:
+                print("sub found")
+                sub_line = f"Your donor has been validated"
+                
+            elif template in grna_list:
+                sub_line = f"Your gRNAs have been validated"
+                
+            else:
+                sub_line = " "
 
-                return sub_line
+            return sub_line
             
         def _get_attachment(email, project_num):
             #find powerpoint
@@ -311,11 +318,12 @@ class Batch_Tab(tbs.Frame):
                 <br><br>
                 Best,
                 <br><br>
+                Baranda
                 <br><br>
                 </font>                
                 """
                 
-            elif template.lower() == "grna and donor - grna validation" or template.lower() == "animal model - gRNA GEMM" or template.lower() =="animal model - gRNA NEL":
+            elif template.lower() == "grna and donor - grna validation" or template.lower() == "animal model - grna gemm" or template.lower() == "animal model - grna nel":
                 body=f"""
                 <font face="Calibri, Calibri, monospace">
                 {greeting},
@@ -326,6 +334,7 @@ class Batch_Tab(tbs.Frame):
                 <br><br>
                 Thanks!
                 <br><br>
+                Baranda
                 <br><br>
                 </font>
                 """
@@ -345,6 +354,7 @@ class Batch_Tab(tbs.Frame):
                 <br><br>
                 Thanks!
                 <br><br>
+                Baranda
                 <br><br>
                 </font>
                 """
@@ -360,6 +370,7 @@ class Batch_Tab(tbs.Frame):
                 <br><br>
                 Please let us know if you have any questions.
                 <br><br>
+                Baranda
                 <br><br>
                 Thanks!
                 </font>
@@ -378,6 +389,7 @@ class Batch_Tab(tbs.Frame):
                 <br><br>
                 Thanks!
                 <br><br>
+                Baranda
                 <br><br>
                 """
             elif template.lower() == "animal model - donor nel":
@@ -393,6 +405,7 @@ class Batch_Tab(tbs.Frame):
                 <br><br>
                 Thanks!
                 <br><br>
+                Baranda
                 <br><br>
                 """
             else:
@@ -403,6 +416,9 @@ class Batch_Tab(tbs.Frame):
         
         intact_rows = self.table.get_rows(visible=True)
         table_entries=[]
+        
+        #input(intact_rows)
+        
         for row in intact_rows:
             table_entries.append(row)
         
@@ -437,27 +453,25 @@ class Batch_Tab(tbs.Frame):
             else:
                 greeting = f"Hi {pi.split(',')[1]}"
             
-            email_cc = []
+            email_cc = ['Miller, Shondra', 'Hendrix, Emily']
                             
-            email_sub = _get_subject_line(scope)
+            email_sub = _get_subject_line(template)
 
-            #email = _get_attachment(email,project_num)
+            email = _get_attachment(email,project_num)
 
             body = _body_builder(greeting, objective, template)
 
             email.To = ";".join(email_recip)
             email.CC = ";".join(email_cc).replace(".","")
 
-            email.bcc = "Shaina Porter"
             email.Subject = email_sub
 
             #find html signature file in each individual userprofile
-            
             email.HTMLBody = body + signature
             #Display(False) loads all emails at once and gives focus back to ttk window
             email.Display(False)
                             
-            return
+            #return
 
 
 if __name__ == "__main__":
