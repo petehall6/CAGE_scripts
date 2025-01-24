@@ -34,11 +34,9 @@ for arg, value in vars(args).items():
     print(f"{arg}: {value}")
 print(stars+"\n\n")
 
-#input("Please verify the input.  Press enter to continue or ctrl+c to exit\n\n")
-
 design_type = args.design
-cas_type = str(args.cas)
-species = args.species
+cas_in = str(args.cas)
+species_in = args.species
 guide_quota = args.quota
 input_file = args.input
 library_name = args.lib
@@ -51,6 +49,24 @@ MERGE_DIR = Path(bash_dir).joinpath('merge_folder')
 
 draft_file_name = f"{bash_dir}/{library_name}_draft.xlsx" #*will just be the guides to fill the quota with the best OTA scores
 sorted_file_name = f"{bash_dir}/{library_name}_all_guides.xlsx" #*make sure file is xlsx. Sorted will be master list of all guides and OTA scores 
+
+def get_species(species):
+    
+    if species.lower() == 'mouse':
+        return 'm'
+    if species.lower() == 'human':
+        return 'h'
+    else:
+        print("Species not recognized.  Please enter 'mouse', 'm','human', or 'h'")
+    
+def get_cas_type(cas_type):
+    
+    if cas_type.lower() == 'cas9':
+        return '9'
+    if cas_type.lower() == 'cas12':
+        return '12'
+    else:
+        print("Cas not recognized.  Please enter 'cas9', '9', 'cas12', '12'")
 
 def get_pam(cas_type):
     
@@ -124,7 +140,7 @@ def call_offinder():
     os.system(f"bwait -w 'ended(cas_offinder_library)'")
     print("CasOffinder Complete.  Formatting OTA table")
 
-def create_ota_table(crispick_flow):
+def create_ota_table(crispick_flow,species):
     
     positive_controls = ['RPA3','PCNA','DBR1','PLK1','RPL3','KIF11','EEF2','POLR2B','POLR2A','GAPDH','PSMB1']
     
@@ -319,7 +335,7 @@ def create_ota_table(crispick_flow):
     named_df  = named_df[arranged_columns]
     
     named_df  = named_df.rename(columns={'name':'Name','gRNA':'full_gRNA'})
-
+    
     if crispick_flow == True:
         all_guides_df = named_df.pipe(_add_guide_numbers)
     else:
@@ -335,9 +351,10 @@ def create_ota_table(crispick_flow):
 
     print(f"{stars}\nOTA Complete. Sorted OTA all guides list saved as: ' {sorted_file_name.split('/')[-1]} '.\n{stars} ")
 
-def library_drafter(sorted_file_name, guide_quota, ntc_percentage, draft_file_name):
-    
-    def _get_ntc_df(lib_size):                
+def library_drafter(sorted_file_name, species, cas_type, guide_quota, ntc_percentage, draft_file_name):
+
+    def _get_ntc_df(lib_size, cas_type, species, ntc_percentage):                
+
         if cas_type == '9':
         
             if species == 'h':
@@ -346,9 +363,8 @@ def library_drafter(sorted_file_name, guide_quota, ntc_percentage, draft_file_na
                 
             elif species == 'm':
                 tmp_df = pd.read_csv(r'accessory_files/ntc_9_mouse_master_list.txt',delimiter="\t")
-                ntc_number_max = 2322 
+                ntc_number_max = 2322
                 
-    
         elif cas_type == '12':
             
             if species == 'h':
@@ -358,8 +374,6 @@ def library_drafter(sorted_file_name, guide_quota, ntc_percentage, draft_file_na
                 tmp_df = pd.read_csv(r'accessory_files/ntc_12_mouse_master_list.txt',delimiter="\t")
                 ntc_number_max = 1999
         
-        
-                
         #parse correct number of ntcs
         #number of validated human ntc is 2775
         #arg can be either whole number or percentage is passed as string
@@ -368,7 +382,6 @@ def library_drafter(sorted_file_name, guide_quota, ntc_percentage, draft_file_na
             ntc_number = int(round((lib_size * ntc_amount),0)) 
         else:
             ntc_number = int(ntc_percentage)
-
         
         if ntc_number > ntc_number_max:
             ntc_number = ntc_number_max
@@ -418,10 +431,12 @@ def library_drafter(sorted_file_name, guide_quota, ntc_percentage, draft_file_na
         
     lib_size = len(picked_df)
     
-    ntc_df = _get_ntc_df(lib_size)
+    ntc_df = _get_ntc_df(lib_size, cas_type, species, ntc_percentage)
 
     library_df = pd.concat([picked_df,ntc_df],ignore_index=True)
     library_df.index = library_df.index + 1
+    
+    library_df.fillna(0,inplace=True)
     
     library_df.to_excel(draft_file_name,index=False)
     
@@ -586,8 +601,12 @@ def clean_files():
         except:
             None
 
-def main(design_type, cas_type, species, guide_quota, input_file, ntc_percentage, aux_func): 
+def main(design_type, cas_in, species_in, guide_quota, input_file, ntc_percentage, aux_func): 
+    
+    cas_type = get_cas_type(cas_in)
+    species = get_species(species_in)
     pam = get_pam(cas_type)
+    
     
     if aux_func == 'merge_crispick':
         print(f'{stars}')
@@ -633,8 +652,8 @@ def main(design_type, cas_type, species, guide_quota, input_file, ntc_percentage
         
         create_offinder_template(input_file,pam,species,crispick_flow)
         call_offinder()
-        create_ota_table(crispick_flow)
-        library_drafter(sorted_file_name, guide_quota, ntc_percentage, draft_file_name)
+        create_ota_table(crispick_flow, species)
+        library_drafter(sorted_file_name, species, cas_type, guide_quota, ntc_percentage, draft_file_name)
 
     if design_type =='list':
         print(f'{stars}')
@@ -646,10 +665,10 @@ def main(design_type, cas_type, species, guide_quota, input_file, ntc_percentage
 
         create_offinder_template(input_file,pam,species,crispick_flow)
         call_offinder()
-        create_ota_table(crispick_flow)
-        library_drafter(sorted_file_name, guide_quota, ntc_percentage, draft_file_name)
+        create_ota_table(crispick_flow, species)
+        library_drafter(sorted_file_name, species, cas_type, guide_quota, ntc_percentage, draft_file_name)
     
     clean_files()
 
 
-main(design_type, cas_type, species, guide_quota, input_file, ntc_percentage, aux_func)
+main(design_type, cas_in, species_in, guide_quota, input_file, ntc_percentage, aux_func)

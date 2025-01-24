@@ -1,3 +1,0 @@
-import ttkbootstrap
-
-print("complete")
