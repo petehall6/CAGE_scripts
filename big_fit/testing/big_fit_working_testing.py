@@ -45,8 +45,9 @@ def find_csv():
     
     for target_proj in input_projects:
         
-        cage_proj, ngs_date, comparison_group = target_proj
+        cage_proj, ngs_date,comparison_group = target_proj
         cage_proj = str(cage_proj).strip()
+        
         #appends 0 in from of months Jan->Sept
         if len(ngs_date) < 6:
             ngs_date = str('0' + str(ngs_date))
@@ -54,10 +55,12 @@ def find_csv():
         
         joined_dir = os.path.join(ngs_dir,ngs_date,'joined').replace('\\\\','\\')
         os.chdir(joined_dir)
+    
+        print(joined_dir)
 
         #search joined folder for all_indel
-        for file in glob.glob(f'{joined_dir}/{cage_proj}*/*all_indel*.csv',recursive=True):
-            #print(file)
+        for file in glob.glob(f'{joined_dir}/{cage_proj}/{cage_proj}.csv',recursive=True):
+            print(file)
             if cage_proj in file:
                 shutil.copy(file, holding_dir)
     
@@ -91,23 +94,23 @@ def compile_to_excel():
             
             #cage_nums = sorted(set(compiled_df['CAGE#'].tolist()))
             #TODO comparisons to time point list
-            
+            #?? Testing if just doing init/final is good enough.  Bypassing _format_excel and switching to finding the catted column Time_Point
             for comparison in comparison_groups:
                 
                 grp = comparison[0] + '_' + comparison[1]
                 
-                time_point_list.append(f'{grp}_init_tp')
-                time_point_list.append(f'{grp}_final_tp')
+                #time_point_list.append(f'{grp}_init_tp')
+                #time_point_list.append(f'{grp}_final_tp')
                 
                 for rep in range(1,4):
                     rep_list.append(f'{grp}_rep{rep}')
 
                 
             time_point_df = pd.DataFrame(time_point_list)
-            rep_df = pd.DataFrame(rep_list)
+            #rep_df = pd.DataFrame(rep_list)
             
             ws2.range('A2').options(index=False,header=False).value = time_point_df
-            ws2.range('C2').options(index=False,header=False).value = rep_df
+            #ws2.range('C2').options(index=False,header=False).value = rep_df
             
             #close and save as updated_form
             wb.save(compiled_excel)
@@ -155,6 +158,8 @@ def compile_to_excel():
     compiled_df.index = compiled_df.index +1
     #print(compiled_df.head(20))
     
+    
+    
     _format_excel(compiled_df)
     pass
 
@@ -175,7 +180,7 @@ def get_scores():
             tmp_df.reset_index(inplace=True, drop=True)
             
 
-            comparison_df['Comparison_Group'] = comparison_df['Comparison_Group'].str.replace('_init_tp','').str.replace('_final_tp','')
+            comparison_df['Comparison_Group'] = comparison_df['Comparison_Group'].str.replace('_initial','').str.replace('_final','')
             comparison_df.drop_duplicates(inplace=True)
             comparison_df.dropna(inplace=True)
             comparison_df.reset_index(inplace=True, drop=True)
@@ -194,7 +199,7 @@ def get_scores():
     columns = ['CAGE#', 'Gene', 'Guide','Out-of-frame', 'Comparison_Group','Replicate','Graph_Group']
     score_df = pd.read_excel(compiled_excel, usecols=columns)
     score_df = score_df[score_df['Comparison_Group'].notna()]
-
+    
     score_df.reset_index(drop=True,inplace=True)
     score_df.index = score_df.index + 1
     
@@ -210,7 +215,7 @@ def get_scores():
         try:
             group_df.loc[:,'Guide'] = group_df['Guide'].apply(lambda x: re.search(r'g\d*', x).group())
         except:
-            print("Please double check guide names have been added to the guide column in the compiled_data.xlsx")
+            print("************************Please double check guide names have been added to the guide column in the compiled_data.xlsx*************************")
         #Stats versions
         if not group_df['Replicate'].isnull().all():
             print("Running Stats")
@@ -286,15 +291,25 @@ def get_scores():
             #generate fitness scores
             #break out each initial and final time point into seperate df's then merge to have 1 flat combined df.#
             #TODO need a way to carry the comparison group column through and then make sure to group each guide to ensure respective oof is correct
-            init_df = group_df[['CAGE#','Gene','Guide','Out-of-frame']][group_df['Comparison_Group'].str.contains('init')]
-            init_df['Comparison_Group'] = group_df['Comparison_Group'][group_df['Comparison_Group'].str.contains('init')].str.replace('_init_tp','')
+            init_df = group_df[['CAGE#','Gene','Guide','Out-of-frame']][group_df['Comparison_Group'].str.contains('initial')]
+            init_df['Comparison_Group'] = group_df['Comparison_Group'][group_df['Comparison_Group'].str.contains('initial')].str.replace('_initial','')
             init_df.rename(columns={'Out-of-frame':'init_oof'},inplace=True) #need to have unique column for merge
             
 
             final_df = group_df[['CAGE#','Gene','Guide','Out-of-frame']][group_df['Comparison_Group'].str.contains('final')]
-            final_df['Comparison_Group'] = group_df['Comparison_Group'][group_df['Comparison_Group'].str.contains('final')].str.replace('_final_tp','')
+            final_df['Comparison_Group'] = group_df['Comparison_Group'][group_df['Comparison_Group'].str.contains('final')].str.replace('_final','')
             final_df.rename(columns={'Out-of-frame':'final_oof'},inplace=True)
+            
+            print(init_df.head(20))
+            
+            print(final_df.head(20))
+            
+            
+            
             graphing_results_df = init_df.merge(final_df,on=['CAGE#','Gene','Guide','Comparison_Group'])
+            
+            input(graphing_results_df.head(20))
+            
             
             graphing_results_df.insert(5,'fitness_score',(graphing_results_df['final_oof'] / graphing_results_df['init_oof']).round(2))
             graphing_results_df.drop(columns=['init_oof','final_oof'],inplace=True)
@@ -314,7 +329,7 @@ def get_scores():
             
             excel_list.append(fitness_scores)
             
-            input(excel_list)
+            #input(excel_list)
             
         
         graph_scores(graphing_results_df,replicates_found)
@@ -362,6 +377,7 @@ def graph_scores(graphing_results_df,replicates_found):
     graphing_results_df['Comparison_Group'] = graphing_results_df['Comparison_Group'].str.replace("_",".")
     graphing_results_df['Comparison_Group'] = graphing_results_df['Comparison_Group'].str.replace("-",".")
     
+    
     if graphing_results_df['Comparison_Group'].str.split('.').str.len().max() == 3:
         graphing_results_df['Guide'] = graphing_results_df['Comparison_Group'].str.split('.').str[0] + '.' + graphing_results_df['Gene'] + '.' + graphing_results_df['Comparison_Group'].str.split('.').str[1] + '.' + graphing_results_df['Comparison_Group'].str.split('.').str[2]
     else:
@@ -377,6 +393,7 @@ def graph_scores(graphing_results_df,replicates_found):
     
     bar_num = len(fa_score_df['Guide'].to_list())
     
+    #*Stats Version
     if replicates_found == True:
         
         err_list = fa_score_df['std'].tolist()
@@ -431,12 +448,14 @@ def graph_scores(graphing_results_df,replicates_found):
                 size=12
             )
             
-
+    #*Non-stats version
     elif replicates_found == False:
                 
         #tries to standardize the bar width.  Bar width is relative to the plot area so the more bars the smaller the width.
         #Fewer bars look weirdly wide.  Set width to 0.3 if 4 or fewer bars looks better, more than five increase
         #width so they don't look too thin
+        
+        
         if bar_num < 4:
             bar_width = 0.3
         else:
@@ -500,5 +519,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-print('Graphing Complete.')

@@ -314,7 +314,7 @@ def get_scores():
             
             excel_list.append(fitness_scores)
             
-            input(excel_list)
+            #input(excel_list)
             
         
         graph_scores(graphing_results_df,replicates_found)
@@ -494,11 +494,9 @@ def graph_scores(graphing_results_df,replicates_found):
     
 def main():
 
-    #find_csv() #comment this line out if you have already pulled your data and entered it into the compiled_data.xlsx
-    #compile_to_excel() #comment this line out if you have already pulled your data and entered it into the compiled_data.xlsx
+    find_csv() #comment this line out if you have already pulled your data and entered it into the compiled_data.xlsx
+    compile_to_excel() #comment this line out if you have already pulled your data and entered it into the compiled_data.xlsx
     get_scores()
 
 if __name__ == "__main__":
     main()
-
-print('Graphing Complete.')
