@@ -6,6 +6,7 @@ import pandas as pd
 import argparse
 from pathlib import Path
 import shutil
+from tabulate import tabulate
 
 from add_cloning_extensions_offinder import add_extension
 
@@ -20,7 +21,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument('-i','--input', help='input design file.  Can be crispick file or a list of guides.  Include file extensions.', default='sgrna-designs.txt', type=str)
 parser.add_argument('-l','--lib', help='library name', default='libxxx', type=str)
 parser.add_argument('-d','--design', help='choose crispick or list to create design',type=str)
-parser.add_argument('-s','--species', help='species. (h)uman or (m)ouse', type=str)
+parser.add_argument('-s','--species', help='species. (h)uman or (m)ouse', default='h',type=str)
 parser.add_argument('-q','--quota', help='guide quota/the number of guides per gene',default=5, type=int)
 parser.add_argument('-c','--cas', help='cas type choose 9 or 12',default='9', type=str)
 parser.add_argument('-n','--ntc',help='Enter percentage or exact number of NTCs. Add "%%" after if using percentage. Default value of 10%%.  enter 0 if you dont want any'.format(),default='10%')
@@ -56,8 +57,12 @@ def get_species(species):
         return 'm'
     if species.lower() == 'human':
         return 'h'
+    
+    elif species.lower() == 'm' or species.lower() == 'h':
+        return species.lower()
     else:
         print("Species not recognized.  Please enter 'mouse', 'm','human', or 'h'")
+        exit()
     
 def get_cas_type(cas_type):
     
@@ -65,8 +70,12 @@ def get_cas_type(cas_type):
         return '9'
     if cas_type.lower() == 'cas12':
         return '12'
+    
+    elif cas_type.lower() == '9' or cas_type.lower() == '12':
+        return cas_type.lower()
     else:
         print("Cas not recognized.  Please enter 'cas9', '9', 'cas12', '12'")
+        exit()
 
 def get_pam(cas_type):
     
@@ -74,7 +83,7 @@ def get_pam(cas_type):
         pam = 'NNNNNNNNNNNNNNNNNNNNNGG'
     
     elif cas_type == "12":
-        pam ='TTTVNNNNNNNNNNNNNNNNNNNNN'
+        pam ='TTTVNNNNNNNNNNNNNNNNNNNNNNN'
         
     else:
         pam = cas_type
@@ -90,7 +99,7 @@ def create_offinder_template(input_file, pam, species, crispick_flow):
                 if str(rows['Target Gene Symbol']) != '':
                     return str(rows['sgRNA Sequence']) + str(rows['PAM Sequence']) + ' 3 ' + str(rows['Target Gene Symbol'])
                 
-            elif pam =='TTTVNNNNNNNNNNNNNNNNNNNNN':
+            elif pam =='TTTVNNNNNNNNNNNNNNNNNNNNNNN':
                 if str(rows['Target Gene Symbol']) != '':
                     return str(rows['PAM Sequence']) + str(rows['sgRNA Sequence']) + ' 3 ' + str(rows['Target Gene Symbol'])
         else:
@@ -140,9 +149,9 @@ def call_offinder():
     os.system(f"bwait -w 'ended(cas_offinder_library)'")
     print("CasOffinder Complete.  Formatting OTA table")
 
-def create_ota_table(crispick_flow,species):
+def create_ota_table(crispick_flow,species,cas_type):
     
-    positive_controls = ['RPA3','PCNA','DBR1','PLK1','RPL3','KIF11','EEF2','POLR2B','POLR2A','GAPDH','PSMB1']
+    positive_controls = ['RPA3','PCNA','DBR1','PLK1','RPL3','KIF11','EEF2','POLR2B','POLR2A','GAPDH','PSMB1','Eef2','Pcna']
     
     def _guide_list_capatilization(sorted_df):
         
@@ -269,7 +278,7 @@ def create_ota_table(crispick_flow,species):
         #replaces Name with Gene.g#
         guide_name_df = input_df.assign(Name=guide_name_list)
 
-        arranged_columns = ['Name','gene','full_gRNA','Long_0','Long_1','Long_2','Long_3']
+        arranged_columns = ['Name','gene','gRNA','Long_0','Long_1','Long_2','Long_3']
         
         labeled_df = guide_name_df[arranged_columns]
         labeled_df = labeled_df.rename(columns={'name':'Name','gRNA':'Full gRNA'})
@@ -317,6 +326,11 @@ def create_ota_table(crispick_flow,species):
     sorted_df = count_df[['gRNA','name','Long_0','Long_1','Long_2','Long_3']].sort_values(by=['name','Long_0','Long_1','Long_2','Long_3'],ignore_index=True)
 
 
+    if cas_type == '9':
+        sorted_df['gRNA'] = sorted_df['gRNA'].str.slice(0,20)
+    elif cas_type == '12':
+        sorted_df['gRNA'] = sorted_df['gRNA'].str.slice(4,27)
+
     #crispick designs get the NTCs concated to the end and guide numbers later.  guide_list designs get the guide # split before capitlization
     #seperates the two work flows
     if crispick_flow == True:
@@ -334,13 +348,13 @@ def create_ota_table(crispick_flow,species):
     
     named_df  = named_df[arranged_columns]
     
-    named_df  = named_df.rename(columns={'name':'Name','gRNA':'full_gRNA'})
+    named_df  = named_df.rename(columns={'name':'Name','gRNA':'gRNA'})
     
     if crispick_flow == True:
         all_guides_df = named_df.pipe(_add_guide_numbers)
     else:
         named_df['gene'] = named_df['Name'].str.replace(r'\.g\d+','',regex=True)
-        all_guides_df = named_df[['Name','gene','full_gRNA','Long_0','Long_1','Long_2','Long_3']]
+        all_guides_df = named_df[['Name','gene','gRNA','Long_0','Long_1','Long_2','Long_3']]
         
     all_guides_df = all_guides_df.astype({"Long_0":'int',"Long_1":'int',"Long_2":'int',"Long_3":'int'})
     
@@ -425,7 +439,7 @@ def library_drafter(sorted_file_name, species, cas_type, guide_quota, ntc_percen
     else:
         picked_list = sorted_df.values.tolist()    
 
-    picked_df = pd.DataFrame(picked_list,columns=['Name','gene','full_gRNA','Long_0','Long_1','Long_2','Long_3'])
+    picked_df = pd.DataFrame(picked_list,columns=['Name','gene','gRNA','Long_0','Long_1','Long_2','Long_3'])
     picked_df.index = picked_df.index+1
     picked_df.sort_values(by=['Name','Long_0','Long_1','Long_2','Long_3'],inplace=True)
         
@@ -438,18 +452,19 @@ def library_drafter(sorted_file_name, species, cas_type, guide_quota, ntc_percen
     
     library_df.fillna(0,inplace=True)
     
+    #drops PAM
+    if cas_type == '9': 
+        library_df['gRNA'] = library_df['gRNA'].str.slice(0,20)
+        
+    elif cas_type == '12':
+        library_df['gRNA'] = library_df['gRNA'].str.slice(4,27)
+    
     library_df.to_excel(draft_file_name,index=False)
     
     counts = library_df.value_counts('gene')
-    
     counts.to_excel(f'{library_name}_guide_counts.xlsx',header=False)
     
-    
-    mageck_df = library_df[['Name','full_gRNA','gene']].copy()
-    
-    mageck_df['full_gRNA'] = mageck_df['full_gRNA'].str.slice(0,20)
-    
-    
+    mageck_df = library_df[['Name','gRNA','gene']].copy()
     mageck_df.to_csv(f'{library_name}_mageck.csv',header=False,index=False)
     
     if library_df.shape[0] < 20:
@@ -458,7 +473,6 @@ def library_drafter(sorted_file_name, species, cas_type, guide_quota, ntc_percen
         guides_to_print = 20
     
     
-
     print(stars)
     print(stars)
     print(library_df.head(guides_to_print))
@@ -524,6 +538,9 @@ def merge_drafts():
     print(stars)
     print(f"Drafts merged.  Merged draft saved as {library_name}_merged_drafts.xlsx")
     print(stars)
+    
+    update_mageck()
+    
     return None
 
 def update_mageck():
@@ -534,7 +551,7 @@ def update_mageck():
     
     draft_df = pd.read_excel(draft_file,engine='openpyxl')
     
-    mageck_df = draft_df[['Name','full_gRNA','gene']].copy()
+    mageck_df = draft_df[['Name','gRNA','gene']].copy()
     
     mageck_df.to_excel(mageck_name+".xlsx",index=False,header=False)
     print(stars)
@@ -542,40 +559,59 @@ def update_mageck():
     print(stars)
     return None
 
+
 def add_twist_primers():
     
-    #reads column B from lib_vectors_and_primers.xlsx
-    backbone_dict = {
-        "PURO" :"PC155-PC156", 
-        "LENTI" :"PC155-PC156",
-        "PC291" : "PC155-PC601",
-        "PC292" : "PC155-PC292",
-        "JS26" : "PC155-JS26.GA",
-        "JS27" : "PC155-JS26.GA",
-        "PC280": "PC280.F-PC280.R",
-        "PC281": "PC281.F-PC281.R",
-        "PC540": "PC540.F-PC540.R",
-        "PC541": "PC541.F-PC541.R",
-        "PC529": "PC155-PC156"
-    }
+    draft_exists = False
     
-    for key in backbone_dict.keys():
-        print(f"{key} : {backbone_dict[key]}")
+    vector_confirmation = ''
     
-    print(f"{stars}")
+    lib_name = input("Enter library name: ").strip().lower()
+    
+    
+    #check to see if draft file exists
+    while draft_exists == False:
+        input_filename = input("\n\nEnter the filename of the library draft that will be used to create the oligo pool, include the file extension: ").strip().lower()
+        draft_exists = os.path.exists(input_filename)
 
-    lib_name = input("Enter lib name: ").strip().lower()
     
-    backbone = input("Enter backbone: ").strip().upper()
+    #reads column B from lib_vectors_and_primers.xlsx
+    vector_primer_excel = '/research_jude/rgs01_jude/groups/millergrp/home/common/Screens/lib_vectors_and_primers.xlsx'
     
-    input_filename = input("Enter the filename of the library draft: ").strip().lower()
+    backbone_df = pd.read_excel(vector_primer_excel, sheet_name='extension_for_TWIST', engine='openpyxl', usecols="A,B,C,D")
     
-    desired_primer = backbone_dict[backbone]
+    backbone_df = backbone_df[backbone_df['cloning_strategy'].str.contains('gibson')].reset_index(drop=True)
+    backbone_df.index = backbone_df.index + 1
+    
+    
+    while vector_confirmation != 'y' and vector_confirmation != 'yes':
+        print("\n\n")
+        print(tabulate(backbone_df, headers='keys',tablefmt='grid',showindex=True))
+        print("\n")
+            
+        line_choice = int(input("Please enter vector line number: "))-1
+        
+        vector_choice = backbone_df.iloc[line_choice]['Vector']
+        
+        print(f"Vector Choice: {vector_choice}")
+        
+        print(f"\n\n{stars}\n\n")
+        vector_confirmation = input(f"Confirm vector choice: {vector_choice} (y/n): ").strip().lower()
+    
+    
+    desired_primer = backbone_df.iloc[line_choice]['primer_set_name']
+    
+    print(f"\n\n{stars}\n\n")
+    input(f"Desired primers are: {desired_primer}.  Press Enter to continue or Crtl+C to cancel.")
+    print(f"\n\n{stars}\n\n")
+    
+    
     
     print(f"Adding {desired_primer} primers to {lib_name}")
-    
-    add_extension(lib_name, desired_primer, input_filename)
-    
+    try:
+        add_extension(lib_name, desired_primer, input_filename)
+    except:
+        print("double check draft file name")
     return None
 
 def clean_files():
@@ -652,7 +688,7 @@ def main(design_type, cas_in, species_in, guide_quota, input_file, ntc_percentag
         
         create_offinder_template(input_file,pam,species,crispick_flow)
         call_offinder()
-        create_ota_table(crispick_flow, species)
+        create_ota_table(crispick_flow, species,cas_type)
         library_drafter(sorted_file_name, species, cas_type, guide_quota, ntc_percentage, draft_file_name)
 
     if design_type =='list':
@@ -665,7 +701,7 @@ def main(design_type, cas_in, species_in, guide_quota, input_file, ntc_percentag
 
         create_offinder_template(input_file,pam,species,crispick_flow)
         call_offinder()
-        create_ota_table(crispick_flow, species)
+        create_ota_table(crispick_flow, species,cas_type)
         library_drafter(sorted_file_name, species, cas_type, guide_quota, ntc_percentage, draft_file_name)
     
     clean_files()

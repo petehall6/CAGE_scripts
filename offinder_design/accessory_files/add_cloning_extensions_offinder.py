@@ -35,8 +35,9 @@ def add_extension(lib_name, desired_primer, input_filename):
 
     input_df = pd.read_excel(INPUT_FILENAME, engine='openpyxl')
 
+    input_df = input_df.astype(str) # Ensure all columns are strings
 
-    input_df['no_pam'] = input_df['full_gRNA'].apply(lambda seq: seq[:20]) # Make a seq w/o PAM to join Broad info
+    input_df['no_pam'] = input_df['gRNA'].apply(lambda seq: seq[:20]) # Make a seq w/o PAM to join Broad info
     input_df['oligo_w_extensions'] = five_primer + five_bsmbi + input_df['no_pam'] + three_bsmbi + three_primer
 
     print(f'OLIGO TEMPLATE: {five_primer} {five_bsmbi} [ 20bp gRNA seq ] {three_bsmbi} {three_primer}')

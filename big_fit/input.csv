@@ -1,17 +1,2 @@
-Project Name,NGS Date,Comparison Groups
-CAGE3525_hH2AZ2_F_R_3guides_all_indels,10725,GIMEN-g14
-CAGE3525_hH2AZ2_F_R_3guides_all_indels,10725,GIMEN-g5
-CAGE3525_hH2AZ2_F_R_3guides_all_indels,10725,GIMEN-g6
-CAGE3525_hH2AZ2_F_R_3guides_all_indels,10725,TTC642-g14
-CAGE3525_hH2AZ2_F_R_3guides_all_indels,10725,TTC642-g5
-CAGE3525_hH2AZ2_F_R_3guides_all_indels,10725,TTC642-g6
-CAGE3525_hH2AZ2_F_R_3guides_all_indels,10725,KD-g14
-CAGE3525_hH2AZ2_F_R_3guides_all_indels,10725,KD-g5
-CAGE3525_hH2AZ2_F_R_3guides_all_indels,10725,KD-g6
-CAGE3525_hH2AZ2_F_R_3guides_all_indels,10725,G402-g14
-CAGE3525_hH2AZ2_F_R_3guides_all_indels,10725,G402-g5
-CAGE3525_hH2AZ2_F_R_3guides_all_indels,10725,G402-g6
-CAGE3526_hH2AZ2_F_R_short_all_indels,10725,GIMEN-g19
-CAGE3526_hH2AZ2_F_R_short_all_indels,10725,TTC642-g19
-CAGE3526_hH2AZ2_F_R_short_all_indels,10725,KD-g19
-CAGE3526_hH2AZ2_F_R_short_all_indels,10725,G402-g19
+Project Name,NGS Date
+CAGE3726_mDcaf7_F_R_short_all_indels_all_indels_celfi bp,31325

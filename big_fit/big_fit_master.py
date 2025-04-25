@@ -8,6 +8,13 @@ import warnings
 import xlwings as xw
 import re
 
+try:
+    from natsort import natsort_keygen
+    
+except:
+    os.system('pip install natsort')
+    from natsort import natsort_keygen
+
 inputCSV = 'input.csv'
 ngs_dir = r'Z:\ResearchHome\Groups\millergrp\home\common\NGS'
 script_dir = os.getcwd()
@@ -20,6 +27,7 @@ warnings.simplefilter(action='ignore', category=UserWarning)
 
 project_title=''
 
+graph_loop = True
 
 def find_csv():
     #clear holding_dir
@@ -40,11 +48,10 @@ def find_csv():
     input_projects = input_df.values.tolist()
     
     print('\nScanning for csv\n')
-    
-    
+
     for target_proj in input_projects:
         
-        cage_proj, ngs_date,comparison_group = target_proj
+        cage_proj, ngs_date = target_proj
         cage_proj = str(cage_proj).strip()
         
         #appends 0 in from of months Jan->Sept
@@ -53,12 +60,11 @@ def find_csv():
         
         
         joined_dir = os.path.join(ngs_dir,ngs_date,'joined').replace('\\\\','\\')
+        
         os.chdir(joined_dir)
-    
-        print(joined_dir)
 
         #search joined folder for all_indel
-        for file in glob.glob(f'{joined_dir}/{cage_proj}/{cage_proj}.csv',recursive=True):
+        for file in glob.glob(f'{joined_dir}/*/{cage_proj}.csv',recursive=True):
             print(file)
             if cage_proj in file:
                 shutil.copy(file, holding_dir)
@@ -72,7 +78,7 @@ def compile_to_excel():
                     
             os.chdir(script_dir)
         
-            comparison_df = pd.read_csv(inputCSV,dtype=object,usecols=['Project Name','Comparison Groups'])
+            comparison_df = pd.read_csv(inputCSV,dtype=object,usecols=['Project Name'])
             comparison_groups = comparison_df.values.tolist()
             
             #load workbook
@@ -83,27 +89,7 @@ def compile_to_excel():
             ws2 = wb.sheets['dont_touch']
             #update workbook
             ws1.range('B2').options(index=False,header=False).value = compiled_df
-            
-            #*Transfer comparison groups to excel
-            #get unique CAGE#s
-            
-            time_point_list=[]
-            rep_list=[]
 
-            for comparison in comparison_groups:
-                
-                grp = comparison[0] + '_' + comparison[1]
-                
-                #get all the replicates
-                for rep in range(1,4):
-                    rep_list.append(f'{grp}_rep{rep}')
-
-            time_point_df = pd.DataFrame(time_point_list)
-            rep_df = pd.DataFrame(rep_list)
-            
-            #ws2.range('A2').options(index=False,header=False).value = time_point_df
-            #ws2.range('C2').options(index=False,header=False).value = rep_df
-            
             #close and save as updated_form
             wb.save(compiled_excel)
             wb.close()
@@ -152,7 +138,7 @@ def get_scores():
   
     replicates_found = False
     
-    print('\nChoose comparison groups in the compiled_data.xlsx.\n')
+    print('\nChoose time points and graphing groups in the compiled_data.xlsx.\n')
     #TODO
     input('\n\nPress Enter to continue\n\n')
     
@@ -171,7 +157,7 @@ def get_scores():
     excel_df = pd.DataFrame()
     
     for group in graph_groups:
-        fitness_scores = pd.DataFrame()        
+        #fitness_scores = pd.DataFrame()        
         group_df = score_df[score_df['Graph_Group'] == group].copy()
         try:
             group_df.loc[:,'Guide'] = group_df['Guide'].apply(lambda x: re.search(r'g\d*', x).group())
@@ -207,7 +193,6 @@ def get_scores():
                 df.drop(columns=['Out-of-frame','Comparison_Group'],inplace=True)
                 df = df.groupby('CAGE#').first().reset_index()
 
-
             #combine rep dfs and clean up formatting
             combo_df = pd.concat(df_list).reset_index(drop=True)
 
@@ -240,49 +225,48 @@ def get_scores():
             
             excel_columns = ['CAGE#','Gene','Guide','Replicate','init_oof','final_oof','fitness_score','avg_fit_score','stdev']
             scores_df = scores_df[excel_columns]
-            
 
-        
         #Non stats version
         else:
             print("Non stats version")
             replicates_found = False
             try:
-                #guide names should always be lower case.....hopefully
                 group_df['Guide'].apply(lambda x: re.search(r'g\d*', x).group())
+
             except:
                 print("************************Please double check guide names have been added to the guide column in the compiled_data.xlsx*************************")
             #generate fitness scores
             #break out each initial and final time point into seperate df's then merge to have 1 flat combined df.#
             init_df = group_df[['CAGE#','Gene','Guide','Out-of-frame']][group_df['Comparison_Group'].str.contains('initial')]
-            init_df['Comparison_Group'] = group_df['Comparison_Group'][group_df['Comparison_Group'].str.contains('initial')].str.replace('_initial','')
+            init_df['Comparison_Group'] = group_df['Comparison_Group'][group_df['Comparison_Group'].str.contains('initial')].str.replace('.initial','')
             #remove any days in listed in the comparison group so the initial and final df's can be merged
-            init_df['Comparison_Group'] = init_df['Comparison_Group'].str.replace(r'.d\d*', lambda x: '',regex=True, case=False)
+            init_df['Comparison_Group'] = init_df['Comparison_Group'].str.replace(r'\.(d\d*)\.?', lambda x: '.',regex=True, case=False)
             
             init_df.rename(columns={'Out-of-frame':'init_oof'},inplace=True) #need to have unique column for merge
 
+
             final_df = group_df[['CAGE#','Gene','Guide','Out-of-frame']][group_df['Comparison_Group'].str.contains('final')]
-            final_df['Comparison_Group'] = group_df['Comparison_Group'][group_df['Comparison_Group'].str.contains('final')].str.replace('_final','')
-            final_df['Comparison_Group'] = final_df['Comparison_Group'].str.replace(r'.d\d*', lambda x:'', regex=True, case=False)
+            final_df['Comparison_Group'] = group_df['Comparison_Group'][group_df['Comparison_Group'].str.contains('final')].str.replace('.final','')
+            final_df['Comparison_Group'] = final_df['Comparison_Group'].str.replace(r'\.(d\d*)\.?', lambda x:'.', regex=True, case=False)
             
             final_df.rename(columns={'Out-of-frame':'final_oof'},inplace=True)
 
+
             graphing_results_df = init_df.merge(final_df,on=['CAGE#','Gene','Guide','Comparison_Group'])
+            
             graphing_results_df['Guide'] = graphing_results_df['Guide'].str.strip()
-            graphing_results_df['Comparison_Group'] = graphing_results_df['Comparison_Group'].str.strip()
+            graphing_results_df['Comparison_Group'] = graphing_results_df['Comparison_Group'].str.strip().str.rstrip('.')
 
             graphing_results_df.insert(5,'fitness_score',(graphing_results_df['final_oof'] / graphing_results_df['init_oof']).round(2))
             graphing_results_df.drop(columns=['init_oof','final_oof'],inplace=True)
             
             graphing_results_df.index = graphing_results_df.index + 1
             
-            graphing_results_df.sort_values(by=['Guide'],inplace=True)
+            
+            print(f"graphing_results_df\n{graphing_results_df}\n\nPress Enter to continue\n\n")
             
             scores_df = graphing_results_df.copy()
-            scores_df.drop(columns=['Comparison_Group'],inplace=True)
-
-        print("\n*******Graphing the following results*************\n")
-        print(graphing_results_df)
+            #scores_df.drop(columns=['Comparison_Group'],inplace=True)
 
         graph_scores(graphing_results_df,replicates_found)
         
@@ -291,7 +275,7 @@ def get_scores():
     print(excel_df )
     excel_df.to_excel('fitness_scores.xlsx',index=False)
         
-def graph_scores(graphing_results_df,replicates_found):
+def graph_scores(graphing_results_df, replicates_found):
         
     def _rotate_labels(plot):
         labels = []
@@ -309,7 +293,7 @@ def graph_scores(graphing_results_df,replicates_found):
         plot.xaxis.set_tick_params(which='both', pad=0)
         plot.set_xticklabels(labels, rotation=45, size=8.0, ha='right', rotation_mode='anchor')
     
-    def _find_max_y(fa_score_df):
+    def _find_max_y(fa_score_df,replicates_found):
         
         if replicates_found == True:
             y_max = fa_score_df['fitness_score'].max() + fa_score_df['std'].max()
@@ -327,17 +311,56 @@ def graph_scores(graphing_results_df,replicates_found):
         
         return y_upper_bound
     
-    graphing_results_df['Comparison_Group'] = graphing_results_df['Comparison_Group'].str.replace("_",".")
-    graphing_results_df['Comparison_Group'] = graphing_results_df['Comparison_Group'].str.replace("-",".")
-    graphing_results_df['Comparison_Group'] = graphing_results_df['Comparison_Group'].str.replace(" ",".")
     
-
+    #TODO rework with regex so order inside of comparison group doesnt matter ie cell.guide.date vs guide.date.cell
+    #CAGE#.GENE.guide cell type
+    
+    
+    #if cell type is detecte
     if graphing_results_df['Comparison_Group'].str.split('.').str.len().max() == 3:
-        graphing_results_df['Guide'] = graphing_results_df['Comparison_Group'].str.split('.').str[0] + '.' + graphing_results_df['Gene'] + '.' + graphing_results_df['Comparison_Group'].str.split('.').str[1] + '.' + graphing_results_df['Comparison_Group'].str.split('.').str[2]
+        
+        graphing_results_df['guide_num'] = graphing_results_df['Comparison_Group'].str.extract(r'\.(g\d*)\.?').astype(str)
+        print("got guide")
+        print(graphing_results_df)
+        tmp_df = pd.DataFrame(columns=['cell_type'])
+        
+        #removes CAGE# and g# no matter where it is in the comparison_group string
+        tmp_df['cell_type'] = graphing_results_df['Comparison_Group'].str.replace(r'CAGE\d*\.', lambda x:'', regex=True, case=False)
+        tmp_df['cell_type'] = tmp_df['cell_type'].str.replace(r'g\d', lambda x:'', regex=True, case=False)
+        graphing_results_df['cell_type'] = tmp_df['cell_type'].str.replace(".","")
+        
+                    
+        graphing_results_df['Guide'] = graphing_results_df['Comparison_Group'].str.split('.').str[0] + '.' + graphing_results_df['Gene'] + "." + graphing_results_df['guide_num'] +"."+ graphing_results_df['cell_type']
+        
     else:
-        graphing_results_df['Guide'] = graphing_results_df['Comparison_Group'].str.split('.').str[0] + '.' + graphing_results_df['Gene'] + '.' + graphing_results_df['Comparison_Group'].str.split('.').str[1]
+        
+        graphing_results_df['guide_num'] = graphing_results_df['Comparison_Group'].str.extract(r'\.(g\d*)\.?').astype(str)
+
+        graphing_results_df['Guide'] = graphing_results_df['Comparison_Group'].str.split('.').str[0] + '.' + graphing_results_df['Gene'] + '.' + graphing_results_df['guide_num']
+
+
+    sort_choice =input("Choose graph sorting method (gene, guide, cage#, fitness, cell type): ").lower().strip().replace(" ","")
+            
+    while sort_choice not in ['gene','guide','cage#','fitness','celltype']:
+        sort_choice = input("Invalid choice, please choose gene, guide, cage# or cell type: ")
+    
+    if sort_choice == 'gene':
+        graphing_results_df.sort_values(by=['Gene'],inplace=True,key=natsort_keygen())
+        
+    elif sort_choice == 'guide':
+        graphing_results_df.sort_values(by=['Guide'],inplace=True,key=natsort_keygen())
+        
+    elif sort_choice == 'cage#':
+        graphing_results_df.sort_values(by=['CAGE#'],inplace=True,key=natsort_keygen())
+        
+    elif sort_choice == 'fitness':
+        graphing_results_df.sort_values(by=['fitness_score'],inplace=True)
+    elif sort_choice == 'celltype':
+        graphing_results_df.sort_values(by=['Guide'],key = lambda x: x.str.split(" ").str[1], inplace=True)
 
     
+        print("\n*******Graphing the following results*************\n")
+        print(graphing_results_df)
         
     try:
         fa_score_df = graphing_results_df[['Guide','fitness_score','std']]
@@ -345,7 +368,7 @@ def graph_scores(graphing_results_df,replicates_found):
         fa_score_df = graphing_results_df[['Guide','fitness_score']]
 
     
-    y_limit= _find_max_y(fa_score_df)
+    y_limit= _find_max_y(fa_score_df,replicates_found)
     
     bar_num = len(fa_score_df['Guide'].to_list())
     
@@ -416,6 +439,7 @@ def graph_scores(graphing_results_df,replicates_found):
             bar_width = 0.3
         else:
             bar_width = 0.5
+        
         fa_plot = fa_score_df.plot.bar(
                         x='Guide',
                         y='fitness_score',
@@ -467,11 +491,16 @@ def graph_scores(graphing_results_df,replicates_found):
 
     plt.show()
     
-def main():
+def main(graph_loop):
 
-    find_csv() #comment this line out if you have already pulled your data and entered it into the compiled_data.xlsx
-    compile_to_excel() #comment this line out if you have already pulled your data and entered it into the compiled_data.xlsx
-    get_scores()
-
+    #find_csv() #comment this line out if you have already pulled your data and entered it into the compiled_data.xlsx
+    
+    #compile_to_excel() #comment this line out if you have already pulled your data and entered it into the compiled_data.xlsx
+    
+    while graph_loop == True:
+        get_scores()
+        graph_loop = True if input('\n\n\nRun graphing step again? (y/n): ').lower().strip() == 'y' else False
+    else:
+        quit()
 if __name__ == "__main__":
-    main()
+    main(graph_loop)
