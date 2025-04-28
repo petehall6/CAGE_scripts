@@ -11,3 +11,10 @@ presentations
 /_BAGES (Batch Automated Graphical Emailer System)/__pycache__
 /asana_backup/certs
 asana_backup/.pem
+pmh_test/essential_and_copynum/copy_num/Model.csv
+pmh_test/essential_and_copynum/copy_num/updated_copy_num.csv
+pmh_test/essential_and_copynum/essential/CRISPRGeneEffect.csv
+pmh_test/essential_and_copynum/essential/CRISPRInferredCommonEssentials.csv
+pmh_test/essential_and_copynum/essential/Model.csv
+/pmh_test/get_gbk/previous_gbks
+/pmh_test/gtfs

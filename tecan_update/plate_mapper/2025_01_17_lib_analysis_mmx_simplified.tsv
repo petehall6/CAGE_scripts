@@ -1,6 +1,0 @@
-sample_name	n_total	uL MMX for Individual MMX	primer	uL Rev Primer for individual MMX	uL DNA/rxn	uL H2O/rxn	desired MMX vol	uL H2O to Add	uL DNA to Add	hart_well
-control	3	210.0	PC399	15.0	25.0	0.0	75.0	0.0	25.0	A01
-test1	4	280.0	PC400	20.0	25.0	0.0	150.0	0.0	50.0	B01
-test2	3	210.0	PC401	15.0	25.0	0.0	75.0	0.0	25.0	C01
-test3	5	350.0	PC402	25.0	25.0	0.0	225.0	0.0	75.0	D01
-test4	8	560.0	PC403	40.0	25.0	0.0	450.0	0.0	150.0	E01
