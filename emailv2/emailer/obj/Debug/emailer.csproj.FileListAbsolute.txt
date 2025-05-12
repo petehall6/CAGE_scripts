@@ -1,0 +1,17 @@
+Z:\ResearchHome\Groups\millergrp\home\common\Python\_pete\emailv2\emailer\bin\Debug\emailer.exe.config
+Z:\ResearchHome\Groups\millergrp\home\common\Python\_pete\emailv2\emailer\bin\Debug\emailer.exe
+Z:\ResearchHome\Groups\millergrp\home\common\Python\_pete\emailv2\emailer\bin\Debug\emailer.pdb
+Z:\ResearchHome\Groups\millergrp\home\common\Python\_pete\emailv2\emailer\obj\Debug\emailer.csproj.AssemblyReference.cache
+Z:\ResearchHome\Groups\millergrp\home\common\Python\_pete\emailv2\emailer\obj\Debug\emailer.Form1.resources
+Z:\ResearchHome\Groups\millergrp\home\common\Python\_pete\emailv2\emailer\obj\Debug\emailer.Properties.Resources.resources
+Z:\ResearchHome\Groups\millergrp\home\common\Python\_pete\emailv2\emailer\obj\Debug\emailer.csproj.GenerateResource.cache
+Z:\ResearchHome\Groups\millergrp\home\common\Python\_pete\emailv2\emailer\obj\Debug\emailer.csproj.CoreCompileInputs.cache
+Z:\ResearchHome\Groups\millergrp\home\common\Python\_pete\emailv2\emailer\obj\Debug\emailer.exe
+Z:\ResearchHome\Groups\millergrp\home\common\Python\_pete\emailv2\emailer\obj\Debug\emailer.pdb
+Z:\ResearchHome\Groups\millergrp\home\common\Python\_pete\emailv2\emailer\bin\Debug\ExcelDataReader.DataSet.dll
+Z:\ResearchHome\Groups\millergrp\home\common\Python\_pete\emailv2\emailer\bin\Debug\ExcelDataReader.dll
+Z:\ResearchHome\Groups\millergrp\home\common\Python\_pete\emailv2\emailer\bin\Debug\ExcelDataReader.pdb
+Z:\ResearchHome\Groups\millergrp\home\common\Python\_pete\emailv2\emailer\bin\Debug\ExcelDataReader.xml
+Z:\ResearchHome\Groups\millergrp\home\common\Python\_pete\emailv2\emailer\bin\Debug\ExcelDataReader.DataSet.pdb
+Z:\ResearchHome\Groups\millergrp\home\common\Python\_pete\emailv2\emailer\bin\Debug\ExcelDataReader.DataSet.xml
+Z:\ResearchHome\Groups\millergrp\home\common\Python\_pete\emailv2\emailer\obj\Debug\emailer.csproj.Up2Date

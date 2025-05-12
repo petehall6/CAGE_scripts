@@ -355,6 +355,7 @@ def graph_scores(graphing_results_df, replicates_found):
         
     elif sort_choice == 'fitness':
         graphing_results_df.sort_values(by=['fitness_score'],inplace=True)
+        
     elif sort_choice == 'celltype':
         graphing_results_df.sort_values(by=['Guide'],key = lambda x: x.str.split(" ").str[1], inplace=True)
 
@@ -364,6 +365,7 @@ def graph_scores(graphing_results_df, replicates_found):
         
     try:
         fa_score_df = graphing_results_df[['Guide','fitness_score','std']]
+        
     except:
         fa_score_df = graphing_results_df[['Guide','fitness_score']]
 
