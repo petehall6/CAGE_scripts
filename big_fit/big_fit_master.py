@@ -266,6 +266,7 @@ def get_scores():
             print(f"graphing_results_df\n{graphing_results_df}\n\nPress Enter to continue\n\n")
             
             scores_df = graphing_results_df.copy()
+            
             #scores_df.drop(columns=['Comparison_Group'],inplace=True)
 
         graph_scores(graphing_results_df,replicates_found)
